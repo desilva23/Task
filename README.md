@@ -8,6 +8,9 @@ Not a programme. The design is right-sized for that, and
 [`docs/proposed-scope.md`](docs/proposed-scope.md) is explicit about what is in,
 what is out, and what is being assumed.
 
+**Rendered architecture diagrams:**
+https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C
+
 ---
 
 ## The use case in one paragraph
@@ -23,10 +26,12 @@ realistic.
 ## The three things worth knowing
 
 **1. The hard part is data, not algorithms.** Routing is close to free — the
-store layout is static, so shortest paths are precomputed once at startup and
-every route query becomes a table lookup. There is no runtime pathfinding and
-no need for A*. What actually decides feasibility is whether machine-readable
-planogram and floor-plan data exist.
+store layout is static, so shortest paths across all three floors are
+precomputed once at startup and every route query becomes a table lookup. There
+is no runtime pathfinding and no need for A*. What actually decides feasibility
+is whether machine-readable planogram and floor-plan data exist. No public
+dataset holds a multi-floor supermarket planogram at rack level, so the POC's
+store map is authored.
 
 **2. A planogram says where a product is *supposed* to be.** Shelves drift from
 plan within days of a range change. In a POC this doesn't bite, because the
@@ -61,10 +66,12 @@ because it is the only real answer to point 2 above.
 | # | Document | What it covers |
 |---|---|---|
 | 1 | [`docs/proposed-scope.md`](docs/proposed-scope.md) | **Start here.** The POC definition, in/out of scope, assumptions register, stack, six-day build plan |
+| 1b | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
 | 2 | [`docs/use-case-understanding.md`](docs/use-case-understanding.md) | What a planogram is, the use case decomposed, and the customer vs. colleague split |
 | 3 | [`docs/clarifying-questions.md`](docs/clarifying-questions.md) | Questions for the stakeholder, prioritised, each with why it matters |
 | 4 | [`docs/solution-sketch.md`](docs/solution-sketch.md) | Data model, store graph, the tiered routing answer, API shape, risks |
 | 5 | [`docs/genai-opportunities.md`](docs/genai-opportunities.md) | Where Gen AI fits, where it must not be used, guardrails |
 
-For the Friday conversation, documents 1 and 3 are the ones that matter: here
-is what I'm building, here is what I assumed, here is what I need from you.
+For the Friday conversation, documents 1, 1b and 3 are the ones that matter:
+here is what I'm building, here is how it's put together, here is what I
+assumed, and here is what I need from you.

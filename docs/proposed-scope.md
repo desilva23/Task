@@ -14,7 +14,9 @@ A working proof of concept that demonstrates the full user journey end to end:
 > Search a product → see whether it's available → see exactly where it is →
 > see the route to it on a store map.
 
-It runs against **synthetic data shaped like a Sainsbury's superstore**. It
+It runs against **synthetic data shaped like a three-floor Sainsbury's
+superstore**, orchestrated with **LangGraph**. The architecture and the
+reasoning behind each decision are in `architecture.md`. It
 proves the journey, the data model and the interface. It is not connected to
 any real system, because connecting to real planogram and stock systems is a
 procurement and integration exercise measured in months, not days.
@@ -27,13 +29,16 @@ credible. One that is mistaken for a pilot creates a promise you cannot keep.
 | Capability | What it does |
 |---|---|
 | Product search | Free-text search over a synthetic catalogue of ~150–200 SKUs |
-| Availability | In stock / low stock / out of stock, from a synthetic stock file |
-| Location | Aisle, bay and shelf, from a synthetic planogram |
-| Multiple locations | A SKU can appear in its home bay *and* on a promo end cap |
-| Route | Entrance → product, drawn on a simple store map, with distance |
-| Shopping list | Several items in serpentine aisle order, one combined route |
+| Availability | Stock count, treated as live and correct |
+| Location | Floor, aisle, rack and shelf, from a synthetic planogram |
+| Multiple locations | A SKU can appear on its home rack *and* on a promo end cap |
+| Three floors | Non-food / ambient grocery / fresh, joined by two vertical cores |
+| Position | Shopper picks their floor and aisle from a list |
+| Single-product route | Shortest path — precomputed matrix lookup |
+| Multi-product route | Optimal shopping route, fixed floor order, ending at the tills |
 | NL query understanding | "something gluten free for lunchboxes" → structured filter |
-| Out of stock handling | Suggest in-stock alternatives from the same category |
+| Out of stock handling | Suggest in-stock alternatives, dietary-filtered first |
+| Clarification | Ambiguous query pauses the graph and asks the shopper |
 
 ## Explicitly out of scope
 
@@ -45,7 +50,7 @@ looks like judgement.
 | Real planogram integration | Needs a source system, access and a data contract | Phase 1 of a real build |
 | Real stock integration | Same | Phase 1 |
 | Multiple stores | Every store needs its own layout and planogram | Phase 2 |
-| Indoor positioning (beacons, Wi-Fi) | Hardware rollout per store | Phase 3, if ever |
+| Indoor positioning (beacons, Wi-Fi) | Hardware rollout per store; manual aisle pick covers the demo | Phase 3, if ever |
 | QR aisle markers | Cheap, but needs physical markers in a real store | Phase 2 |
 | Shelf compliance vision | High value, but a project of its own | Separate initiative |
 | Voice / hands-free | Only matters for the colleague version | Later |
@@ -62,97 +67,128 @@ know" into "I made a documented decision you can correct".
 | # | Assumption | Replace when we learn |
 |---|---|---|
 | A1 | **Customer-facing**, shopper searching for themselves | Who the user is (Q1) |
-| A2 | Single product at a time, with a shopping list as a bonus | Single vs. list (Q6) |
-| A3 | One superstore, ~15 aisles, synthetic layout | Store coverage (Q7) |
-| A4 | Start position is always the **entrance** | Positioning (Q4) |
-| A5 | Location granularity is aisle → bay → shelf | Planogram granularity (Q2) |
-| A6 | Availability is **shelf stock**, shown as a band not a number | Availability definition (Q5) |
-| A7 | "Optimal" means shortest walking distance | Definition of optimal (Q12) |
-| A8 | Catalogue of ~150–200 SKUs is representative enough to demo | — |
+| A2 | One synthetic store, 3 floors, ~36 aisles total | Store coverage (Q7) |
+| A3 | Catalogue of ~150–200 SKUs is representative enough to demo | — |
+| A4 | Floor order is fixed: highest floor with items first, then down to the tills | Confirmed by the lead |
+| A5 | "Optimal" means shortest walking distance | Definition of optimal (Q12) |
+
+Resolved since the first draft — no longer assumptions:
+
+| Was | Now |
+|---|---|
+| Single product only | **Both** — single product and multi-product routes |
+| Start position = entrance | Shopper **picks floor + aisle** |
+| Aisle → bay → shelf | **Floor → zone → aisle → rack → shelf → facing** |
+| Stock banded, staleness modelled | Stock **live and correct**, exact count shown |
+| Route ends at last product | Route **ends at a checkout** |
 
 ## Proposed stack
 
 Python backend, static frontend, no build step.
 
 ```
-  backend/            FastAPI
-    api.py              one orchestrating endpoint for the UI
-    search.py           catalogue search + NL query understanding
-    locations.py        planogram lookup
-    availability.py     stock lookup
-    routing.py          store graph + precomputed distance matrix
+  backend/
+    api.py              FastAPI — thin: validates, owns thread_id, streams
+    graph.py            LangGraph StateGraph: nodes, edges, checkpointer
+    nodes/
+      understand.py       model — NL query → typed filter
+      search.py           deterministic — filter → SKUs
+      clarify.py          interrupt() — ask the shopper
+      availability.py     deterministic — stock lookup
+      substitutes.py      model — alternatives, dietary-filtered first
+      locations.py        deterministic — planogram lookup
+      routing.py          deterministic — matrix lookup / floor-clustered TSP
+      describe.py         model — node list → directions
+    services/
+      catalogue.py  planogram.py  stock.py  graph_matrix.py
   data/
-    store_layout.json   nodes and edges for one store
-    planogram.json      SKU → aisle/bay/shelf
+    store_graph.json    nodes + edges across 3 floors, incl. vertical cores
+    planogram.json      SKU → floor/aisle/rack/shelf
     products.json       catalogue
     stock.json          stock positions
   frontend/
-    index.html          search box, result card, SVG store map
-    app.js              fetch + render, no framework
-    store-map.svg       hand-drawn floor plan, aisles as rectangles
+    index.html          search, floor+aisle picker, mode toggle, result card
+    app.js              fetch + SSE node progress, no framework
+    store-map.svg       three floor plates, aisles and racks as rectangles
 ```
+
+Dependencies: `fastapi`, `uvicorn`, `langgraph`, `langchain-anthropic`,
+`pydantic`, `scipy` (for the one all-pairs shortest-path call).
 
 Why this shape:
 
 - **No database.** JSON files loaded into memory at startup. The whole dataset
   is a few hundred kilobytes. A database adds setup cost and demonstrates
   nothing.
-- **No frontend framework.** A search box, a result card and an SVG with a
-  highlighted path. React would add a build step and no capability.
-- **SVG store map.** Aisles as labelled rectangles, the route as a polyline.
-  Looks deliberately schematic, which is honest — it is not a surveyed floor
-  plan, and shouldn't pretend to be.
-- **Python** because the catalogue work, the graph precomputation and the
-  Anthropic SDK are all cleanest there, and it keeps the whole thing in one
-  language.
+- **No frontend framework.** A search box, a result card and three SVG floor
+  plates with a highlighted path. React would add a build step and no
+  capability.
+- **SVG store map.** Aisles and racks as labelled rectangles, one plate per
+  floor, the route as a polyline. Deliberately schematic, which is honest — it
+  is not a surveyed floor plan and shouldn't pretend to be.
+- **LangGraph orchestrates the whole pipeline**, not only the model calls. The
+  deterministic steps become plain-function nodes. See `architecture.md` for
+  why, and for where that would tip into theatre.
+- **Python** because the catalogue work, the graph precomputation, LangGraph and
+  the Anthropic binding are all cleanest there.
 
 ## Build plan — six working days
 
 | Day | Work | Done when |
 |---|---|---|
-| 1 | Synthetic data: store layout graph, planogram, catalogue, stock | A known SKU resolves to a known bay in a JSON lookup |
-| 2 | Location + availability + plain keyword search services | `/search?q=coke` returns SKU, band and aisle/bay |
-| 3 | Routing: graph load, precomputed all-pairs matrix, route lookup | Entrance → any bay returns an ordered node list and a distance |
-| 4 | NL query understanding (one structured-output call) | "gluten free lunchbox snacks" returns sensible real SKUs |
-| 5 | Frontend: search, result card, SVG map with the route drawn | Full journey clickable in a browser |
-| 6 | Shopping list mode, out-of-stock alternatives, polish, demo script | Can be demoed cold without explanation |
+| 1 | Synthetic data: 3-floor store graph with cores, planogram, catalogue, stock | A known SKU resolves to a known floor/aisle/rack in a JSON lookup |
+| 2 | Service layer: catalogue, planogram, stock, keyword search | A plain function call returns SKU, count and full location |
+| 3 | Routing: graph load, all-pairs matrix across floors, single-product lookup | Any aisle → any rack returns an ordered node list and a distance |
+| 4 | LangGraph skeleton: state, the 6 deterministic nodes, conditional edges | `/journey` answers single-product end to end through the graph |
+| 5 | Floor-clustered TSP + the 3 model nodes + the `clarify` interrupt | Multi-product route across floors, ending at the tills |
+| 6 | Frontend: 3 floor plates, picker, mode toggle, route overlay, SSE progress | Can be demoed cold without explanation |
 
-Sequencing rationale: the journey works end to end by day 3 with plain keyword
-search. Everything after that is an upgrade to something already working, so if
-a day is lost there is still a demo.
+Sequencing rationale: the deterministic core is working by day 3 and the graph
+answers end to end by day 4, with keyword search only. The model nodes and the
+multi-product route are upgrades to something already working, so losing a day
+still leaves a demo.
+
+Risk to watch: day 5 carries both the TSP and the first model calls. If that
+day slips, drop `suggest_substitutes` first — it is the least visible of the
+three model nodes.
 
 ## Routing decision for the POC
 
-Build **Tier 0, 1 and 2** from `solution-sketch.md`, skip Tier 3.
+All four tiers from `solution-sketch.md` are now in scope, because the lead
+asked for both a single-product shortest path and an optimal multi-product
+route.
 
-- Aisle/bay location is the answer to most of the value (Tier 0).
-- Serpentine aisle-order sort handles the shopping list (Tier 1).
-- Precompute all-pairs shortest paths at startup — a few hundred nodes is
-  instant — so every route query is a table lookup (Tier 2).
-- Skip TSP sequencing. With a demo list of 5–8 items, serpentine order is
-  indistinguishable from optimal, and nobody watching can tell the difference.
+- Floor/aisle/rack location answers most of the value on its own (Tier 0).
+- Precompute all-pairs shortest paths across all three floors at startup, so
+  every route query is a table lookup (Tier 2).
+- Multi-product uses floor-clustered sequencing: fixed floor order, then
+  nearest-neighbour + 2-opt within each floor, ending at the tills (Tier 3).
 
-No A*, no runtime graph search. If asked, the answer is: the layout is static,
-so searching at request time is work we can do once at startup instead.
+Still no A* and no runtime graph search. If asked: the layout is static, so
+searching at request time is work we can do once at startup instead. Full
+reasoning in `architecture.md`.
 
 ## Gen AI in the POC
 
-One use, not nine: **natural-language query understanding**. A single
-structured-output call turns a messy query into a catalogue filter, then
-deterministic search does the rest. The model never names a product.
+Three model nodes out of nine, and **none of them is on the wire that returns a
+location, a distance or a stock figure**:
 
-- `claude-haiku-5-5` — the volume is high, the task is simple, and it is
-  $0.10 / $0.50 per million tokens, so the demo costs pennies.
+| Node | Model | Why |
+|---|---|---|
+| `understand_query` | `claude-haiku-5-5` | High volume, simple task, latency-critical |
+| `suggest_substitutes` | `claude-opus-5-5` | Needs real reasoning over constraints |
+| `describe_route` | `claude-haiku-5-5` | Phrasing only; cacheable per node pair |
+
 - Keyword search stays wired up as the fallback, so a model failure degrades
   the demo rather than breaking it.
 - **Nothing generated asserts a location, a stock figure or a dietary claim.**
   The grounding rule from `genai-opportunities.md` holds even in a POC, because
-  a hallucinated aisle number in a live demo is the worst possible moment for
+  a hallucinated rack number in a live demo is the worst possible moment for
   one.
 
 Everything else Gen AI could do here — shelf compliance from photos,
-conversational basket building, voice — is in `genai-opportunities.md` as the
-roadmap, not the build.
+conversational basket building, voice — stays in `genai-opportunities.md` as
+the roadmap, not the build.
 
 ## What to say about the gap
 
