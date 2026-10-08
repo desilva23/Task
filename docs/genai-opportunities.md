@@ -1,5 +1,14 @@
 # Where Gen AI Belongs in the Planogram Locator
 
+> **In the one-week POC, only item 1 below gets built** — natural-language
+> query understanding, one structured-output call, with keyword search as the
+> fallback. Everything else here is the roadmap: worth raising on Friday to
+> show where this goes, explicitly not worth building this week. See
+> `proposed-scope.md`.
+>
+> The grounding rule and the allergen guardrail below apply in the POC too.
+> A hallucinated aisle number is at its most damaging during a live demo.
+
 ## First, the framing that will survive the stakeholder meeting
 
 Do not walk in and say "I want to use Gen AI in this". That reads as a solution

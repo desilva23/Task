@@ -1,8 +1,17 @@
 # Clarifying Questions for the Stakeholder
 
-Ordered by how much the answer changes the design. The P0 questions are
-genuinely blocking — you cannot size or architect this without them. Each one
-says *why* it matters, so you can explain yourself if asked.
+Ordered by how much the answer changes the design. Each one says *why* it
+matters, so you can explain yourself if asked.
+
+> **How to use this against a Friday deadline.** Do not wait for answers — a
+> week doesn't allow it. Every unanswered question has a documented assumption
+> in `proposed-scope.md` instead, and the POC is built on those. That turns
+> this list from a blocker into the **agenda for the conversation**: here is
+> what I assumed, correct me where I'm wrong.
+>
+> The P0 questions are the ones whose answers would require rework, so they are
+> the ones to get answered on Friday. The P1 and P2 questions are for the real
+> build and can wait.
 
 ---
 

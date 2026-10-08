@@ -1,18 +1,12 @@
-# Solution Sketch (pre-clarification, assumptions stated)
+# Solution Sketch — Data Model, Routing and API
 
-This is a straw man to react to, not a design. It exists so the conversation
-with the stakeholder has something concrete to push against. Every assumption
-is flagged — replace it with their answer.
+The technical design. Two audiences in one document: the **POC** being built
+this week, and the **real build** it would grow into. Where they differ, the
+POC choice is called out.
 
-## Assumptions made
-
-| # | Assumption | Replace with answer to |
-|---|---|---|
-| A1 | Customer-facing, single product first; shopping list later | Q1, Q6 |
-| A2 | Planogram data arrives as a nightly per-store extract | Q2 |
-| A3 | Store layout must be modelled by us as a graph | Q3 |
-| A4 | Start position = entrance, QR aisle markers in phase 2 | Q4 |
-| A5 | Stock is a near-real-time per-store feed, banded for display | Q5 |
+The POC's assumptions are registered in `proposed-scope.md`; this document
+assumes them rather than re-listing them. In short: one store, synthetic data
+for all four inputs, entrance as the start position, shopper as the user.
 
 ## Core data model
 
@@ -167,7 +161,7 @@ confirming with the stakeholder (Q12) before optimising for the wrong thing.
                         │
   Locate API  ──────────┼──► Location Service   (planogram projection)
                         ├──► Availability Svc   (stock feed, banded)
-                        └──► Routing Service    (graph + A*/TSP, cached)
+                        └──► Routing Service    (graph + precomputed matrix)
 ```
 
 One orchestrating endpoint for the UI, because the screen needs all three at
@@ -195,29 +189,38 @@ GET /v1/stores/{storeId}/products/search?q=coke+500ml&from=ENTRANCE
 }
 ```
 
-## Suggested phasing
+## Beyond the POC — phasing for a real build
 
-1. **Phase 0 — data feasibility spike.** Get one real store's planogram extract
-   and one real floor plan. Everything else is guesswork until this exists.
-   This is the phase to argue for first.
-2. **Phase 1 — locate only.** Search → availability → "Aisle 7". No map, no
-   route. This alone answers most "where is X" questions and ships fast.
-3. **Phase 2 — routing from entrance.** Graph model + A*, text directions.
-4. **Phase 3 — positioning.** QR aisle markers to set start position.
-5. **Phase 4 — shopping list sequencing.** TSP + constraints.
-6. **Phase 5 — map visualisation / turn-by-turn,** if the metric justifies it.
+The POC covers the whole journey on synthetic data. A real build re-does it
+one real input at a time:
 
-The temptation will be to demo phase 6 first. Resist it: the demo is easy and
-the data underneath it is what actually decides whether this works.
+1. **Data feasibility spike.** One real store's planogram extract and one real
+   floor plan. Everything downstream is guesswork until these exist, so this is
+   the phase to argue for on Friday.
+2. **Locate only, real data.** Search → availability → "Aisle 7" against the
+   real feeds. No map, no route. This alone answers most "where is X" questions.
+3. **Routing from the entrance.** Real floor plan → graph → precomputed
+   matrix → text directions.
+4. **Positioning.** QR aisle markers to set a start position other than the
+   entrance.
+5. **Shopping list sequencing.** TSP with crush-order and temperature
+   constraints — only if the colleague use case is in play.
+6. **Map visualisation and turn-by-turn,** if the success metric justifies it.
+
+The temptation is to demo phase 6 first. The POC deliberately fakes its way to
+a map because a picture sells the idea — but the sequencing above is what a
+real build should follow, and the data underneath is what decides whether it
+works at all.
 
 ## Biggest risks to name upfront
 
 1. **Planogram ≠ reality.** Shelves drift from plan within days. Without a
    compliance signal or a user feedback loop, accuracy decays and trust goes
-   with it.
+   with it. (Invisible in the POC, because synthetic data is always correct —
+   worth saying so rather than letting the demo imply otherwise.)
 2. **Store layout digitisation** is the hidden cost. Per-store manual work
    across a large estate can dwarf the software build.
 3. **Stock accuracy** for shelf-level availability is genuinely hard; most
    retailers know total store stock far better than shelf stock.
 4. **Indoor positioning** is the classic scope trap — easy to promise, expensive
-   to deliver, and avoidable in early phases.
+   to deliver, and avoidable entirely in early phases.

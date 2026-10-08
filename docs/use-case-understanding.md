@@ -1,5 +1,10 @@
 # Planogram-Based Product Locator — Use Case Understanding
 
+> Background on the domain. The build itself is scoped in
+> `proposed-scope.md` — one store, synthetic data, one week. This document
+> exists so the POC's design decisions are informed rather than arbitrary, and
+> so the real-build implications can be answered if asked.
+
 ## 1. What a planogram actually is
 
 A **planogram** is the shelf-level layout plan for a store: for every bay, shelf
@@ -10,9 +15,9 @@ space-planning tools (JDA/Blue Yonder Space Planning, Nielsen Spaceman,
 Relex, Symphony RetailAI are the common ones in UK grocery).
 
 Crucially: a planogram says **where a product is *supposed* to be**. It does not
-say whether the product is physically there. That gap is the single biggest
-source of risk in this project and it drives most of the questions in
-`clarifying-questions.md`.
+say whether the product is physically there. That gap doesn't bite a POC with
+synthetic data, but in a real deployment it is the single biggest source of
+risk, and it drives most of the questions in `clarifying-questions.md`.
 
 ## 2. The use case as described
 
@@ -48,9 +53,10 @@ Search: "coca cola 500ml"
 | Route | Store floor layout as a navigable graph + a start position | Store layout / mapping |
 
 Each of those four is a **separate upstream system** in a retailer the size of
-Sainsbury's. The work in this project is mostly *integration and modelling*, not
-algorithms. The pathfinding itself (Dijkstra / A*) is the easy part — the data
-is the hard part.
+Sainsbury's — which is exactly why the POC synthesises all four. In a real
+build the work is mostly *integration and modelling*, not algorithms: the
+routing is close to free (see the tiered answer in `solution-sketch.md`), and
+the data is the hard part.
 
 ## 4. Two very different products hide behind the same description
 
@@ -73,8 +79,9 @@ first:
 
 These share a data layer but almost nothing in the UX or the optimisation
 problem. (b) is where retailers usually get the ROI; (a) is where the demo
-looks good. Find out which one is being asked for — or whether the data layer
-is the deliverable and both front ends come later.
+looks good — which, for a one-week POC, is the right trade. **The POC assumes
+(a).** Confirm it, because if the real target is (b) the optimisation problem
+changes completely.
 
 ## 5. Scope map — what "planogram" might also include
 
@@ -93,3 +100,4 @@ navigation. Typical planogram-domain capabilities:
 Navigation is a *consumer* of planogram data, not planogram management itself.
 Worth confirming which of these is in scope, because "we own the planogram
 system" and "we consume planogram data" are wildly different sized projects.
+The POC consumes; it does not manage.
