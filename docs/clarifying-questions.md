@@ -135,6 +135,10 @@ objective function.
     Pointr, Oriient, Mapsted, Aisle411 historically). Worth asking whether a
     vendor evaluation has already happened or is expected.
 
+21. **Gen AI governance** — is there an approved platform, does data have to
+    stay in the UK/EU, and is customer-facing generated text permitted at all?
+    See `genai-opportunities.md` for the full set of AI-specific questions.
+
 ---
 
 ## The one-paragraph version to open with
