@@ -63,19 +63,102 @@ Notes:
 - Accessibility: tag edges `step_free: false` and filter the graph per user
   preference rather than maintaining a second map.
 
-## Algorithms
+## Algorithms — do we actually need pathfinding?
 
-- **Single product:** A* with Euclidean distance as the heuristic. On a store
-  graph of a few hundred nodes this is sub-millisecond; Dijkstra is fine too.
-- **Shopping list:** this is TSP over the graph. Practical approach:
-  1. Precompute the all-pairs shortest-path matrix per store (a few hundred
-     nodes → a small matrix, computed once per layout version, cached).
-  2. Nearest-neighbour construction, then 2-opt improvement. Good enough for
-     40–80 stops and runs in milliseconds.
-  3. Apply constraints as ordering rules on top: chilled/frozen last, heavy
-     items first, respect one-way aisles via directed edges.
-- **Do not** recompute graphs per request. Precompute per layout version, cache,
-  invalidate on planogram/layout change.
+Mostly no, and this is worth getting right because it's where this kind of
+project gets over-engineered. **A supermarket is not a maze.** It is a set of
+parallel aisles joined by cross-aisles at the front and back. That regularity
+means the classic graph-search answer is usually unnecessary.
+
+Work up the tiers and stop at the first one that meets the requirement.
+
+### Tier 0 — No algorithm at all
+
+> "Aisle 7, bay 3, eye level."
+
+Shoppers can navigate a supermarket. What they don't know is *which aisle*.
+Tell them the aisle and the job is done — no graph, no route, no map. This
+answers the real question behind "where is it", and it is the fastest thing to
+ship. Most of the value in this whole project lives here.
+
+### Tier 1 — Sort by aisle order (serpentine / S-shape)
+
+For a shopping list, sort the items into walking order and snake through the
+store: aisle 2 front-to-back, aisle 4 back-to-front, and so on. One sort on an
+aisle sequence number. No graph.
+
+This is what most real grocery picking systems actually do, and the warehouse
+picking literature consistently puts S-shape traversal within single-digit to
+low-double-digit percent of the true optimum. More importantly it produces a
+route a human will *follow*. A mathematically optimal route that zig-zags
+unpredictably gets abandoned by pickers, and an abandoned route saves nothing.
+**Compliance beats optimality.**
+
+### Tier 2 — Precomputed distance matrix
+
+Needed once you want real distances or ETAs ("45 m, about a minute").
+
+Build the store graph, then compute **all-pairs shortest paths once per layout
+version**, offline — Floyd–Warshall, or Dijkstra from every node. A superstore
+is maybe 30–40 aisles and 200–400 bay nodes; Floyd–Warshall on 400 nodes is
+~64M operations, i.e. well under a second, run once and cached.
+
+Every runtime query is then an **O(1) table lookup**. There is no pathfinding
+at request time at all. This is the key move: you are not searching, you are
+reading a precomputed answer.
+
+### Tier 3 — Route sequencing for a list
+
+Only when the *order* genuinely matters (colleague picking a 60-item order).
+Note what the problem actually is: **sequencing, not pathfinding.** The
+shortest paths are already in the Tier 2 matrix; what's left is TSP.
+
+- Nearest-neighbour construction, then 2-opt improvement, over the precomputed
+  matrix. Milliseconds for 40–80 stops.
+- Because a SKU can sit in several locations (home bay *and* promo end cap),
+  it's strictly a *generalised* TSP — pick one node per item group.
+  Nearest-neighbour handles this naturally by taking the closest member of each
+  group.
+- Constraints go on top as ordering rules: chilled and frozen last, heavy items
+  first, don't put bananas under bleach, respect one-way aisles via directed
+  edges.
+- For a single-block layout there is an exact polynomial-time algorithm
+  (Ratliff–Rosenthal, 1983) if the heuristic ever proves not good enough. It
+  almost certainly will be good enough.
+
+### Where Dijkstra/A* genuinely earn their place
+
+Real graph search becomes the right answer when any of these are true:
+
+- **Arbitrary start points.** The moment QR aisle markers let someone start
+  mid-store, "route from anywhere to anywhere" is the requirement — though
+  Tier 2's precomputed matrix already covers it.
+- **Constraint filtering per user.** Step-free routes, closed aisles, cleaning
+  in progress, staff-only areas. You filter the graph and re-search; a single
+  precomputed matrix can't express every variant, so keep a live search
+  available as the fallback path.
+- **Irregular or multi-floor layouts.** Hybrid and city-centre stores aren't
+  tidy grids, and multi-floor with lifts and escalators needs a real graph.
+- **Congestion weighting**, if "optimal" ever means "fastest given where
+  everyone else is".
+
+Even then: Dijkstra on a few hundred nodes is microseconds. **A\* buys nothing
+at this scale** — the heuristic only pays off on large search spaces, and
+adding one is complexity without benefit here. Use plain Dijkstra and move on.
+
+### The trap to avoid
+
+Don't model the floor as a fine-grained occupancy grid and run A* over it. That
+is robot navigation, and it will happily route diagonally through a shelf unit
+unless you fight it. Humans walk aisles, so **model aisles and bays as nodes**.
+The graph should look like the store's own vocabulary — aisle, bay, cross-aisle
+— because that's also what the directions have to say out loud.
+
+### And check what "optimal" means
+
+For a shopper, "optimal" almost certainly means *comprehensible*, not minimal.
+A route that saves 12 metres but reads strangely will be ignored. Worth
+confirming with the stakeholder (Q12) before optimising for the wrong thing.
 
 ## Service shape
 

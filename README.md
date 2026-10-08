@@ -22,9 +22,9 @@ A user searches for a product and gets, in order: **is it in stock here**,
 **where is it**, **how do I get to it**.
 
 Four upstream systems are required — product catalogue, stock, planogram
-location data, and store floor layout. The pathfinding is the easy part
-(A* for one product, TSP for a list). The data availability and data accuracy
-are the project.
+location data, and store floor layout. The data availability and data accuracy
+are the project; the routing is the easy part, and mostly needs less algorithm
+than expected — see the tiered answer in `solution-sketch.md`.
 
 **Start by asking:** is the user a shopper or a store colleague; does
 machine-readable planogram and floor-plan data exist; and how do we know where
