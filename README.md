@@ -8,8 +8,9 @@ Not a programme. The design is right-sized for that, and
 [`docs/proposed-scope.md`](docs/proposed-scope.md) is explicit about what is in,
 what is out, and what is being assumed.
 
-**Rendered architecture diagrams:**
-https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C
+**Rendered pages:**
+· [High-level design](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) — requirements, search design, edge cases
+· [Architecture note](https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C) — LangGraph graph, store model, routing
 
 ---
 
@@ -66,7 +67,8 @@ because it is the only real answer to point 2 above.
 | # | Document | What it covers |
 |---|---|---|
 | 1 | [`docs/proposed-scope.md`](docs/proposed-scope.md) | **Start here.** The POC definition, in/out of scope, assumptions register, stack, six-day build plan |
-| 1b | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
+| 1b | [`docs/hld.md`](docs/hld.md) | **The review document.** Consolidated requirements register, the search design, 45 edge cases, and answers to the questions most likely to be asked |
+| 1c | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
 | 2 | [`docs/use-case-understanding.md`](docs/use-case-understanding.md) | What a planogram is, the use case decomposed, and the customer vs. colleague split |
 | 3 | [`docs/clarifying-questions.md`](docs/clarifying-questions.md) | Questions for the stakeholder, prioritised, each with why it matters |
 | 4 | [`docs/solution-sketch.md`](docs/solution-sketch.md) | Data model, store graph, the tiered routing answer, API shape, risks |
