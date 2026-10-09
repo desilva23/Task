@@ -389,6 +389,46 @@ never wrong about where something is.
 interface and the data model are proven on synthetic data. What stands between
 this and a real store is data, not software.
 
+**Is this a machine learning problem?** No. It is search and graph routing over
+enumerable data. BM25 is statistical ranking, not learned; Dijkstra and the
+2-opt heuristic are classical algorithms with exact or provable answers. The
+only learned component is a pre-trained model called for language understanding
+— inference, not training. There is no dataset, no labels, no model to fit and
+no training pipeline.
+
+**Shouldn't we train a model on the store data so it learns the map?** No, and
+this is the most common misconception about this kind of system. **The store map
+is not a pattern to learn, it is a fact to look up.** Training is for rules you
+cannot enumerate; this map is 300 nodes and 900 edges in a file. Training a
+model to hold it is like training one to remember a phone number instead of
+writing it down.
+
+| | Trained model | Lookup + Dijkstra |
+|---|---|---|
+| Accuracy | Approximates distances, sometimes wrong | Exact, provably shortest |
+| Shelf moves at a range change | Retrain | Edit one row |
+| 600 stores | 600 models | 600 files |
+| "Why this route?" | No answer available | Trace the path |
+| Cost per query | Inference | An array read |
+
+The failure mode is the real objection: a model that has "learned" the map will
+confidently invent an aisle number for a product it did not memorise — exactly
+what this architecture exists to prevent.
+
+**What the model is for is language, not geography.** It turns "something gluten
+free for the kids' lunchboxes" into a structured query and hands that to BM25,
+which searches the real catalogue. It never knows where anything is, and its
+output schema carries no field for a product name or a location (LLD §9), so it
+cannot.
+
+Google Maps does not train a model to learn the road network — it stores roads
+as a graph and runs a routing algorithm. Its machine learning is for traffic
+prediction and for understanding "coffee near me", not for knowing where streets
+are. The same split applies here.
+
+Training would be the right call with click logs and a learning-to-rank goal, or
+shelf photos and a compliance-detection goal. Neither is this project.
+
 ---
 
 ## 6. Where this design is weakest
