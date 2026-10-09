@@ -10,6 +10,7 @@ what is out, and what is being assumed.
 
 **Rendered pages:**
 · [High-level design](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) — requirements, search design, basket gate, edge cases
+· [Low-level design](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) — schemas, node contracts, algorithms, API
 · [Architecture note](https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C) — LangGraph graph, store model, routing
 
 ---
@@ -68,7 +69,8 @@ because it is the only real answer to point 2 above.
 |---|---|---|
 | 1 | [`docs/proposed-scope.md`](docs/proposed-scope.md) | **Start here.** The POC definition, in/out of scope, assumptions register, stack, six-day build plan |
 | 1b | [`docs/hld.md`](docs/hld.md) | **The review document.** Consolidated requirements register, the search design, 46 edge cases, and answers to the questions most likely to be asked |
-| 1c | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
+| 1c | [`docs/lld.md`](docs/lld.md) | Low-level design: identifier scheme, file schemas, graph state, node contracts, search and routing internals, API contracts, startup validation, test plan |
+| 1d | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
 | 2 | [`docs/use-case-understanding.md`](docs/use-case-understanding.md) | What a planogram is, the use case decomposed, and the customer vs. colleague split |
 | 3 | [`docs/clarifying-questions.md`](docs/clarifying-questions.md) | Questions for the stakeholder, prioritised, each with why it matters |
 | 4 | [`docs/solution-sketch.md`](docs/solution-sketch.md) | Data model, store graph, the tiered routing answer, API shape, risks |
