@@ -28,7 +28,8 @@ Nothing is implied.
 | FR-10 | Fixed floor order, one picking pass per floor | confirmed |
 | FR-11 | Multi-product route terminates at a checkout | confirmed |
 | FR-12 | **Search bar accepts several products at once**, returning availability for all in one pass, without first building a basket | confirmed |
-| FR-13 | Basket accumulates items across separate searches | confirmed |
+| FR-16 | **Batch results are grouped by availability, in-stock first**, with a single action that moves only the available items into the basket. An out-of-stock item may be added individually but is flagged not routable | confirmed |
+| FR-13 | Basket accumulates items across separate searches, and is the input to routing | confirmed |
 | FR-14 | Ambiguous search asks the user to narrow rather than guessing | assumed |
 | FR-15 | Out-of-stock items offer in-stock alternatives | assumed |
 
@@ -56,6 +57,85 @@ Nothing is implied.
 | OQ-06 | Age-restricted and locked-cabinet products | Needs an "ask a colleague" location type rather than a route |
 | OQ-07 | Success metric | Without one the project has no finish line |
 | OQ-08 | Multi-store coverage | Store layout becomes a versioned, owned data asset |
+
+### 1.1 What the less obvious requirements actually mean
+
+#### FR-05 · Store spans multiple floors
+
+Not a UI feature. It changes four things:
+
+- **The address.** Floor is part of a location, not metadata about it. "Aisle 7"
+  is meaningless alone — there is an Aisle 7 on every floor.
+- **The graph is not a flat plane.** Three floor plates, and no edge joins one to
+  another except through a vertical connector. You cannot get between floors any
+  other way. This is precisely why A* is awkward here: straight-line distance
+  assumes you can walk through a ceiling.
+- **Routing changes.** A floor transition costs more than its metres — you wait
+  for a lift, then ride it — so connectors are weighted edges with a penalty,
+  and a multi-product route groups stops by floor rather than treating every
+  stop alike.
+- **The UI needs one map per floor** with a switcher, and the route drawn across
+  plates with transition markers.
+
+For the POC: three floors, one zone per floor, two vertical cores.
+
+#### FR-06 · Racks are addressable
+
+"Addressable" means the rack has its own identifier that the system can store,
+look up and route to. It is a real entity in the data model with its own node in
+the graph — not a rectangle on a drawing.
+
+| | Not addressable | Addressable |
+|---|---|---|
+| Planogram says | "Coke is in Aisle 7" | `Coke → F1 · A07 · R03 · S02` |
+| Route targets | The aisle entrance | That specific rack |
+| Shopper then | Hunts along a 20-metre aisle | Goes straight to it |
+| Directions can say | "Aisle 7" | "Two-thirds down on your right, eye level" |
+
+- **Honest distances.** If only aisles were nodes, every product in Aisle 7 would
+  sit at the same distance. Rack nodes make the metres real.
+- **A stable key.** `F1-A07-R03-S02` identifies a physical slot; the planogram is
+  a mapping of SKU onto that address. A range change rewrites the mapping, not
+  the map.
+- **Shelf position becomes sayable** — eye level, bottom shelf — which is what
+  spoken directions need.
+
+#### FR-12, FR-16 and FR-13 · three different things
+
+Routinely confused, and the distinction is where a review will probe:
+
+- **FR-12** — *one* search returns *many* products.
+- **FR-16** — one action moves the available ones into the basket.
+- **FR-13** — *many* searches contribute to *one* basket, and the basket is what
+  gets routed.
+
+FR-12 and FR-13 are orthogonal; both feed the same basket. The basket is not the
+mechanism for multi-item search, and saying it is will not survive a follow-up.
+
+#### FR-14 · Ambiguous search asks rather than guessing
+
+"bread" matches forty products with similar scores. Rather than picking one, the
+graph pauses on a real `interrupt()` and asks, showing the top options. State is
+preserved, so in a batch query only the ambiguous term asks — the others stay
+resolved. Capped at two rounds, after which it shows the ranked list and stops
+asking.
+
+**Marked assumed for a real reason.** For a shopper, tapping a ranked list may be
+better than answering a question; the interrupt earns its place in a
+conversational or voice interface. Worth confirming which is wanted.
+
+#### FR-15 · Out-of-stock items offer alternatives
+
+Eggs are out, so instead of a dead end the shopper sees two or three in-stock
+alternatives from the same category. The mechanic that matters: candidates are
+filtered on structured dietary attributes *before* the model sees them, so it
+chooses among already-safe options rather than judging safety. Nothing generated
+asserts that a product is gluten free, vegan or nut free — that claim comes from
+a catalogue attribute, passed through verbatim.
+
+**Marked assumed because nobody asked for it.** It is the commercial
+nice-to-have — a dead end becomes a sale — and the first thing to cut if the week
+runs short.
 
 ---
 
@@ -161,6 +241,32 @@ So: availability for several products up front, in a single pass, and the route
 is then *offered* rather than forced — the shopper sees what is in stock and
 where before deciding whether to walk it.
 
+### 3.4 Batch results and the basket gate
+
+Resolving several terms produces a mixed result — some in stock, some not.
+Routing straight off that set is wrong, because it would plan a walk to shelves
+with nothing on them. So a basket gate sits between search and routing:
+**results are grouped with the available items first, and one action moves only
+those into the basket.**
+
+```
+batch search  →  results grouped: AVAILABLE first, out of stock below
+              →  [Add 3 available to basket]      ← one action
+              →  basket holds only routable items
+              →  [Plan route]
+```
+
+The basket is then the input to routing, so a route is never computed for
+something that is not there. It also disposes of the all-out-of-stock case
+without special handling — the action is simply disabled.
+
+An out-of-stock item **can** be added individually, for a shopper who intends to
+ask a colleague, but it is flagged not routable and excluded from the path, with
+the exclusion stated rather than silent.
+
+Consequence for the sequence: the first journey call returns **results only**.
+Routing is a second call, made from the basket.
+
 ---
 
 ## 4. Edge cases
@@ -188,8 +294,9 @@ where before deciding whether to walk it.
 |---|---|---|
 | EC-13 | Out of stock | Still show the location — "usually Aisle 7, currently out" — and offer substitutes |
 | EC-14 | Stock changes between search and routing | Re-check at route time; drop the item and say which one and why |
-| EC-15 | Every item in a batch out of stock | No route. Routing to nothing is worse than saying there is nothing to route to |
-| EC-16 | Some available, some not | Route the available ones; list the rest with substitutes |
+| EC-15 | Every item in a batch out of stock | The "add available" action is disabled and nothing enters the basket, so there is no route to refuse. Substitutes offered for each |
+| EC-16 | Some available, some not | The designed case, not an exception. Available group first, one action moves those to the basket, the rest listed with substitutes |
+| EC-46 | Shopper adds an out-of-stock item individually | Allowed — they may intend to ask a colleague — but flagged not routable and excluded from the path, with the exclusion stated rather than silent |
 | EC-17 | Product delisted mid-session | Basket entries revalidated on every journey call, never trusted from session state |
 | EC-18 | Stock service unreachable *(real build)* | Degrade to location-only with availability marked unknown. Never render a guess as a fact |
 
