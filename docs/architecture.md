@@ -156,24 +156,88 @@ recognised indoor standard rather than inventing a private scheme.
 
 ## 4. Routing
 
-### Precompute, don't search
+### The algorithm: Dijkstra, run at startup
 
-The layout is static, so **all-pairs shortest paths across all three floors are
-computed once at startup** (one `scipy.sparse.csgraph.shortest_path` call) and
-cached. At ~300 nodes this is instant, and every single-product query becomes an
-O(1) table lookup. No runtime graph search, and no need for A* — a heuristic
-only pays off on large search spaces.
+**Dijkstra from every node, once, when the service starts.** At request time
+there is no graph search at all — the answer is an array lookup.
+
+```python
+from scipy.sparse.csgraph import shortest_path
+
+D, P = shortest_path(
+    graph,                      # sparse weighted adjacency, ~300 nodes
+    method="D",                 # Dijkstra; "auto" also picks it for a sparse graph
+    directed=True,              # escalators and one-way aisles are genuinely directed
+    return_predecessors=True,
+)
+```
+
+Two matrices come out:
+
+| Matrix | Holds | Used for |
+|---|---|---|
+| `D[u][v]` | walking distance between any two nodes | distances, ETAs, the TSP cost function |
+| `P[u][v]` | previous node on the path from `u` to `v` | reconstructing the actual route |
+
+Cost, once, at startup:
+
+| Approach | Operations | Verdict |
+|---|---|---|
+| Dijkstra from all ~300 sources | ~1M | **Chosen.** Sparse graph (~900 edges), so per-source Dijkstra wins |
+| Floyd–Warshall | 300³ ≈ 27M | Also fine at this size; simpler to reason about |
+
+Both finish in well under a second in compiled C. The matrices cost about 1 MB
+(720 KB distances as float64, 360 KB predecessors as int32).
 
 Because the matrix already spans floors, "which core should I use" falls out of
 it rather than needing separate logic.
 
+### Why not A*
+
+A* optimises a **single** source-to-target query. We want all pairs, so A* would
+mean V² searches where Dijkstra needs V runs — the heuristic buys nothing when
+everything is being computed anyway.
+
+More specifically, **the floors make A* awkward.** A* needs an admissible
+heuristic, one that never overestimates. In a flat store, straight-line
+Euclidean distance qualifies. Across three floors it does not: the straight-line
+3D distance between a Floor 0 rack and a Floor 2 rack badly underestimates the
+real walk, because you cannot go through a ceiling — you have to detour to a
+core. An inadmissible heuristic breaks the optimality guarantee, and a
+safe-but-weak one (heuristic = 0) is Dijkstra with extra code.
+
+**And not BFS**, because edges are weighted: metres for walking, plus a wait
+penalty on lift edges. BFS only gives shortest paths when every edge costs the
+same.
+
 ### Single product
 
-Selected aisle node → product rack node. One matrix read.
+Selected aisle node → product rack node:
+
+```python
+distance = D[u][v]                     # one lookup, O(1)
+path     = walk_predecessors(P, u, v)  # O(path length), ~15 steps
+```
+
+### Two implementation details
+
+**Step-free routing needs a second matrix.** A per-user constraint (lift only,
+no escalator or stairs) cannot come out of one precomputed matrix. Run
+`shortest_path` twice at startup — once on the full graph, once on the step-free
+subgraph — and pick the matrix per request. Two matrices, ~2 MB, still no
+runtime search.
+
+**Unreachable pairs carry a sentinel.** scipy writes `-9999` into the
+predecessor matrix where no path exists, and `inf` into the distance matrix.
+Check for both rather than assuming every pair is connected — a mis-authored
+store graph with an orphaned aisle otherwise surfaces as a silently wrong
+answer.
 
 ### Multiple products — sequencing, not pathfinding
 
-The shortest paths are already in the matrix. What remains is a travelling
+The shortest paths are already in `D`. `route_multi` does no pathfinding of its
+own — `D` is its cost function, read by both nearest-neighbour and 2-opt. One
+Dijkstra pass at startup serves both route modes. What remains is a travelling
 salesman problem:
 
 1. **Group items by floor.**
