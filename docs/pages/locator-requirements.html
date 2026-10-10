@@ -247,11 +247,6 @@
 </table>
 </div>
 
-<div class="callout">
-  <h4>NFR-02 is the one that shapes the system</h4>
-  <p>Requiring every claim to be checked against the store data before display is stronger than requiring the facts to come from tools. It means a verification step is part of the required behaviour, not an implementation nicety — and it gives the whole design a testable definition of "correct" rather than a promise.</p>
-</div>
-
 <h2><span class="sec">6</span> &nbsp;Acceptance criteria</h2>
 <div class="prose">
   <p>Each row is a test that can pass or fail. A requirement with no row here is not finished being written.</p>
@@ -279,11 +274,6 @@
     <tr><td class="id">AC-17</td><td>FR-09</td><td>An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one</td></tr>
   </tbody>
 </table>
-</div>
-
-<div class="callout warn">
-  <h4>AC-11 is the test that earns the architecture</h4>
-  <p>It is the only one that proves NFR-01 and NFR-04 rather than asserting them. If every model call can be switched off and the system still returns the right aisle and the right route, then the claim that models never supply facts is demonstrated. If it cannot, the claim is decoration.</p>
 </div>
 
 <h2><span class="sec">7</span> &nbsp;Situations the system must handle</h2>

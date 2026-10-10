@@ -150,12 +150,6 @@ store works with no code changes.
 | NFR-10 | Accessibility | Step-free routing is available, and route directions are usable by a screen reader. |
 | NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom. |
 
-**NFR-02 is the one that shapes the system.** Requiring every claim to be
-checked against the store data before display is stronger than requiring the
-facts to come from tools. It means a verification step is part of the required
-behaviour, not an implementation nicety — and it gives the whole design a
-testable definition of "correct" rather than a promise.
-
 ---
 
 ## 6. Acceptance criteria
@@ -182,12 +176,6 @@ finished being written.
 | AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
 | AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
 | AC-17 | FR-09 | An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one |
-
-**AC-11 is the test that earns the architecture.** It is the only one that
-proves NFR-01 and NFR-04 rather than asserting them. If every model call can be
-switched off and the system still returns the right aisle and the right route,
-then the claim that models never supply facts is demonstrated. If it cannot, the
-claim is decoration.
 
 ---
 
