@@ -80,7 +80,7 @@ store works with no code changes.
 | A-03 | Demo store has **two floors**; the portability test store has three | confirmed | Floor count changes, and FR-17's ordering becomes more or less visible |
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
-| A-06 | The shopper is on a phone or a kiosk, standing in the store | confirmed | Layout and latency targets change |
+| A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
 
 **Two floors satisfies every requirement, but thins one demo.** Two floors is
 enough for FR-14, FR-19 and FR-25, and it halves the store data to author. The
@@ -169,6 +169,7 @@ than either alone.
 | NFR-08 | Portability | A differently shaped store passes the same acceptance tests with no code changes. |
 | NFR-09 | Explainability | Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model. |
 | NFR-10 | Accessibility | Step-free routing is available, and route directions are usable by a screen reader. |
+| NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom. |
 
 **NFR-02 is the one that shapes the system.** Requiring every claim to be
 checked against the store data before display is stronger than requiring the
@@ -199,6 +200,7 @@ finished being written.
 | AC-12 | NFR-05 | Measured over repeated runs, one product completes inside 5 s and ten products inside 10 s |
 | AC-13 | NFR-06 | Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call |
 | AC-14 | NFR-07 | Each malformed store fixture is rejected at load with a message naming the fault |
+| AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
 
 **AC-11 is the test that earns the architecture.** It is the only one that
 proves NFR-01 and NFR-04 rather than asserting them. If every model call can be
