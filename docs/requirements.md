@@ -49,9 +49,9 @@ store works with no code changes.
 
 | Actor | Needs | In scope |
 |---|---|---|
-| **Shopper** | Find one or several products quickly; know before walking whether it is worth the trip | Yes — the primary user |
-| **Store colleague** | — | **No.** Not a user of this system. Colleague workflows are out of scope and not planned |
-| **Store data owner** | Onboard a new store by supplying four files | Yes — FR-25 exists for this actor |
+| **Shopper** | Find one or several products quickly; know before walking whether it is worth the trip | Yes |
+| **Store colleague** | — | No |
+| **Store data owner** | Onboard a new store by supplying four files | Yes |
 
 ---
 
