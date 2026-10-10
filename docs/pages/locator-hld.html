@@ -1,0 +1,782 @@
+<title>Product Locator HLD</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Layout: review document — single column, prose to ~66ch, figures and tables breaking wider */
+  :root {
+    --paper: #f6f7f8; --surface: #ffffff; --ink: #1c2730; --ink-2: #55656f; --rule: #d5dbdf;
+    --fn: #2f6f8f; --llm: #a8620c; --pause: #7a3e9d; --ok: #2d6a4a; --risk: #9c2f34;
+    --display: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper: #13191d; --surface: #1b2328; --ink: #e3e8eb; --ink-2: #9aa7b0; --rule: #2e3a41;
+    --fn: #6fb3d2; --llm: #e0a355; --pause: #be92dc; --ok: #6cc49a; --risk: #e8848a;
+    color-scheme: dark;
+  } }
+  :root[data-theme="dark"] {
+    --paper: #13191d; --surface: #1b2328; --ink: #e3e8eb; --ink-2: #9aa7b0; --rule: #2e3a41;
+    --fn: #6fb3d2; --llm: #e0a355; --pause: #be92dc; --ok: #6cc49a; --risk: #e8848a;
+    color-scheme: dark;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 960px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 72px; }
+  .prose { max-width: 66ch; }
+
+  h1,h2,h3,h4 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(30px,5vw,44px); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: clamp(21px,3vw,27px); font-weight: 600; margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 18px; font-weight: 600; margin-top: 32px; }
+  h4 { font-size: 14px; font-weight: 600; margin-top: 24px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); }
+  p { margin: 13px 0; }
+  .sec { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 12px; }
+  .standfirst { font-size: 18px; color: var(--ink-2); font-style: italic; margin-top: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 26px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  figure { margin: 32px 0; padding: 20px 16px 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; }
+  figure .scroller { overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink); min-width: 560px; }
+  figcaption { font-family: var(--display); font-size: 13px; line-height: 1.5; color: var(--ink-2); margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--rule); }
+  figcaption b { color: var(--ink); font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-bottom: 16px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .chip { width: 22px; height: 11px; border-radius: 2px; border: 1.5px solid; display: inline-block; }
+
+  .tablewrap { overflow-x: auto; margin: 22px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule); min-width: 0; }
+  th { font-family: var(--display); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 600; }
+  td code, p code, li code, td b code { font-family: var(--mono); font-size: 0.86em; }
+  td.id { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--ink-2); }
+
+  .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; white-space: nowrap; border: 1px solid; }
+  .t-ok { color: var(--ok); border-color: var(--ok); }
+  .t-as { color: var(--llm); border-color: var(--llm); }
+  .t-op { color: var(--risk); border-color: var(--risk); }
+
+  ul, ol { padding-left: 20px; margin: 13px 0; }
+  li { margin: 6px 0; }
+
+  .callout { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--fn); border-radius: 3px; padding: 16px 18px; margin: 24px 0; font-size: 15px; }
+  .callout.warn { border-left-color: var(--llm); }
+  .callout h3, .callout h4 { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .qa { margin: 24px 0; padding-left: 16px; border-left: 2px solid var(--rule); }
+  .qa .q { font-family: var(--display); font-weight: 600; font-size: 16px; }
+  .qa .a { margin-top: 8px; }
+
+  footer { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+</style>
+
+<div class="wrap">
+
+<header class="prose">
+  <div class="eyebrow">High-level design · proof of concept</div>
+  <h1>Product Locator HLD</h1>
+  <p class="standfirst">In-store product search, availability, location and optimal routing across a three-floor store, orchestrated with LangGraph.</p>
+  <div class="meta">
+    <span><b>Requirements</b> 16 confirmed · 5 assumed · 8 open</span>
+    <span><b>Scope</b> one store, synthetic data</span>
+    <span><b>Stack</b> LangGraph · FastAPI · static SVG frontend</span>
+  </div>
+</header>
+
+<h2><span class="sec">1</span> &nbsp;Consolidated requirements</h2>
+<div class="prose">
+  <p>Every requirement below is either confirmed by the stakeholder, assumed with the assumption written down, or still open. Nothing is implied. The three open items marked in red are the ones that would cause rework if answered differently.</p>
+</div>
+
+<h4>Functional</h4>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-01</td><td>Search for a product within a given store</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-02</td><td>Show availability for the matched product</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-03</td><td>Show location — floor, aisle, rack, shelf</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-04</td><td>Show the optimal route from the user to the product</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-05</td><td>Store spans multiple floors</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-06</td><td>Aisles contain multiple racks; rack is addressable</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-07</td><td>User position set by manually selecting floor + aisle</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-08</td><td>Single product → shortest path</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-09</td><td>Multiple products → optimal shopping route</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-10</td><td>Fixed floor order, one picking pass per floor</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-11</td><td>Multi-product route terminates at a checkout</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-12</td><td><b>Search bar accepts several products at once</b> and returns availability for all of them in one pass, without first building a basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-16</td><td><b>Batch results are grouped by availability, in-stock first</b>, with a single action that moves only the available items into the basket. An out-of-stock item may be added individually but is flagged not routable</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-13</td><td>Basket accumulates items across separate searches, and is the input to routing</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-14</td><td>Ambiguous search asks the user to narrow it rather than guessing</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">FR-15</td><td>Out-of-stock items offer in-stock alternatives</td><td><span class="tag t-as">assumed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Technical and non-functional</h4>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">TR-01</td><td>Agentic framework is LangGraph</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">TR-02</td><td>Store map authored in-house — no public multi-floor rack-level planogram exists</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">TR-03</td><td>Availability data treated as live and correct</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">TR-04</td><td>Python · FastAPI · static HTML/SVG frontend · JSON in memory</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">TR-05</td><td>Search returns in well under a second; no runtime graph search</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">TR-06</td><td>Model failure degrades to keyword search rather than erroring</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">TR-07</td><td>No location, stock figure or dietary claim is ever model-generated</td><td><span class="tag t-ok">confirmed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Open — would cause rework</h4>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Question</th><th>Impact if answered differently</th></tr></thead>
+  <tbody>
+    <tr><td class="id">OQ-01</td><td>Is the user a shopper or a store colleague?</td><td>A colleague picking a 60-item order needs crush-order and temperature constraints, and a handheld UI. Different optimisation problem.</td></tr>
+    <tr><td class="id">OQ-02</td><td>Source and granularity of real planogram data</td><td>Decides whether rack-level addressing is even available. The long pole for a real build.</td></tr>
+    <tr><td class="id">OQ-03</td><td>Source of real floor plans, and for how many stores</td><td>Per-store digitisation can dwarf the software effort.</td></tr>
+    <tr><td class="id">OQ-04</td><td>Approved Gen AI platform, data residency, is customer-facing generated text permitted</td><td>May force the colleague-facing version first.</td></tr>
+    <tr><td class="id">OQ-05</td><td>Accessibility — is step-free routing required?</td><td>Second distance matrix over the lift-only subgraph. Cheap if known now.</td></tr>
+    <tr><td class="id">OQ-06</td><td>Age-restricted and locked-cabinet products</td><td>Needs a "ask a colleague" location type rather than a route.</td></tr>
+    <tr><td class="id">OQ-07</td><td>Success metric</td><td>Without one the project has no finish line.</td></tr>
+    <tr><td class="id">OQ-08</td><td>Multi-store coverage</td><td>Store layout becomes a versioned, owned data asset.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>1.1 &nbsp;What the less obvious requirements actually mean</h3>
+
+<h4>FR-05 · Store spans multiple floors</h4>
+<div class="prose">
+  <p>Not a UI feature. It changes four things:</p>
+  <ul>
+    <li><b>The address.</b> Floor is part of a location, not metadata about it. "Aisle 7" is meaningless alone — there is an Aisle 7 on every floor.</li>
+    <li><b>The graph is not a flat plane.</b> Three floor plates, and no edge joins one to another except through a vertical connector. You cannot get between floors any other way. This is precisely why A* is awkward here: straight-line distance assumes you can walk through a ceiling.</li>
+    <li><b>Routing changes.</b> A floor transition costs more than its metres — you wait for a lift, then ride it — so connectors are weighted edges with a penalty, and a multi-product route has to group stops by floor rather than treating every stop alike.</li>
+    <li><b>The UI needs one map per floor</b> with a switcher, and the route drawn across plates with transition markers.</li>
+  </ul>
+  <p>For the proof of concept: three floors, one zone per floor, two vertical cores (front and rear).</p>
+</div>
+
+<h4>FR-06 · Racks are addressable</h4>
+<div class="prose">
+  <p>"Addressable" means the rack has its own identifier that the system can store, look up and route to. It is a real entity in the data model with its own node in the graph — not a rectangle on a drawing.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th></th><th>Not addressable</th><th>Addressable</th></tr></thead>
+  <tbody>
+    <tr><td><b>Planogram says</b></td><td>"Coke is in Aisle 7"</td><td><code>Coke → F1 · A07 · R03 · S02</code></td></tr>
+    <tr><td><b>Route targets</b></td><td>The aisle entrance</td><td>That specific rack</td></tr>
+    <tr><td><b>Shopper then</b></td><td>Hunts along a 20-metre aisle</td><td>Goes straight to it</td></tr>
+    <tr><td><b>Directions can say</b></td><td>"Aisle 7"</td><td>"Two-thirds down on your right, eye level"</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <ul>
+    <li><b>Honest distances.</b> If only aisles were nodes, every product in Aisle 7 would sit at the same distance. Rack nodes make the metres real.</li>
+    <li><b>A stable key.</b> <code>F1-A07-R03-S02</code> identifies a physical slot; the planogram is a mapping of SKU onto that address. A range change rewrites the mapping, not the map.</li>
+    <li><b>Shelf position becomes sayable</b> — eye level, bottom shelf — which is what spoken directions need.</li>
+  </ul>
+</div>
+
+<h4>FR-12, FR-16 and FR-13 · three different things</h4>
+<div class="prose">
+  <p>These are routinely confused, and the distinction is where a review will probe:</p>
+  <ul>
+    <li><b>FR-12</b> — <i>one</i> search returns <i>many</i> products.</li>
+    <li><b>FR-16</b> — one action moves the available ones into the basket.</li>
+    <li><b>FR-13</b> — <i>many</i> searches contribute to <i>one</i> basket, and the basket is what gets routed.</li>
+  </ul>
+  <p>FR-12 and FR-13 are orthogonal; both feed the same basket. The basket is not the mechanism for multi-item search, and saying it is will not survive a follow-up question.</p>
+</div>
+
+<h4>FR-14 · Ambiguous search asks rather than guessing</h4>
+<div class="prose">
+  <p>"bread" matches forty products with similar scores. Rather than picking one, the graph pauses on a real <code>interrupt()</code> and asks, showing the top options. State is preserved, so in a batch query only the ambiguous term asks — the others stay resolved. Capped at two rounds, after which it shows the ranked list and stops asking.</p>
+  <p><b>Marked assumed for a real reason.</b> For a shopper, tapping a ranked list may be better than answering a question; the interrupt earns its place in a conversational or voice interface. Worth confirming which is wanted before building it.</p>
+</div>
+
+<h4>FR-15 · Out-of-stock items offer alternatives</h4>
+<div class="prose">
+  <p>Eggs are out, so instead of a dead end the shopper sees two or three in-stock alternatives from the same category. The mechanic that matters: candidates are filtered on structured dietary attributes <i>before</i> the model sees them, so it chooses among already-safe options rather than judging safety. Nothing generated asserts that a product is gluten free, vegan or nut free — that claim comes from a catalogue attribute, passed through verbatim.</p>
+  <p><b>Marked assumed because nobody asked for it.</b> It is the commercial nice-to-have — a dead end becomes a sale — and the first thing to cut if the week runs short.</p>
+</div>
+
+<h2><span class="sec">2</span> &nbsp;System design</h2>
+<div class="prose">
+  <p>Five layers. The search subsystem is drawn out separately because it carries more design than the rest of the pipeline put together, and because it is where the multi-product question lands.</p>
+</div>
+
+<figure>
+  <div class="legend">
+    <span><i class="chip" style="border-color: var(--fn); background: color-mix(in srgb, var(--fn) 14%, transparent)"></i> deterministic</span>
+    <span><i class="chip" style="border-color: var(--llm); background: color-mix(in srgb, var(--llm) 14%, transparent)"></i> model call</span>
+    <span><i class="chip" style="border-color: var(--pause); background: color-mix(in srgb, var(--pause) 14%, transparent)"></i> human pause</span>
+  </div>
+  <div class="scroller">
+  <svg viewBox="0 0 800 640" role="img" aria-label="Five-layer high-level design. Client layer holds the search bar, position picker, basket and map. FastAPI layer is thin. LangGraph orchestrates nine nodes. A search subsystem below it holds exact match, BM25, fuzzy and ranking stages. Domain services and in-memory JSON data sit at the bottom.">
+    <defs><marker id="h1" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Sans Condensed, sans-serif">
+
+      <rect x="30" y="14" width="740" height="76" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="44" y="38" font-size="12.5" font-weight="700" fill="currentColor">CLIENT</text>
+      <g font-size="11.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.8">
+        <rect x="44" y="48" width="178" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.45"/>
+        <text x="133" y="60" text-anchor="middle">search bar</text>
+        <text x="133" y="73" text-anchor="middle" font-size="10">single · list · natural language</text>
+        <rect x="234" y="48" width="140" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.45"/>
+        <text x="304" y="60" text-anchor="middle">position picker</text>
+        <text x="304" y="73" text-anchor="middle" font-size="10">floor + aisle</text>
+        <rect x="386" y="48" width="130" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.45"/>
+        <text x="451" y="67" text-anchor="middle">basket</text>
+        <rect x="528" y="48" width="228" height="30" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.45"/>
+        <text x="642" y="60" text-anchor="middle">3 floor plates · route overlay</text>
+        <text x="642" y="73" text-anchor="middle" font-size="10">floor switcher</text>
+      </g>
+
+      <line x1="400" y1="90" x2="400" y2="126" stroke="currentColor" stroke-width="1.5" marker-end="url(#h1)"/>
+      <text x="412" y="105" font-size="11" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">POST /journey</text>
+      <text x="412" y="119" font-size="11" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">SSE progress ↩</text>
+
+      <rect x="30" y="130" width="740" height="44" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="44" y="150" font-size="12.5" font-weight="700" fill="currentColor">API — FastAPI, thin</text>
+      <text x="44" y="166" font-size="11.5" fill="currentColor" opacity="0.75">validate · own thread_id · stream node events · no business logic</text>
+
+      <line x1="400" y1="174" x2="400" y2="204" stroke="currentColor" stroke-width="1.5" marker-end="url(#h1)"/>
+
+      <rect x="30" y="208" width="740" height="130" rx="3" fill="none" stroke="var(--fn)" stroke-width="2.5"/>
+      <text x="44" y="228" font-size="12.5" font-weight="700" fill="var(--fn)">ORCHESTRATION — LangGraph</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+        <rect x="44" y="240" width="104" height="38" rx="2" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="1.5"/>
+        <text x="96" y="256" text-anchor="middle" fill="currentColor">classify</text><text x="96" y="269" text-anchor="middle" fill="currentColor">_query</text>
+        <rect x="158" y="240" width="104" height="38" rx="2" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="1.5"/>
+        <text x="210" y="256" text-anchor="middle" fill="currentColor">understand</text><text x="210" y="269" text-anchor="middle" fill="currentColor">_query</text>
+        <rect x="272" y="240" width="104" height="38" rx="2" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="1.5"/>
+        <text x="324" y="256" text-anchor="middle" fill="currentColor">resolve</text><text x="324" y="269" text-anchor="middle" fill="currentColor">_items</text>
+        <rect x="386" y="240" width="104" height="38" rx="2" fill="color-mix(in srgb, var(--pause) 14%, transparent)" stroke="var(--pause)" stroke-width="1.5"/>
+        <text x="438" y="256" text-anchor="middle" fill="currentColor">clarify</text><text x="438" y="269" text-anchor="middle" fill="currentColor">interrupt()</text>
+        <rect x="500" y="240" width="118" height="38" rx="2" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="1.5"/>
+        <text x="559" y="256" text-anchor="middle" fill="currentColor">check</text><text x="559" y="269" text-anchor="middle" fill="currentColor">_availability</text>
+        <rect x="628" y="240" width="128" height="38" rx="2" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="1.5"/>
+        <text x="692" y="256" text-anchor="middle" fill="currentColor">suggest</text><text x="692" y="269" text-anchor="middle" fill="currentColor">_substitutes</text>
+
+        <rect x="44" y="286" width="134" height="38" rx="2" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="1.5"/>
+        <text x="111" y="302" text-anchor="middle" fill="currentColor">resolve</text><text x="111" y="315" text-anchor="middle" fill="currentColor">_locations</text>
+        <rect x="188" y="286" width="118" height="38" rx="2" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="1.5"/>
+        <text x="247" y="302" text-anchor="middle" fill="currentColor">route_single</text><text x="247" y="315" text-anchor="middle" fill="currentColor">matrix O(1)</text>
+        <rect x="316" y="286" width="118" height="38" rx="2" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="1.5"/>
+        <text x="375" y="302" text-anchor="middle" fill="currentColor">route_multi</text><text x="375" y="315" text-anchor="middle" fill="currentColor">floor TSP</text>
+        <rect x="444" y="286" width="118" height="38" rx="2" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="1.5"/>
+        <text x="503" y="302" text-anchor="middle" fill="currentColor">describe</text><text x="503" y="315" text-anchor="middle" fill="currentColor">_route</text>
+        <text x="580" y="309" font-size="10.5" fill="currentColor" opacity="0.6">checkpointed per session</text>
+      </g>
+
+      <line x1="324" y1="338" x2="324" y2="368" stroke="currentColor" stroke-width="1.5" marker-end="url(#h1)"/>
+      <text x="336" y="357" font-size="11" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">resolve_items calls ↓</text>
+
+      <rect x="30" y="372" width="740" height="92" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="44" y="392" font-size="12.5" font-weight="700" fill="currentColor">SEARCH SUBSYSTEM</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor">
+        <rect x="44" y="404" width="118" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        <text x="103" y="422" text-anchor="middle">exact match</text><text x="103" y="436" text-anchor="middle" opacity="0.7">barcode · SKU</text>
+        <rect x="178" y="404" width="118" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        <text x="237" y="422" text-anchor="middle">BM25 lexical</text><text x="237" y="436" text-anchor="middle" opacity="0.7">the workhorse</text>
+        <rect x="312" y="404" width="118" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        <text x="371" y="422" text-anchor="middle">fuzzy fallback</text><text x="371" y="436" text-anchor="middle" opacity="0.7">typos</text>
+        <rect x="446" y="404" width="138" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        <text x="515" y="422" text-anchor="middle">structured filter</text><text x="515" y="436" text-anchor="middle" opacity="0.7">category · dietary</text>
+        <rect x="600" y="404" width="156" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.8"/>
+        <text x="678" y="422" text-anchor="middle">retail ranking</text><text x="678" y="436" text-anchor="middle" opacity="0.7">ranged · in stock · size</text>
+      </g>
+
+      <line x1="400" y1="464" x2="400" y2="494" stroke="currentColor" stroke-width="1.5" marker-end="url(#h1)"/>
+
+      <rect x="30" y="498" width="740" height="56" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+      <text x="44" y="518" font-size="12.5" font-weight="700" fill="currentColor">DOMAIN SERVICES — deterministic, no model</text>
+      <g font-size="11.5" fill="currentColor" opacity="0.8">
+        <text x="100" y="542" text-anchor="middle">catalogue</text>
+        <text x="256" y="542" text-anchor="middle">planogram</text>
+        <text x="400" y="542" text-anchor="middle">stock</text>
+        <text x="600" y="542" text-anchor="middle">routing — Dijkstra matrix + TSP</text>
+      </g>
+
+      <line x1="400" y1="554" x2="400" y2="580" stroke="currentColor" stroke-width="1.5" marker-end="url(#h1)"/>
+      <rect x="30" y="584" width="740" height="44" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/>
+      <text x="44" y="604" font-size="12.5" font-weight="700" fill="currentColor">DATA — JSON loaded into memory at startup</text>
+      <text x="44" y="620" font-size="11.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">products · planogram · stock · store_graph (3 floors, 2 vertical cores)</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>Ten nodes, four of which call a model.</b> <code>classify_query</code> is new: it decides the query's shape before anything searches, which is what makes several products in one search bar work. Node-level detail is in the companion architecture note.</figcaption>
+</figure>
+
+<h2><span class="sec">3</span> &nbsp;Search design</h2>
+<div class="prose">
+  <p>This section exists because it is what got asked and what had no answer. Three separate questions hide inside "how does search work": what matching mechanism, can several products go in at once, and can their availability be checked in a single pass. They have three different answers.</p>
+</div>
+
+<h3>3.1 &nbsp;The matching mechanism</h3>
+<div class="prose">
+  <p>Five stages, tried in order, cheapest first. A query stops at the first stage that produces confident results.</p>
+</div>
+
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Stage</th><th>Mechanism</th><th>Handles</th><th>Implementation</th></tr></thead>
+  <tbody>
+    <tr><td><b>1 · Exact</b></td><td>Dictionary lookup on barcode or SKU</td><td>Scanned EAN-13, internal codes</td><td>Python dict, O(1)</td></tr>
+    <tr><td><b>2 · Lexical</b></td><td><b>BM25</b> over a normalised text field: name + brand + size + category + synonyms</td><td>"coke 500ml", "hovis wholemeal" — the overwhelming majority of real queries</td><td><code>rank_bm25</code> in memory for ~200 SKUs; OpenSearch BM25 at real scale</td></tr>
+    <tr><td><b>3 · Fuzzy</b></td><td>Trigram / Levenshtein similarity, applied only when BM25 scores come back weak</td><td>"paracetomol", "yoghurt" vs "yogurt"</td><td><code>rapidfuzz</code>, threshold-gated</td></tr>
+    <tr><td><b>4 · Structured filter</b></td><td>Model maps natural language to typed filters, which constrain stage 2</td><td>"something gluten free for lunchboxes"</td><td>One structured-output call; the model names no product</td></tr>
+    <tr><td><b>5 · Ranking</b></td><td>Retail signals re-rank the candidate set</td><td>Putting the right Coke first</td><td>Deterministic score function</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <h4>Why BM25 and not vector search</h4>
+  <p>BM25 is a ranked lexical match — it weights rare terms highly, dampens repeated ones, and normalises for field length, which is exactly right for short product names. It is also explainable: you can say why a result ranked where it did, which matters when a buyer asks why their product is not showing.</p>
+  <p>Vector search is the usual next suggestion, and it is deliberately <i>not</i> in the design. At 200 SKUs the semantic cases are handled better by stage 4 — the model maps intent to a category and dietary filter, and BM25 searches within it. That is cheaper, explainable, and cannot return a product that does not exist. Vector search earns its place at a 50,000-SKU catalogue where an LLM call per query is too slow; at that point the pattern is hybrid BM25 + embeddings fused with reciprocal rank fusion. Worth naming as the scale-up path, not building now.</p>
+</div>
+
+<h4>Ranking signals, in priority order</h4>
+<ol>
+  <li><b>Ranged in this store</b> — a product this branch does not carry never outranks one it does</li>
+  <li><b>In stock</b> — available beats unavailable</li>
+  <li><b>BM25 relevance</b></li>
+  <li><b>Exact size or variant match</b> when the query names one ("500ml")</li>
+  <li><b>Own-brand and popularity</b> as a tiebreak</li>
+</ol>
+
+<h3>3.2 &nbsp;Several products in one search</h3>
+<div class="prose">
+  <p>Yes — and not via the basket. The basket accumulates items across <i>separate</i> searches; it is not the mechanism for putting several products into one search. That is a <b>batch query</b>, and it is handled before any searching happens, by <code>classify_query</code>.</p>
+</div>
+
+<figure>
+  <div class="scroller">
+  <svg viewBox="0 0 780 470" role="img" aria-label="Decision tree for classifying a search query. Empty or very short queries are rejected with category suggestions. All-digit queries go to barcode lookup. Queries containing commas, semicolons, newlines or the word and are split into separate terms and each is resolved independently. Long natural-language queries go to the model for a structured filter. Everything else goes straight to BM25. All paths converge on ranking, then a confidence check that either returns results or raises a clarify interrupt.">
+    <defs><marker id="h2" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+
+      <rect x="296" y="12" width="188" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="390" y="34" text-anchor="middle" fill="currentColor">raw query string</text>
+      <line x1="390" y1="46" x2="390" y2="70" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="60" y1="70" x2="720" y2="70" stroke="currentColor" stroke-width="1.5"/>
+
+      <g>
+        <line x1="60" y1="70" x2="60" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="14" y="102" width="130" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="79" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">empty / &lt;2 chars</text>
+        <text x="79" y="135" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">reject,</text>
+        <text x="79" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">offer categories</text>
+      </g>
+      <g>
+        <line x1="208" y1="70" x2="208" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="156" y="102" width="130" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="221" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">8–13 digits</text>
+        <text x="221" y="135" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">barcode</text>
+        <text x="221" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">exact lookup</text>
+      </g>
+      <g>
+        <line x1="390" y1="70" x2="390" y2="98" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+        <rect x="312" y="102" width="156" height="52" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="390" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">, ; newline " and "</text>
+        <text x="390" y="135" text-anchor="middle" fill="currentColor" font-size="10">SPLIT → N terms</text>
+        <text x="390" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">resolve each in parallel</text>
+      </g>
+      <g>
+        <line x1="562" y1="70" x2="562" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="492" y="102" width="140" height="52" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="1.8"/>
+        <text x="562" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">&gt;4 words, verbs</text>
+        <text x="562" y="135" text-anchor="middle" fill="currentColor" opacity="0.8" font-size="10">model → typed filter</text>
+        <text x="562" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">may also yield a list</text>
+      </g>
+      <g>
+        <line x1="720" y1="70" x2="720" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="652" y="102" width="118" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="711" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">1–3 words</text>
+        <text x="711" y="135" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">straight to</text>
+        <text x="711" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">BM25</text>
+      </g>
+
+      <polyline points="221,154 221,180 390,180" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+      <polyline points="562,154 562,180 390,180" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+      <polyline points="711,154 711,194 390,194" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+      <line x1="390" y1="154" x2="390" y2="214" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+
+      <rect x="286" y="218" width="208" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="390" y="234" text-anchor="middle" fill="currentColor">BM25 over catalogue</text>
+      <text x="390" y="249" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">name · brand · size · synonyms</text>
+
+      <polyline points="494,237 580,237 580,284 494,284" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#h2)"/>
+      <text x="590" y="258" font-size="10" fill="currentColor" opacity="0.72">all scores weak</text>
+      <text x="590" y="271" font-size="10" fill="currentColor" opacity="0.72">→ fuzzy, retry once</text>
+
+      <line x1="390" y1="256" x2="390" y2="288" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+      <rect x="286" y="292" width="208" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="390" y="308" text-anchor="middle" fill="currentColor">retail re-rank</text>
+      <text x="390" y="323" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">ranged → in stock → relevance</text>
+
+      <line x1="390" y1="330" x2="390" y2="362" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+      <polygon points="390,362 486,396 390,430 294,396" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="390" y="393" text-anchor="middle" fill="currentColor" font-size="10.5">top score clear</text>
+      <text x="390" y="406" text-anchor="middle" fill="currentColor" font-size="10.5">of the rest?</text>
+
+      <line x1="294" y1="396" x2="196" y2="396" stroke="currentColor" stroke-width="1.8" marker-end="url(#h2)"/>
+      <text x="245" y="388" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.72">no</text>
+      <rect x="40" y="376" width="150" height="40" rx="3" fill="color-mix(in srgb, var(--pause) 14%, transparent)" stroke="var(--pause)" stroke-width="1.8"/>
+      <text x="115" y="392" text-anchor="middle" fill="currentColor" font-size="10.5">clarify</text>
+      <text x="115" y="406" text-anchor="middle" fill="currentColor" opacity="0.75" font-size="10">interrupt(), max 2×</text>
+
+      <line x1="486" y1="396" x2="584" y2="396" stroke="currentColor" stroke-width="1.8" marker-end="url(#h2)"/>
+      <text x="535" y="388" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.72">yes</text>
+      <rect x="590" y="376" width="150" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="665" y="400" text-anchor="middle" fill="currentColor">return results</text>
+
+      <text x="390" y="458" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.6">a batch query runs this whole tree once per term, concurrently</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>Query shape is decided before any searching.</b> The bold path is the batch case: a delimiter splits the input and each term runs the tree independently and concurrently, so "milk, bread, eggs" is three resolutions and one combined result — no basket needed.</figcaption>
+</figure>
+
+<h4>What the three input shapes look like</h4>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Input</th><th>Classified as</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td><code>coke 500ml</code></td><td>single term</td><td>One product, availability, location, route</td></tr>
+    <tr><td><code>milk, bread, eggs</code></td><td>delimited list</td><td>Three rows — each with its own availability and location — plus one combined route offered</td></tr>
+    <tr><td><code>milk and 6 eggs and some bread</code></td><td>delimited list</td><td>Same. <code>" and "</code> is a delimiter, and quantities are parsed off the term</td></tr>
+    <tr><td><code>what do I need for a fry up</code></td><td>natural language</td><td>Model expands to an item list, then the batch path. Items are shown for confirmation before routing, because the model chose them</td></tr>
+    <tr><td><code>5010029000061</code></td><td>barcode</td><td>Exact lookup, single product</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>3.3 &nbsp;Checking availability for all of them at once</h3>
+<div class="prose">
+  <p>This is the part the basket answer misses, and it is a separate design point from batch search. Resolving several terms gives several SKUs; the availability check on them must be <b>one call, not N</b>.</p>
+  <p><code>check_availability</code> takes a <i>list</i> of SKUs and returns a map. At POC scale that is a dict comprehension; against a real stock service it is the difference between one request and sixty. Designing the signature as a batch from the start costs nothing now and avoids an N+1 rewrite later. The same applies to <code>resolve_locations</code>.</p>
+  <p>So the answer to "can I check several products' availability up front" is yes, in a single pass, and the route is then <i>offered</i> rather than forced — the shopper sees what is in stock and where before deciding whether to walk it.</p>
+</div>
+
+<figure>
+  <div class="scroller">
+  <svg viewBox="0 0 800 545" role="img" aria-label="Sequence diagram for the query milk comma bread comma eggs. The client posts to the API, which invokes the graph. The graph classifies the query as a three-term list, resolves all three terms concurrently in the search subsystem, finds bread ambiguous and raises an interrupt to the client, resumes with the shopper's choice, then makes one batched availability call and one batched location call before computing a single multi-floor route ending at the checkout.">
+    <defs><marker id="h3" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7.5" markerHeight="6.5" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+      <g font-family="IBM Plex Sans Condensed, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle" fill="currentColor">
+        <text x="62" y="20">CLIENT</text><text x="206" y="20">API</text><text x="356" y="20">GRAPH</text>
+        <text x="506" y="20">SEARCH</text><text x="634" y="20">STOCK</text><text x="748" y="20">ROUTING</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1" opacity="0.3" stroke-dasharray="3 4">
+        <line x1="62" y1="30" x2="62" y2="528"/><line x1="206" y1="30" x2="206" y2="528"/>
+        <line x1="356" y1="30" x2="356" y2="528"/><line x1="506" y1="30" x2="506" y2="528"/>
+        <line x1="634" y1="30" x2="634" y2="528"/><line x1="748" y1="30" x2="748" y2="528"/>
+      </g>
+      <g fill="currentColor">
+        <line x1="62" y1="54" x2="198" y2="54" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="66" y="48" font-size="10">"milk, bread, eggs" + floor 0 / aisle 1</text>
+
+        <line x1="206" y1="86" x2="348" y2="86" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="210" y="80" font-size="10">invoke(state, thread_id)</text>
+
+        <rect x="360" y="104" width="196" height="30" rx="2" fill="color-mix(in srgb, var(--fn) 12%, transparent)" stroke="var(--fn)" stroke-width="1.3"/>
+        <text x="368" y="116" font-size="10">classify_query →</text>
+        <text x="368" y="128" font-size="10">delimited list, 3 terms</text>
+
+        <line x1="356" y1="156" x2="498" y2="156" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="360" y="150" font-size="10">resolve_items([3 terms]) — concurrent</text>
+        <line x1="506" y1="184" x2="364" y2="184" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="178" font-size="10">milk ✓ · eggs ✓ · bread → 12 hits</text>
+
+        <line x1="348" y1="214" x2="70" y2="214" stroke="var(--pause)" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#h3)"/>
+        <text x="78" y="208" font-size="10" fill="var(--pause)">interrupt() — "which bread?"</text>
+        <line x1="62" y1="244" x2="348" y2="244" stroke="var(--pause)" stroke-width="1.8" marker-end="url(#h3)"/>
+        <text x="70" y="238" font-size="10" fill="var(--pause)">Command(resume="wholemeal 800g")</text>
+
+        <line x1="356" y1="278" x2="626" y2="278" stroke="currentColor" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="360" y="272" font-size="10">check_availability([3 SKUs]) — ONE call, not three</text>
+        <line x1="634" y1="306" x2="364" y2="306" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="300" font-size="10">milk 14 · bread 6 · eggs 0</text>
+
+        <rect x="360" y="324" width="222" height="30" rx="2" fill="color-mix(in srgb, var(--llm) 12%, transparent)" stroke="var(--llm)" stroke-width="1.3"/>
+        <text x="368" y="336" font-size="10">suggest_substitutes(eggs) —</text>
+        <text x="368" y="348" font-size="10">dietary-filtered candidates only</text>
+
+        <line x1="356" y1="376" x2="498" y2="376" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="360" y="370" font-size="10">resolve_locations([SKUs]) — also batched</text>
+        <line x1="506" y1="404" x2="364" y2="404" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="398" font-size="10">F0·A4·R2 · F1·A7·R1 · F1·A2·R5</text>
+
+        <line x1="348" y1="434" x2="70" y2="434" stroke="currentColor" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="78" y="428" font-size="10">results grouped: 2 available + 1 out of stock with a substitute — NO route yet</text>
+
+        <line x1="62" y1="462" x2="348" y2="462" stroke="var(--fn)" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="70" y="456" font-size="10" fill="var(--fn)">"add available to basket" → plan route</text>
+
+        <line x1="356" y1="490" x2="740" y2="490" stroke="currentColor" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="360" y="484" font-size="10">route_multi(start, basket racks, → checkout)</text>
+        <line x1="748" y1="512" x2="364" y2="512" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="506" font-size="10">ordered path · 2 floors · 68 m · ends at tills</text>
+      </g>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>One search, three products, one availability call — then the basket gate.</b> The bold arrows are the batched calls; designing those signatures as lists from the start is what avoids an N+1 rewrite against a real stock service. The violet pair is the clarification pause and resume, which happens mid-graph without losing the terms already resolved. Note the first journey returns <i>results only</i> — routing is a second call, made from the basket.</figcaption>
+</figure>
+
+<h3>3.4 &nbsp;Batch results and the basket gate</h3>
+<div class="prose">
+  <p>Resolving several terms produces a mixed result — some in stock, some not. Routing straight off that set is wrong, because it would plan a walk to shelves that have nothing on them. So a basket gate sits between search and routing: <b>results are grouped with the available items first, and one action moves only those into the basket.</b></p>
+  <p>The basket is then the input to routing, which means a route is never computed for something that is not there. It also disposes of the all-out-of-stock case without special handling — the action is simply disabled.</p>
+</div>
+
+<figure>
+  <div class="scroller">
+  <svg viewBox="0 0 720 582" role="img" aria-label="Wireframe of the batch search result screen. A search bar holds four comma-separated terms. A summary line reads three available, one out of stock. An available group lists three products with stock counts and locations, followed by a primary action to add all three to the basket. An unavailable group lists the fourth product greyed out with a substitute suggestion and its own add link. A basket bar at the bottom shows three items and a plan route action.">
+    <defs><marker id="h4" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="6" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Sans Condensed, sans-serif">
+
+      <rect x="40" y="18" width="640" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="56" y="42" font-size="12.5" font-family="IBM Plex Mono, monospace" fill="currentColor">milk, bread, eggs, chicken thighs</text>
+      <text x="664" y="42" font-size="12.5" text-anchor="end" fill="currentColor" opacity="0.5">⌕</text>
+
+      <text x="40" y="78" font-size="12" fill="currentColor" opacity="0.7">4 terms · <tspan fill="var(--ok)" font-weight="700">3 available</tspan> · 1 out of stock · you are on Floor 0, Aisle 1</text>
+
+      <text x="40" y="108" font-size="11.5" font-weight="700" letter-spacing="0.08em" fill="var(--ok)">AVAILABLE</text>
+      <g font-size="12">
+        <rect x="40" y="118" width="640" height="40" rx="3" fill="none" stroke="var(--ok)" stroke-width="1.3" opacity="0.8"/>
+        <text x="56" y="135" fill="currentColor">Sainsbury's Whole Milk 2L</text>
+        <text x="56" y="150" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.65">F0 · A04 · R02 · S01</text>
+        <text x="664" y="143" text-anchor="end" font-size="11.5" fill="var(--ok)">14 in stock</text>
+
+        <rect x="40" y="164" width="640" height="40" rx="3" fill="none" stroke="var(--ok)" stroke-width="1.3" opacity="0.8"/>
+        <text x="56" y="181" fill="currentColor">Hovis Wholemeal 800g</text>
+        <text x="56" y="196" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.65">F1 · A07 · R01 · S03</text>
+        <text x="664" y="189" text-anchor="end" font-size="11.5" fill="var(--ok)">6 in stock</text>
+
+        <rect x="40" y="210" width="640" height="40" rx="3" fill="none" stroke="var(--ok)" stroke-width="1.3" opacity="0.8"/>
+        <text x="56" y="227" fill="currentColor">Free Range Eggs, 6 pack</text>
+        <text x="56" y="242" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.65">F0 · A06 · R03 · S02</text>
+        <text x="664" y="235" text-anchor="end" font-size="11.5" fill="var(--ok)">21 in stock</text>
+      </g>
+
+      <rect x="40" y="264" width="300" height="38" rx="3" fill="color-mix(in srgb, var(--fn) 18%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+      <text x="190" y="288" font-size="12.5" font-weight="600" text-anchor="middle" fill="currentColor">Add 3 available to basket</text>
+      <text x="356" y="288" font-size="11" fill="currentColor" opacity="0.6">one action — skips the out-of-stock item</text>
+
+      <text x="40" y="340" font-size="11.5" font-weight="700" letter-spacing="0.08em" fill="currentColor" opacity="0.55">OUT OF STOCK</text>
+      <rect x="40" y="350" width="640" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.3" stroke-dasharray="4 4" opacity="0.45"/>
+      <text x="56" y="367" font-size="12" fill="currentColor" opacity="0.6">Chicken Thighs 1kg</text>
+      <text x="56" y="382" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.45">usually F0 · A09 · R02 — currently out</text>
+      <text x="664" y="375" text-anchor="end" font-size="11.5" fill="currentColor" opacity="0.55">0 in stock</text>
+
+      <rect x="72" y="398" width="608" height="36" rx="3" fill="none" stroke="var(--llm)" stroke-width="1.3" opacity="0.75"/>
+      <text x="88" y="414" font-size="11.5" fill="currentColor">Instead: Chicken Drumsticks 1kg · same aisle · 9 in stock</text>
+      <text x="88" y="428" font-size="10" fill="currentColor" opacity="0.6">substitute chosen from dietary-filtered candidates only</text>
+      <text x="664" y="420" text-anchor="end" font-size="11.5" fill="var(--fn)">+ add</text>
+
+      <line x1="190" y1="302" x2="190" y2="462" stroke="var(--fn)" stroke-width="1.5" stroke-dasharray="4 4" marker-end="url(#h4)"/>
+
+      <rect x="40" y="466" width="640" height="46" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="56" y="486" font-size="12.5" font-weight="600" fill="currentColor">Basket · 3 items</text>
+      <text x="56" y="502" font-size="10.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.65">2 floors · ends at the tills</text>
+      <rect x="530" y="477" width="134" height="26" rx="3" fill="color-mix(in srgb, var(--fn) 18%, transparent)" stroke="var(--fn)" stroke-width="1.8"/>
+      <text x="597" y="495" font-size="12" font-weight="600" text-anchor="middle" fill="currentColor">Plan route</text>
+
+      <text x="40" y="542" font-size="11" fill="currentColor" opacity="0.65">The basket — not the search result — is what routing reads, so no route is ever planned to an empty shelf.</text>
+      <text x="40" y="562" font-size="11" fill="currentColor" opacity="0.65">An out-of-stock item can be added individually, but it is flagged not routable and left out of the path.</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>Available first, then one action.</b> The bulk action only ever moves in-stock items, so the basket contains only things that can actually be walked to. Adding an out-of-stock item individually stays possible — for a shopper who intends to ask a colleague — but it is excluded from the route rather than silently breaking it.</figcaption>
+</figure>
+
+<h2><span class="sec">4</span> &nbsp;Edge cases</h2>
+<div class="prose">
+  <p>Grouped by where they arise. The behaviour column is the design decision, not a wish.</p>
+</div>
+
+<h3>4.1 &nbsp;Search</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-01</td><td>Empty or one-character query</td><td>Reject before any search; show category browse instead</td></tr>
+    <tr><td class="id">EC-02</td><td>Misspelling — "paracetomol"</td><td>BM25 scores weak → fuzzy stage → retry once. One retry only, to bound latency</td></tr>
+    <tr><td class="id">EC-03</td><td>No match anywhere in the catalogue</td><td>"We don't recognise that" + nearest fuzzy suggestions. Never an empty screen</td></tr>
+    <tr><td class="id">EC-04</td><td>Product exists in the catalogue but is not ranged in this store</td><td>Say so explicitly — "not stocked at this branch" — and offer the nearest ranged alternative. Early graph exit, no route computed</td></tr>
+    <tr><td class="id">EC-05</td><td>Ambiguous — "bread" returns 12 near-equal hits</td><td><code>clarify</code> interrupt with the top options. Capped at two rounds, then show the ranked list and stop asking</td></tr>
+    <tr><td class="id">EC-06</td><td>Batch query with 200 pasted terms</td><td>Cap at 30 resolved items; return the rest unprocessed with a clear message. Protects both latency and the route quality</td></tr>
+    <tr><td class="id">EC-07</td><td>Duplicate terms — "milk, milk, bread"</td><td>Deduplicate after resolution, not before — "milk" and "whole milk" may resolve to the same SKU</td></tr>
+    <tr><td class="id">EC-08</td><td>A single term in a batch resolves to nothing</td><td>Partial success. Return the ones that resolved and name the one that did not; never fail the whole query</td></tr>
+    <tr><td class="id">EC-09</td><td>Query is a category, not a product — "dairy"</td><td>Detected as a category; show the aisle and offer to browse rather than returning an arbitrary SKU</td></tr>
+    <tr><td class="id">EC-10</td><td>Unknown barcode scanned</td><td>Distinguish "not a valid EAN" from "valid but not in our catalogue" — different user messages</td></tr>
+    <tr><td class="id">EC-11</td><td>Prompt injection in the query, or in supplier-supplied product text</td><td>Query text is passed as data, never concatenated into instructions. Catalogue descriptions are treated as untrusted — they are editable outside the retailer</td></tr>
+    <tr><td class="id">EC-12</td><td>Medical or dosage question — "what should I take for a migraine"</td><td>Out of scope by design. Locate the pharmacy aisle; give no medical advice</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.2 &nbsp;Availability</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-13</td><td>Out of stock</td><td>Still show the location — "usually on Aisle 7, currently out" — and offer substitutes. Location is useful even at zero stock</td></tr>
+    <tr><td class="id">EC-14</td><td>Stock changes between search and routing</td><td>Re-check at route time. If an item has gone, drop it from the route and say which one and why</td></tr>
+    <tr><td class="id">EC-15</td><td>Every item in a batch is out of stock</td><td>The "add available" action is disabled and nothing enters the basket, so there is no route to refuse. Substitutes are offered for each</td></tr>
+    <tr><td class="id">EC-16</td><td>Some available, some not</td><td>The designed case, not an exception. Available group first, one action moves those to the basket, the rest listed with substitutes</td></tr>
+    <tr><td class="id">EC-46</td><td>Shopper adds an out-of-stock item to the basket individually</td><td>Allowed — they may intend to ask a colleague — but flagged not routable and excluded from the path, with the exclusion stated rather than silent</td></tr>
+    <tr><td class="id">EC-17</td><td>Product delisted mid-session</td><td>Stale basket entries are revalidated on every journey call, not trusted from session state</td></tr>
+    <tr><td class="id">EC-18</td><td>Stock service unreachable <span class="tag t-as">real build</span></td><td>Degrade to location-only with availability marked unknown. Never render a guess as a fact</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.3 &nbsp;Location and planogram</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-19</td><td>SKU has no planogram entry — newly listed, not yet placed</td><td>Show availability without a location, and say the location is unknown rather than inventing one</td></tr>
+    <tr><td class="id">EC-20</td><td>SKU has several locations — home rack plus a promotional end cap</td><td>Show all; route to the nearest. This is the normal case, not an exception</td></tr>
+    <tr><td class="id">EC-21</td><td>Planogram references an aisle absent from the store graph</td><td>Data integrity failure. Caught by a startup validation pass, not at request time</td></tr>
+    <tr><td class="id">EC-22</td><td>Locked cabinet — spirits, formula, razor blades</td><td>Location type <code>ASSISTED</code>: route to the cabinet, state that a colleague must unlock it. Linked to <span class="tag t-op">OQ-06</span></td></tr>
+    <tr><td class="id">EC-23</td><td>Behind a counter — deli, pharmacy, fish</td><td>Location type <code>COUNTER</code>: route to the counter, no rack or shelf</td></tr>
+    <tr><td class="id">EC-24</td><td>Seasonal bay currently empty</td><td>Location flagged seasonal; suppressed when stock is zero, so shoppers are not sent to bare shelving</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.4 &nbsp;Routing</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-25</td><td>Shopper is already standing in the product's aisle</td><td>Zero-length route. Show "you're in the right aisle — rack 3, eye level" and draw no line</td></tr>
+    <tr><td class="id">EC-26</td><td>All items on one floor</td><td>No vertical transition; the floor-clustering step collapses to a single pass</td></tr>
+    <tr><td class="id">EC-27</td><td>Items spread across all three floors</td><td>Highest floor first, work down, finish at the tills</td></tr>
+    <tr><td class="id">EC-28</td><td>Single item submitted in multi mode</td><td>Falls through to the single-product path; the TSP is not invoked for one stop</td></tr>
+    <tr><td class="id">EC-29</td><td>Unreachable node — orphaned aisle in the graph</td><td>scipy writes <code>-9999</code> to the predecessor matrix and <code>inf</code> to the distance matrix. Both are checked; a startup validation pass rejects a disconnected graph outright</td></tr>
+    <tr><td class="id">EC-30</td><td>Lift out of service</td><td>Remove the edge and recompute the matrix — a sub-second startup task, so it can run on demand. The other core absorbs the traffic</td></tr>
+    <tr><td class="id">EC-31</td><td>Step-free route requested but none exists</td><td>Say so plainly rather than silently returning a route with stairs in it</td></tr>
+    <tr><td class="id">EC-32</td><td>Route would pass through a closed zone</td><td>Zones carry an open flag; closed zone edges are filtered before the matrix is built</td></tr>
+    <tr><td class="id">EC-33</td><td>Chilled and frozen items in a multi-item route</td><td>Deferred to the final floor pass. Natural consequence of terminating at the tills</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.5 &nbsp;Orchestration</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-34</td><td>Shopper abandons a clarification; the interrupt is never resumed</td><td>Threads carry a TTL and are swept. Without this, every abandoned search leaks a checkpoint forever — LangGraph does not expire threads on its own</td></tr>
+    <tr><td class="id">EC-35</td><td>Clarify loop never converges</td><td>Loop counter in state, capped at two rounds, then forced to return the ranked list</td></tr>
+    <tr><td class="id">EC-36</td><td>Same <code>thread_id</code> used from two tabs at once</td><td>Last write wins, and the UI reloads graph state rather than trusting local state</td></tr>
+    <tr><td class="id">EC-37</td><td>Model call times out or errors</td><td>Each model node has a deterministic fallback: keyword search for understanding, a static substitution table for substitutes, a template for directions. The journey always completes</td></tr>
+    <tr><td class="id">EC-38</td><td>Model returns malformed structured output</td><td>Validate against the schema; on failure fall back to keyword search. Known interaction with thinking enabled — see the build note</td></tr>
+    <tr><td class="id">EC-39</td><td>Model declines the request</td><td>Check the stop reason before reading content. Fall through to the deterministic path</td></tr>
+    <tr><td class="id">EC-40</td><td>Node raises mid-graph, leaving partial state</td><td>The checkpoint holds the last good state; the journey resumes from the failed node rather than restarting</td></tr>
+    <tr><td class="id">EC-41</td><td>SSE stream drops mid-journey</td><td>The result is retrievable by <code>thread_id</code> — progress streaming is a convenience, not the delivery mechanism</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.6 &nbsp;Data and startup</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-42</td><td>Malformed store graph</td><td>Fail at startup with a clear error. Never serve a half-loaded graph</td></tr>
+    <tr><td class="id">EC-43</td><td>Planogram references SKUs absent from the catalogue</td><td>Startup validation lists the orphans and refuses to start</td></tr>
+    <tr><td class="id">EC-44</td><td>Disconnected graph components</td><td>Connectivity check at startup; a store you cannot walk across is a data bug, not a routing edge case</td></tr>
+    <tr><td class="id">EC-45</td><td>Zero or negative edge weight</td><td>Rejected at load. Negative weights break Dijkstra's correctness guarantee outright</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="sec">5</span> &nbsp;Likely review questions</h2>
+
+<div class="prose">
+  <div class="qa">
+    <div class="q">What search mechanism is it?</div>
+    <div class="a">BM25 lexical ranking over a normalised product text field, with exact barcode lookup in front of it and fuzzy matching behind it for typos. Natural-language queries go through the model first, which produces a typed filter that constrains the same BM25 search — so the model narrows the search, it never names the product.</div>
+  </div>
+  <div class="qa">
+    <div class="q">Why not vector search or embeddings?</div>
+    <div class="a">At this catalogue size the model's structured filter handles the semantic cases more cheaply and more explainably, and it cannot return a product that does not exist. Hybrid BM25 plus embeddings fused with reciprocal rank fusion is the right answer at tens of thousands of SKUs, where an LLM call per query is too slow. It is the scale-up path, not the starting point.</div>
+  </div>
+  <div class="qa">
+    <div class="q">If I type several products into the search bar, does it work?</div>
+    <div class="a">Yes. <code>classify_query</code> detects the delimiters and splits the input, then each term resolves independently and concurrently. The basket is for accumulating items across separate searches — it is not the mechanism for multi-item search, and it should not be the answer to this question.</div>
+  </div>
+  <div class="qa">
+    <div class="q">Can I see availability for all of them up front, before committing to a route?</div>
+    <div class="a">Yes, in one batched call rather than one per item. The route is then offered, not forced — the shopper sees what is in stock and where it is before deciding whether to walk it.</div>
+  </div>
+  <div class="qa">
+    <div class="q">What happens when the search is ambiguous?</div>
+    <div class="a">The graph pauses on a real interrupt and asks, keeping the terms already resolved. Capped at two rounds, after which it shows the ranked list rather than asking again.</div>
+  </div>
+  <div class="qa">
+    <div class="q">What algorithm computes the route?</div>
+    <div class="a">Dijkstra, run from every node once at startup, giving a distance matrix and a predecessor matrix. Every single-product query is then an O(1) lookup. A* is the wrong tool here: it optimises one query at a time, and across floors straight-line distance is not an admissible heuristic, because a route cannot pass through a ceiling.</div>
+  </div>
+  <div class="qa">
+    <div class="q">What if the model is wrong or unavailable?</div>
+    <div class="a">Every model node has a deterministic fallback, and no model is on the path that returns a location, a distance or a stock figure. The system degrades to plain keyword search — less fluent, never wrong about where something is.</div>
+  </div>
+  <div class="qa">
+    <div class="q">Is this ready for a real store?</div>
+    <div class="a">No, and it is not meant to be. The journey, the interface and the data model are proven on synthetic data. What stands between this and a real store is data, not software: a planogram feed with an owner and a contract, a stock feed with known freshness, and a machine-readable floor plan per store. The first is the long pole and it is a conversation with space planning, not an engineering task.</div>
+  </div>
+  <div class="qa">
+    <div class="q">Is this a machine learning problem?</div>
+    <div class="a">No. It is search and graph routing over enumerable data. BM25 is statistical ranking, not learned; Dijkstra and the 2-opt heuristic are classical algorithms with exact or provable answers. The only learned component is a pre-trained model called for language understanding — inference, not training. There is no dataset, no labels, no model to fit and no training pipeline.</div>
+  </div>
+  <div class="qa">
+    <div class="q">Shouldn't we train a model on the store data so it learns the map?</div>
+    <div class="a">
+      <p>No, and this is the most common misconception about this kind of system. <b>The store map is not a pattern to learn, it is a fact to look up.</b> Training is for rules you cannot enumerate; this map is 300 nodes and 900 edges in a file. Training a model to hold it is like training one to remember a phone number instead of writing it down.</p>
+      <div class="tablewrap">
+      <table>
+        <thead><tr><th></th><th>Trained model</th><th>Lookup + Dijkstra</th></tr></thead>
+        <tbody>
+          <tr><td><b>Accuracy</b></td><td>Approximates distances, sometimes wrong</td><td>Exact, provably shortest</td></tr>
+          <tr><td><b>Shelf moves at a range change</b></td><td>Retrain</td><td>Edit one row</td></tr>
+          <tr><td><b>600 stores</b></td><td>600 models</td><td>600 files</td></tr>
+          <tr><td><b>"Why this route?"</b></td><td>No answer available</td><td>Trace the path</td></tr>
+          <tr><td><b>Cost per query</b></td><td>Inference</td><td>An array read</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p>The failure mode is the real objection: a model that has "learned" the map will confidently invent an aisle number for a product it did not memorise — exactly what this architecture exists to prevent.</p>
+      <p><b>What the model is for is language, not geography.</b> It turns "something gluten free for the kids' lunchboxes" into a structured query and hands that to BM25, which searches the real catalogue. It never knows where anything is, and its output schema carries no field for a product name or a location, so it cannot.</p>
+      <p>Google Maps does not train a model to learn the road network — it stores roads as a graph and runs a routing algorithm. Its machine learning is for traffic prediction and for understanding "coffee near me", not for knowing where streets are. The same split applies here.</p>
+      <p>Training would be the right call with click logs and a learning-to-rank goal, or shelf photos and a compliance-detection goal. Neither is this project.</p>
+    </div>
+  </div>
+</div>
+
+<div class="callout warn">
+  <h4>Where this design is weakest — say it before someone finds it</h4>
+  <p><b>A planogram says where a product is supposed to be.</b> Shelves drift from plan within days of a range change. Synthetic data hides this completely, so the demo will look more reliable than a real deployment would. The honest mitigations are a user "this is wrong" report and, longer term, vision-based shelf compliance.</p>
+  <p><b>The three open questions in section 1 are genuinely open.</b> If the user turns out to be a colleague picking online orders rather than a shopper, the optimisation problem changes shape.</p>
+</div>
+
+<footer>
+  High-level design · proof of concept · one store, synthetic data · 16 confirmed requirements, 5 assumed, 8 open
+</footer>
+
+</div>

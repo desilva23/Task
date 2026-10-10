@@ -1,0 +1,464 @@
+<title>Planogram Locator Architecture</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Layout: single technical-note column, prose held to ~66ch, figures breaking wider */
+  :root {
+    --paper: #f6f7f8;
+    --surface: #ffffff;
+    --ink: #1c2730;
+    --ink-2: #55656f;
+    --rule: #d5dbdf;
+    --fn: #2f6f8f;
+    --llm: #a8620c;
+    --pause: #7a3e9d;
+
+    --display: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #13191d;
+      --surface: #1b2328;
+      --ink: #e3e8eb;
+      --ink-2: #9aa7b0;
+      --rule: #2e3a41;
+      --fn: #6fb3d2;
+      --llm: #e0a355;
+      --pause: #be92dc;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #13191d;
+    --surface: #1b2328;
+    --ink: #e3e8eb;
+    --ink-2: #9aa7b0;
+    --rule: #2e3a41;
+    --fn: #6fb3d2;
+    --llm: #e0a355;
+    --pause: #be92dc;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 48px 72px;
+  }
+  .prose { max-width: 66ch; }
+
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: clamp(20px, 3vw, 26px); font-weight: 600; margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 17px; font-weight: 600; margin-top: 30px; }
+  p { margin: 14px 0; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 14px;
+  }
+  .standfirst { font-size: 18px; color: var(--ink-2); font-style: italic; margin-top: 18px; }
+
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 28px;
+    font-family: var(--mono); font-size: 12px; color: var(--ink-2);
+    margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--rule);
+  }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  figure {
+    margin: 36px 0;
+    padding: 22px 18px 16px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+  }
+  figure .scroller { overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink); min-width: 520px; }
+  figcaption {
+    font-family: var(--display); font-size: 13px; line-height: 1.5;
+    color: var(--ink-2); margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--rule);
+  }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-bottom: 18px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .chip { width: 22px; height: 11px; border-radius: 2px; border: 1.5px solid; display: inline-block; }
+
+  table { border-collapse: collapse; width: 100%; margin: 24px 0; font-size: 14.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 10px 12px 10px 0; border-bottom: 1px solid var(--rule); min-width: 0; }
+  th { font-family: var(--display); font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-2); font-weight: 600; }
+  td code, p code, li code { font-family: var(--mono); font-size: 0.87em; }
+  .tablewrap { overflow-x: auto; }
+
+  .decision { margin: 26px 0; padding-left: 18px; border-left: 2px solid var(--rule); }
+  .decision h3 { margin-top: 0; }
+  .decision .verdict { font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fn); }
+
+  ul { padding-left: 20px; margin: 14px 0; }
+  li { margin: 7px 0; }
+
+  .warn { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--llm); border-radius: 3px; padding: 16px 18px; margin: 24px 0; font-size: 15px; }
+  .warn h3 { margin-top: 0; }
+
+  footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+</style>
+
+<div class="wrap">
+
+  <header class="prose">
+    <div class="eyebrow">Proof of concept · design note</div>
+    <h1>Planogram Locator Architecture</h1>
+    <p class="standfirst">Search a product, see whether it is in stock, see which floor, aisle and rack it sits on, and get the optimal route to reach it — across a three-floor store.</p>
+    <div class="meta">
+      <span><b>Orchestration</b> LangGraph</span>
+      <span><b>Service</b> FastAPI</span>
+      <span><b>Frontend</b> static HTML + SVG</span>
+      <span><b>Data</b> synthetic, in-memory JSON</span>
+    </div>
+  </header>
+
+  <h2>1 · Where LangGraph sits</h2>
+  <div class="prose">
+    <p>Five layers. The point of the drawing is the third one: LangGraph is the orchestrator, and every fact in a response is fetched by a deterministic service below it. The model never holds the data.</p>
+  </div>
+
+  <figure>
+    <div class="scroller">
+    <svg viewBox="0 0 720 560" role="img" aria-label="Five-layer stack: browser, FastAPI, LangGraph orchestrator, deterministic services, and in-memory JSON data. Labelled arrows show what crosses each boundary.">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+          <polygon points="0,0 10,4 0,8" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Sans Condensed, sans-serif">
+
+        <rect x="40" y="16" width="640" height="72" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="56" y="42" font-size="13" font-weight="700" fill="currentColor">BROWSER</text>
+        <text x="56" y="62" font-size="12" fill="currentColor" opacity="0.72">search · floor + aisle picker · single / multi toggle · basket</text>
+        <text x="56" y="79" font-size="12" fill="currentColor" opacity="0.72">multi-floor SVG map, floor switcher, route overlay</text>
+
+        <line x1="360" y1="88" x2="360" y2="130" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="374" y="105" font-size="11.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">POST /journey</text>
+        <text x="374" y="121" font-size="11.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">SSE node events ↩</text>
+
+        <rect x="40" y="134" width="640" height="58" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="56" y="160" font-size="13" font-weight="700" fill="currentColor">FASTAPI — deliberately thin</text>
+        <text x="56" y="180" font-size="12" fill="currentColor" opacity="0.72">validates input · owns thread_id · streams graph progress</text>
+
+        <line x1="360" y1="192" x2="360" y2="234" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="374" y="216" font-size="11.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">invoke(state, thread_id)</text>
+
+        <rect x="40" y="238" width="640" height="86" rx="3" fill="none" stroke="var(--fn)" stroke-width="2.5"/>
+        <text x="56" y="264" font-size="13" font-weight="700" fill="var(--fn)">LANGGRAPH — the orchestrator</text>
+        <text x="56" y="284" font-size="12" fill="currentColor" opacity="0.8">9 nodes · 3 conditional edges · 1 cycle · 1 interrupt</text>
+        <text x="56" y="301" font-size="12" fill="currentColor" opacity="0.8">typed state, checkpointed per shopping session</text>
+        <text x="56" y="318" font-size="12" fill="currentColor" opacity="0.8">6 nodes are plain functions · 3 call a model</text>
+
+        <line x1="360" y1="324" x2="360" y2="366" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+        <text x="374" y="349" font-size="11.5" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">plain function calls — no model</text>
+
+        <rect x="40" y="370" width="640" height="76" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="56" y="396" font-size="13" font-weight="700" fill="currentColor">SERVICE LAYER — deterministic</text>
+        <line x1="56" y1="406" x2="664" y2="406" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+        <text x="80" y="426" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.8">catalogue</text>
+        <text x="216" y="426" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.8">planogram</text>
+        <text x="340" y="426" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.8">stock</text>
+        <text x="520" y="426" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.8">routing — matrix + TSP</text>
+        <line x1="148" y1="414" x2="148" y2="436" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+        <line x1="284" y1="414" x2="284" y2="436" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+        <line x1="400" y1="414" x2="400" y2="436" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+
+        <line x1="360" y1="446" x2="360" y2="480" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar)"/>
+
+        <rect x="40" y="484" width="640" height="58" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="56" y="510" font-size="13" font-weight="700" fill="currentColor">DATA — JSON, loaded into memory at startup</text>
+        <text x="56" y="530" font-size="12" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.72">store_graph · planogram · products · stock</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>The orchestrator holds no facts.</b> Gen AI lives inside the LangGraph layer; locations, stock and distances are read from the service layer below it on every request. Remove the model and the system still answers — less fluently, but never wrongly.</figcaption>
+  </figure>
+
+  <h2>2 · The graph</h2>
+  <div class="prose">
+    <p>Nine nodes. Six are ordinary Python functions, three call a model, one pauses for the shopper. That ratio is the design: LangGraph is here for state, branching and interrupts — not to let a model decide what happens next.</p>
+  </div>
+
+  <figure>
+    <div class="legend">
+      <span><i class="chip" style="border-color: var(--fn); background: color-mix(in srgb, var(--fn) 14%, transparent)"></i> deterministic function</span>
+      <span><i class="chip" style="border-color: var(--llm); background: color-mix(in srgb, var(--llm) 14%, transparent)"></i> model call</span>
+      <span><i class="chip" style="border-color: var(--pause); background: color-mix(in srgb, var(--pause) 14%, transparent)"></i> human pause — interrupt()</span>
+    </div>
+    <div class="scroller">
+    <svg viewBox="0 0 820 668" role="img" aria-label="LangGraph state machine. Start flows to understand_query, then search_catalogue, which branches to a clarify interrupt node and cycles back, or exits early when a product is not ranged. Then check_availability branches to suggest_substitutes when out of stock, then resolve_locations branches on mode to route_single or route_multi, both joining describe_route and then end.">
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto">
+          <polygon points="0,0 10,4 0,8" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Mono, monospace" font-size="12.5">
+
+        <!-- early exit, drawn first so nodes sit above it -->
+        <polyline points="280,180 56,180 56,626 322,626" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.55" marker-end="url(#ar2)"/>
+        <text x="64" y="404" font-size="11.5" fill="currentColor" opacity="0.6" transform="rotate(-90 64 404)" text-anchor="middle">not ranged in this store</text>
+
+        <!-- START -->
+        <rect x="325" y="16" width="80" height="28" rx="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="365" y="35" text-anchor="middle" fill="currentColor">START</text>
+        <line x1="365" y1="44" x2="365" y2="62" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+        <!-- understand_query -->
+        <rect x="280" y="64" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="2"/>
+        <text x="365" y="84" text-anchor="middle" fill="currentColor">understand_query</text>
+        <text x="365" y="100" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">Haiku · structured out</text>
+        <line x1="365" y1="108" x2="365" y2="146" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+        <!-- search_catalogue -->
+        <rect x="280" y="148" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="365" y="175" text-anchor="middle" fill="currentColor">search_catalogue</text>
+
+        <!-- clarify + cycle -->
+        <rect x="560" y="148" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--pause) 14%, transparent)" stroke="var(--pause)" stroke-width="2"/>
+        <text x="645" y="168" text-anchor="middle" fill="currentColor">clarify</text>
+        <text x="645" y="184" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">interrupt()</text>
+        <line x1="450" y1="162" x2="552" y2="162" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="501" y="155" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.72">ambiguous</text>
+        <line x1="560" y1="182" x2="458" y2="182" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="509" y="196" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.72">resume</text>
+
+        <line x1="365" y1="192" x2="365" y2="238" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="375" y="219" font-size="11" fill="currentColor" opacity="0.72">matched</text>
+
+        <!-- check_availability -->
+        <rect x="280" y="240" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="365" y="267" text-anchor="middle" fill="currentColor">check_availability</text>
+
+        <!-- suggest_substitutes -->
+        <rect x="560" y="240" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="2"/>
+        <text x="645" y="260" text-anchor="middle" fill="currentColor">suggest_subs</text>
+        <text x="645" y="276" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">Opus · dietary-filtered</text>
+        <line x1="450" y1="262" x2="552" y2="262" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="501" y="255" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.72">out of stock</text>
+
+        <line x1="340" y1="284" x2="340" y2="330" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="246" y="310" font-size="11" fill="currentColor" opacity="0.72">all available</text>
+        <polyline points="645,284 645,308 400,308 400,330" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+        <!-- resolve_locations -->
+        <rect x="280" y="332" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="365" y="352" text-anchor="middle" fill="currentColor">resolve_locations</text>
+        <text x="365" y="368" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">floor · aisle · rack · shelf</text>
+
+        <!-- mode branch -->
+        <polyline points="320,376 320,400 200,400 200,422" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="196" y="393" font-size="11" text-anchor="end" fill="currentColor" opacity="0.72">mode = single</text>
+        <polyline points="410,376 410,400 530,400 530,422" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <text x="536" y="393" font-size="11" fill="currentColor" opacity="0.72">mode = multi</text>
+
+        <rect x="115" y="424" width="170" height="48" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="200" y="444" text-anchor="middle" fill="currentColor">route_single</text>
+        <text x="200" y="460" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">matrix lookup, O(1)</text>
+
+        <rect x="445" y="424" width="170" height="48" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="530" y="444" text-anchor="middle" fill="currentColor">route_multi</text>
+        <text x="530" y="460" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">floor-clustered TSP</text>
+
+        <polyline points="200,472 200,496 340,496 340,518" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <polyline points="530,472 530,496 400,496 400,518" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+
+        <rect x="280" y="520" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="2"/>
+        <text x="365" y="540" text-anchor="middle" fill="currentColor">describe_route</text>
+        <text x="365" y="556" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">node list → directions</text>
+
+        <line x1="365" y1="564" x2="365" y2="596" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
+        <rect x="325" y="598" width="80" height="28" rx="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="365" y="617" text-anchor="middle" fill="currentColor">END</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Three things here need a graph rather than a chain:</b> the <code>clarify</code> cycle, which sends an ambiguous query back to search after the shopper answers; the <code>mode</code> branch, which is read from state rather than decided by a model; and the early exit for a product the store does not range.</figcaption>
+  </figure>
+
+  <h2>3 · Routing across three floors</h2>
+  <div class="prose">
+    <p>Floors change the routing problem more than anything else in the brief. A distance-only optimiser will send a shopper up and down repeatedly, because it has no notion that a floor change is worse than the metres it costs. So the floor order is fixed and each floor gets one picking pass.</p>
+    <p>The rule: <b>ride to the highest floor that has items, then work down, finishing at the ground-floor tills.</b> Two cores — front and rear — mean each pass ends next to a lift, so the shopper never walks back the way they came.</p>
+  </div>
+
+  <figure>
+    <div class="scroller">
+    <svg viewBox="0 0 760 556" role="img" aria-label="Three stacked floor plates. A dotted transit line runs from the ground-floor entrance to the rear core and up to floor two. Solid route lines then cross floor two, floor one and floor zero in turn, alternating between the front and rear cores, ending at the ground-floor checkout.">
+      <defs>
+        <marker id="ar3" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7.5" markerHeight="6.5" orient="auto">
+          <polygon points="0,0 10,4 0,8" fill="currentColor"/>
+        </marker>
+      </defs>
+      <g font-family="IBM Plex Sans Condensed, sans-serif">
+
+        <!-- cores -->
+        <line x1="115" y1="82" x2="115" y2="422" stroke="currentColor" stroke-width="1" stroke-dasharray="3 5" opacity="0.4"/>
+        <line x1="640" y1="82" x2="640" y2="478" stroke="currentColor" stroke-width="1" stroke-dasharray="3 5" opacity="0.4"/>
+
+        <!-- FLOOR 2 -->
+        <rect x="90" y="30" width="610" height="130" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        <text x="96" y="24" font-size="11.5" font-weight="700" letter-spacing="0.08em" fill="currentColor" opacity="0.75">FLOOR 2 · NON-FOOD</text>
+        <g fill="currentColor" opacity="0.14">
+          <rect x="150" y="52" width="26" height="60"/><rect x="215" y="52" width="26" height="60"/>
+          <rect x="280" y="52" width="26" height="60"/><rect x="345" y="52" width="26" height="60"/>
+          <rect x="410" y="52" width="26" height="60"/><rect x="475" y="52" width="26" height="60"/>
+          <rect x="540" y="52" width="26" height="60"/>
+        </g>
+        <line x1="640" y1="82" x2="123" y2="82" stroke="var(--fn)" stroke-width="2.5" marker-end="url(#ar3)"/>
+        <circle cx="488" cy="82" r="8" fill="var(--fn)"/><text x="488" y="86" font-size="10.5" font-weight="700" text-anchor="middle" fill="var(--paper)">1</text>
+        <circle cx="228" cy="82" r="8" fill="var(--fn)"/><text x="228" y="86" font-size="10.5" font-weight="700" text-anchor="middle" fill="var(--paper)">2</text>
+        <text x="96" y="140" font-size="11" fill="currentColor" opacity="0.6">health &amp; beauty · household · baby · homeware</text>
+
+        <!-- FLOOR 1 -->
+        <rect x="90" y="200" width="610" height="130" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        <text x="96" y="194" font-size="11.5" font-weight="700" letter-spacing="0.08em" fill="currentColor" opacity="0.75">FLOOR 1 · AMBIENT GROCERY</text>
+        <g fill="currentColor" opacity="0.14">
+          <rect x="150" y="222" width="26" height="60"/><rect x="215" y="222" width="26" height="60"/>
+          <rect x="280" y="222" width="26" height="60"/><rect x="345" y="222" width="26" height="60"/>
+          <rect x="410" y="222" width="26" height="60"/><rect x="475" y="222" width="26" height="60"/>
+          <rect x="540" y="222" width="26" height="60"/>
+        </g>
+        <line x1="115" y1="252" x2="632" y2="252" stroke="var(--fn)" stroke-width="2.5" marker-end="url(#ar3)"/>
+        <circle cx="293" cy="252" r="8" fill="var(--fn)"/><text x="293" y="256" font-size="10.5" font-weight="700" text-anchor="middle" fill="var(--paper)">3</text>
+        <circle cx="553" cy="252" r="8" fill="var(--fn)"/><text x="553" y="256" font-size="10.5" font-weight="700" text-anchor="middle" fill="var(--paper)">4</text>
+        <text x="96" y="310" font-size="11" fill="currentColor" opacity="0.6">tins · pasta · cereals · snacks · drinks · world foods</text>
+
+        <!-- FLOOR 0 -->
+        <rect x="90" y="370" width="610" height="130" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+        <text x="96" y="364" font-size="11.5" font-weight="700" letter-spacing="0.08em" fill="currentColor" opacity="0.75">FLOOR 0 · FRESH &amp; TILLS</text>
+        <g fill="currentColor" opacity="0.14">
+          <rect x="150" y="392" width="26" height="60"/><rect x="215" y="392" width="26" height="60"/>
+          <rect x="280" y="392" width="26" height="60"/><rect x="345" y="392" width="26" height="60"/>
+          <rect x="410" y="392" width="26" height="60"/><rect x="475" y="392" width="26" height="60"/>
+          <rect x="540" y="392" width="26" height="60"/>
+        </g>
+        <line x1="640" y1="422" x2="131" y2="422" stroke="var(--fn)" stroke-width="2.5" marker-end="url(#ar3)"/>
+        <circle cx="488" cy="422" r="8" fill="var(--fn)"/><text x="488" y="426" font-size="10.5" font-weight="700" text-anchor="middle" fill="var(--paper)">5</text>
+        <circle cx="293" cy="422" r="8" fill="var(--fn)"/><text x="293" y="426" font-size="10.5" font-weight="700" text-anchor="middle" fill="var(--paper)">6</text>
+        <rect x="100" y="412" width="22" height="20" rx="2" fill="var(--pause)"/>
+        <text x="111" y="452" font-size="11" font-weight="700" text-anchor="middle" fill="currentColor">tills</text>
+        <text x="96" y="470" font-size="11" fill="currentColor" opacity="0.6">produce · bakery · meat &amp; fish · chilled · dairy</text>
+
+        <!-- transit from entrance -->
+        <polyline points="150,478 632,478" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.6" marker-end="url(#ar3)"/>
+        <circle cx="146" cy="478" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="156" y="494" font-size="11" fill="currentColor" opacity="0.7">you are here — entrance, Floor 0</text>
+        <text x="408" y="472" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.7">transit to rear core, ride to Floor 2</text>
+
+        <!-- core labels -->
+        <text x="115" y="528" font-size="11" text-anchor="middle" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.7">front core</text>
+        <text x="115" y="543" font-size="10" text-anchor="middle" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.55">lift</text>
+        <text x="640" y="528" font-size="11" text-anchor="middle" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.7">rear core</text>
+        <text x="640" y="543" font-size="10" text-anchor="middle" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.55">lift + escalator</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Six picks, three floors, one pass each, ending at the tills.</b> The dotted line is transit, not a picking pass — Floor 0 is crossed on the way to the lift and picked on the way back down, which is why "one pass per floor" still holds. Alternating cores is what removes the backtrack.</figcaption>
+  </figure>
+
+  <h2>4 · Decisions</h2>
+
+  <div class="prose">
+
+    <div class="decision">
+      <div class="verdict">Orchestration</div>
+      <h3>LangGraph runs the whole pipeline, not only the AI parts</h3>
+      <p>Deterministic steps become plain-function nodes. This costs nothing and buys two things: the generated graph is the architecture diagram, so it cannot drift from the code, and the UI can stream node-by-node progress — "found 3 products → checking stock → planning route across 2 floors".</p>
+      <p>The risk to name out loud is the opposite one. Search → availability → location → route is a <i>fixed</i> sequence, so a ReAct-style agent that decides which tool to call next would add latency, cost and nondeterminism to a problem with a known answer. Nodes are wired with explicit edges for exactly that reason.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Position</div>
+      <h3>The shopper picks their floor and aisle</h3>
+      <p>The start node is whatever they select — no beacons, no Wi-Fi trilateration, no hardware. The data model is already shaped for QR aisle markers later, since a scanned code sets the same node.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Location model</div>
+      <h3>Floor → Zone → Aisle → Rack → Shelf → Facing</h3>
+      <p>Rack is a first-class level rather than a detail inside an aisle, because that is the granularity asked for. The planogram world calls this a bay; the data model uses "rack" so the vocabulary matches the conversation.</p>
+      <p>One SKU maps to several locations — its home rack plus promotional end caps — so the lookup returns a list, and the router picks the nearest member.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Routing</div>
+      <h3>Precompute distances once; never search at request time</h3>
+      <p>The layout is static, so all-pairs shortest paths across all three floors are computed at startup in a single call and cached. Roughly 300 nodes makes this instant, and every single-product query becomes an O(1) table lookup.</p>
+      <p>Vertical connectors are weighted edges, which is what makes the router avoid pointless floor changes. Tagging the lift as step-free and trolley-friendly gives accessibility routing almost free: filter the graph to lift-only edges and recompute.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Routing</div>
+      <h3>Multi-product is sequencing, not pathfinding</h3>
+      <p>The shortest paths already sit in the matrix. What is left is a travelling-salesman problem — nearest-neighbour construction, then 2-opt, over the precomputed distances. Milliseconds for a basket of any realistic size.</p>
+      <p>Because the route ends at the tills it is a closed path, not an open one, which also makes deferring chilled and frozen items to the final floor natural rather than bolted on.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Availability</div>
+      <h3>Stock is treated as live and correct</h3>
+      <p>Granted as an assumption, so there is no staleness handling and an exact count can be shown rather than a vague band. Worth saying plainly that this is a concession, not a property of real stock systems — shelf-level accuracy is one of the harder problems in grocery.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Gen AI</div>
+      <h3>The model interprets and phrases; it never supplies a fact</h3>
+      <p>Three nodes call a model and none of them is on the wire that returns a location, a distance or a stock figure. A hallucinated rack number sends a shopper to the wrong floor, so the model is architecturally unable to produce one.</p>
+      <p>Substitution candidates are filtered on structured dietary attributes <i>before</i> the model sees them, so it chooses among already-safe options rather than judging safety. Nothing generated asserts that a product is gluten free, nut free, vegan or halal — that claim comes from a catalogue attribute, passed through verbatim.</p>
+    </div>
+
+    <div class="decision">
+      <div class="verdict">Stack</div>
+      <h3>No database, no frontend framework</h3>
+      <p>The whole dataset is a few hundred kilobytes held in memory. A database adds setup cost and demonstrates nothing; React adds a build step for a search box, a result card and an SVG polyline.</p>
+    </div>
+
+  </div>
+
+  <h2>5 · Data sources</h2>
+  <div class="prose">
+    <p>No public dataset holds a real multi-floor supermarket planogram at rack level — shelf layout is competitive information and retailers do not publish it. The store map is therefore authored, which is the right answer anyway, since no real planogram would match a brief that asks for three floors and racks.</p>
+  </div>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>Source</th><th>Supplies</th><th>Caveat</th></tr></thead>
+    <tbody>
+      <tr><td><b>Open Food Facts</b></td><td>Real products — names, brands, EAN-13 barcodes, categories, allergens. Bulk CSV and SQLite, ODbL.</td><td>Coverage strongest in Western Europe; any field can be absent, allergens included.</td></tr>
+      <tr><td><b>Instacart Market Basket</b></td><td>A real grocery taxonomy: 134 aisles, 21 departments, ~50k products mapped to both.</td><td>2017 competition data under a research-use licence.</td></tr>
+      <tr><td><b>OSM Simple Indoor Tagging</b></td><td>The vocabulary for multi-floor indoor data: <code>level</code>, <code>min_level</code>/<code>max_level</code>, lifts spanning floors via <code>repeat_on</code>.</td><td>A schema, not a floor plan. Borrowed for the authored map so the model matches a recognised standard.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="warn">
+    <h3>Two traps worth knowing before the first line of code</h3>
+    <p><b>Do not pass <code>temperature=0</code>.</b> Nearly every LangChain example does. Sampling parameters are rejected outright on the current Claude models — construct the chat model without it.</p>
+    <p><b>Structured output and thinking interact badly.</b> Thinking is on by default, and there is a known failure where <code>with_structured_output</code> raises a parse error with it enabled. Test that path on day one and consider the JSON-schema method over the default function-calling one.</p>
+    <p>Pin versions too: the checkpointer is exported as both <code>MemorySaver</code> and <code>InMemorySaver</code> depending on release, and the pause API moved from <code>interrupt_before</code> to <code>interrupt()</code>.</p>
+  </div>
+
+  <footer>
+    Proof of concept · one store · synthetic data · assumptions registered separately and open to correction
+  </footer>
+
+</div>

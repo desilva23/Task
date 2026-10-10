@@ -1,0 +1,428 @@
+<title>Product Finder Requirements</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Layout: specification document — numbered register, prose to ~66ch, tables breaking wider */
+  :root {
+    --paper: #f6f7f8; --surface: #ffffff; --code: #eef1f3; --ink: #1c2730; --ink-2: #55656f; --rule: #d5dbdf;
+    --fn: #2f6f8f; --llm: #a8620c; --ok: #2d6a4a; --risk: #9c2f34;
+    --display: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper: #13191d; --surface: #1b2328; --code: #10161a; --ink: #e3e8eb; --ink-2: #9aa7b0; --rule: #2e3a41;
+    --fn: #6fb3d2; --llm: #e0a355; --ok: #6cc49a; --risk: #e8848a; color-scheme: dark;
+  } }
+  :root[data-theme="dark"] {
+    --paper: #13191d; --surface: #1b2328; --code: #10161a; --ink: #e3e8eb; --ink-2: #9aa7b0; --rule: #2e3a41;
+    --fn: #6fb3d2; --llm: #e0a355; --ok: #6cc49a; --risk: #e8848a; color-scheme: dark;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 960px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 72px; }
+  .prose { max-width: 66ch; }
+
+  h1,h2,h3,h4 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(30px,5vw,44px); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: clamp(21px,3vw,27px); font-weight: 600; margin-top: 54px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 17px; font-weight: 600; margin-top: 30px; }
+  h4 { font-size: 13px; font-weight: 600; margin-top: 22px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); }
+  p { margin: 13px 0; }
+  .sec { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 12px; }
+  .standfirst { font-size: 18px; color: var(--ink-2); font-style: italic; margin-top: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 26px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  .tablewrap { overflow-x: auto; margin: 20px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; vertical-align: top; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule); min-width: 0; }
+  th { font-family: var(--display); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 600; }
+  td.id { font-family: var(--mono); font-size: 12px; white-space: nowrap; color: var(--ink-2); }
+  td code, p code, li code { font-family: var(--mono); font-size: 0.86em; background: var(--code); padding: 1px 4px; border-radius: 2px; }
+
+  .tag { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; padding: 2px 6px; border-radius: 2px; white-space: nowrap; border: 1px solid; }
+  .t-ok { color: var(--ok); border-color: var(--ok); }
+  .t-as { color: var(--llm); border-color: var(--llm); }
+  .t-op { color: var(--risk); border-color: var(--risk); }
+
+  ul, ol { padding-left: 20px; margin: 13px 0; }
+  li { margin: 6px 0; }
+  .callout { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--fn); border-radius: 3px; padding: 16px 18px; margin: 22px 0; font-size: 15px; }
+  .callout.warn { border-left-color: var(--llm); }
+  .callout.stop { border-left-color: var(--risk); }
+  .callout h4 { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  footer { margin-top: 54px; padding-top: 16px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+</style>
+
+<div class="wrap">
+
+<header class="prose">
+  <div class="eyebrow">Requirements specification · v1</div>
+  <h1>Product Finder Requirements</h1>
+  <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, how each requirement is verified, and what is still undecided.</p>
+  <div class="meta">
+    <span><b>Requirements</b> 25 functional · 11 non-functional</span>
+    <span><b>Constraints</b> 5</span>
+    <span><b>Open</b> 6</span>
+  </div>
+</header>
+
+<div class="callout">
+  <h4>What this document is, and is not</h4>
+  <p>This states <b>what</b> the system must do and how each requirement will be shown to be met. It contains no architecture, no algorithms, no data schemas and no technology choices beyond the constraints in §3 — those belong in the HLD, the LLD and the Schema document respectively.</p>
+  <p>That separation is deliberate. A requirement that names a technique cannot be challenged without re-opening the design, and a design that hides inside a requirement never gets reviewed.</p>
+</div>
+
+<h2><span class="sec">1</span> &nbsp;Overview</h2>
+<div class="prose">
+  <p>Shoppers in a large multi-floor store lose time hunting for products and cannot tell from the shelf whether an item is stocked at that branch. This system takes one or more typed product requests and returns, for each, whether it is available, exactly where it sits, and the shortest walking route to reach it — including floor changes.</p>
+  <p>It is built as an agentic system in which language models interpret and phrase, and deterministic tools supply every fact. It must work on any store by replacing the store data, with no code changes.</p>
+</div>
+
+<h4>In scope</h4>
+<ul>
+  <li>Typed product requests — single, several at once, or natural language</li>
+  <li>Product matching against a store catalogue</li>
+  <li>Availability from a mock inventory file</li>
+  <li>Product location to floor, aisle, rack and shelf</li>
+  <li>Shortest route from any start point in the store, across floors</li>
+  <li>One combined route for several products</li>
+  <li>Step-free routing</li>
+  <li>A single-page user interface</li>
+</ul>
+
+<h4>Out of scope</h4>
+<ul>
+  <li>Voice input</li>
+  <li>Live shopper positioning — beacons, Wi-Fi, QR markers</li>
+  <li>Integration with any real inventory, planogram or mapping system</li>
+  <li>Payments, loyalty and recommendations</li>
+  <li>Shelf-compliance detection from photographs</li>
+  <li>More than one store running concurrently</li>
+  <li>Colleague workflows — order picking, replenishment, shelf-edge tasks</li>
+</ul>
+
+<h4>Inputs</h4>
+<div class="prose">
+  <p>One store folder holding four kinds of data: the <b>store map</b> (walkable points, paths between them, and the stairs, escalators and lifts connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
+</div>
+
+<h4>Done when</h4>
+<div class="prose">
+  <p>A shopper's request returns the correct availability, the correct location and a provably shortest route — including from a start point other than the entrance, and across floors; every fact in every answer has been checked against the store data before it is shown; and a second, differently shaped store works with no code changes.</p>
+</div>
+
+<h2><span class="sec">2</span> &nbsp;Users</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Actor</th><th>Needs</th><th>In scope</th></tr></thead>
+  <tbody>
+    <tr><td><b>Shopper</b></td><td>Find one or several products quickly; know before walking whether it is worth the trip</td><td>Yes — the primary user</td></tr>
+    <tr><td><b>Store colleague</b></td><td>—</td><td><b>No.</b> Not a user of this system. Colleague workflows are out of scope and not planned</td></tr>
+    <tr><td><b>Store data owner</b></td><td>Onboard a new store by supplying four files</td><td>Yes — FR-25 exists for this actor</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="sec">3</span> &nbsp;Constraints and assumptions</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Constraint</th><th>Source</th></tr></thead>
+  <tbody>
+    <tr><td class="id">C-01</td><td>Agentic framework is <b>LangGraph</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-02</td><td>Implementation language is <b>Python</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-03</td><td>User interface is a single <b>Streamlit</b> page</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-04</td><td>All store data is <b>synthetic</b> and is stated as such wherever shown</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-05</td><td>No integration with any live retailer system</td><td><span class="tag t-ok">confirmed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h4>Assumptions</h4>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Assumption</th><th>Status</th><th>If it later proves wrong</th></tr></thead>
+  <tbody>
+    <tr><td class="id">A-01</td><td>Stock data is treated as current and correct; staleness is not modelled</td><td><span class="tag t-ok">confirmed</span></td><td>Availability needs a freshness indicator and an "unknown" state</td></tr>
+    <tr><td class="id">A-02</td><td>A product present in the planogram with non-zero stock counts as available</td><td><span class="tag t-ok">confirmed</span></td><td>—</td></tr>
+    <tr><td class="id">A-03</td><td>Demo store has <b>three floors</b>; the portability test store has two</td><td><span class="tag t-ok">confirmed</span></td><td>Floor count changes, and FR-17's ordering becomes more or less visible</td></tr>
+    <tr><td class="id">A-04</td><td>Catalogue of roughly 150–200 products is representative enough to demonstrate</td><td><span class="tag t-ok">confirmed</span></td><td>Search ranking needs re-tuning at real catalogue scale</td></tr>
+    <tr><td class="id">A-05</td><td>"Optimal" means shortest walking distance, not shortest time</td><td><span class="tag t-ok">confirmed</span></td><td>Edge weights become durations; floor transitions re-weighted</td></tr>
+    <tr><td class="id">A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td><span class="tag t-ok">confirmed</span></td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <h4>Why three floors costs almost nothing</h4>
+  <p>The catalogue and the planogram do not grow with floor count. The same roughly 180 products still sit somewhere; three floors simply spreads them across more aisles, so the row counts are unchanged. Only the <b>map</b> grows — in the order of 150 walkable points to 220, plus the extra paths and one more floor plate to draw.</p>
+  <p>Three floors is worth that, because it is the smallest store in which <b>FR-17</b> is a real decision rather than a formality. With two floors, "visit the floors in a fixed order, one pass each" reduces to "upstairs, then downstairs" — the rule still has to be built, and still stops a shopper being sent up and down repeatedly, but nothing in a demo shows whether it works.</p>
+  <p>The <b>portability store therefore has two floors</b>. What AC-09 proves is that the store's shape lives in the data rather than the code, and a differently shaped store proves that whether it is larger or smaller. Two floors is also the cheaper second store to author.</p>
+</div>
+
+<h2><span class="sec">4</span> &nbsp;Functional requirements</h2>
+
+<h3>4.1 &nbsp;Search and request handling</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-01</td><td>A shopper can find a product by typing its name</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-02</td><td>A shopper can request <b>several products in one search</b>, separated by commas, semicolons, new lines or the word "and", without first building a basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-03</td><td>A shopper can find a product by entering its barcode</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">FR-04</td><td>A request phrased in natural language resolves to real catalogue products — never to an invented one</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-05</td><td>Where more than one product could match, the system <b>asks the shopper to choose</b> rather than selecting one</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-06</td><td>Results are ordered so that products stocked at this store rank above products that are not</td><td><span class="tag t-ok">confirmed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.2 &nbsp;Availability</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-07</td><td>The system states whether each requested product is available</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-08</td><td>"Not stocked at this branch" is distinguished from "stocked but sold out" — they are different answers to the shopper</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-09</td><td>An unavailable product offers in-stock alternatives from the same category</td><td><span class="tag t-as">assumed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.3 &nbsp;Location</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-10</td><td>Location is given as <b>floor, aisle, rack and shelf</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-11</td><td>A product held in more than one place shows all of them; routing uses the nearest</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-12</td><td>A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf</td><td><span class="tag t-as">assumed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.4 &nbsp;Routing</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-13</td><td>The system gives the <b>shortest walking route</b> from the shopper's position to the product</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-14</td><td>A route may cross floors, using the lifts, escalators and stairs recorded in the store map</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-15</td><td>The shopper sets their start point by selecting a floor and aisle; the entrance is only the default</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-16</td><td>For several products the system gives <b>one combined route</b> visiting all of them, and lists any that are unavailable</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-17</td><td>A combined route visits the floors in a fixed order, with one picking pass per floor</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-18</td><td>A combined route ends at a checkout</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-19</td><td>The shopper can request a <b>step-free route</b> that avoids stairs and escalators</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-20</td><td>A route is presented both as step-by-step directions and drawn on a floor map</td><td><span class="tag t-ok">confirmed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.5 &nbsp;Basket</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-21</td><td>Results of a multi-product search are <b>grouped by availability, in-stock first</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-22</td><td>A <b>single action moves only the available items</b> into the basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-23</td><td>The basket accumulates items across separate searches, and is what gets routed</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-24</td><td>An unavailable item may be added to the basket individually, but is marked as not routable and left out of the route</td><td><span class="tag t-ok">confirmed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>4.6 &nbsp;Portability</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-25</td><td>A <b>different store works by replacing the four data files only</b> — no code changes, including a store with a different number of floors</td><td><span class="tag t-ok">confirmed</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="sec">5</span> &nbsp;Non-functional requirements</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Area</th><th>Requirement</th></tr></thead>
+  <tbody>
+    <tr><td class="id">NFR-01</td><td>Correctness</td><td>Availability, location, distance and directions are taken only from the store data. <b>No fact in any answer is generated by a language model.</b></td></tr>
+    <tr><td class="id">NFR-02</td><td>Verification</td><td>Every factual claim in a response is checked against the store data <b>before it is shown</b>. A claim that fails the check is never displayed.</td></tr>
+    <tr><td class="id">NFR-03</td><td>Safety</td><td>No generated text asserts that a product is gluten free, nut free, vegan or halal. Such claims come only from a recorded product attribute, passed through unaltered. An unrecorded attribute reads as unknown, never as absent.</td></tr>
+    <tr><td class="id">NFR-04</td><td>Reliability</td><td>If a language model is unavailable, slow, or returns malformed output, the system still answers using deterministic rules. The answer may be less fluent; it is never less correct.</td></tr>
+    <tr><td class="id">NFR-05</td><td>Performance</td><td>Under <b>5 seconds</b> for one product; under <b>10 seconds</b> for ten products.</td></tr>
+    <tr><td class="id">NFR-06</td><td>Input safety</td><td>Empty, over-long, non-English, duplicated and deliberately malicious input is handled safely. Shopper text cannot alter which tools run, nor reach files or commands.</td></tr>
+    <tr><td class="id">NFR-07</td><td>Data integrity</td><td>Invalid or inconsistent store data is rejected when the store is loaded, not discovered during a shopper's request.</td></tr>
+    <tr><td class="id">NFR-08</td><td>Portability</td><td>A differently shaped store passes the same acceptance tests with no code changes.</td></tr>
+    <tr><td class="id">NFR-09</td><td>Explainability</td><td>Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model.</td></tr>
+    <tr><td class="id">NFR-10</td><td>Accessibility</td><td>Step-free routing is available, and route directions are usable by a screen reader.</td></tr>
+    <tr><td class="id">NFR-11</td><td>Mobile layout</td><td>The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <h4>NFR-02 is the one that shapes the system</h4>
+  <p>Requiring every claim to be checked against the store data before display is stronger than requiring the facts to come from tools. It means a verification step is part of the required behaviour, not an implementation nicety — and it gives the whole design a testable definition of "correct" rather than a promise.</p>
+</div>
+
+<h2><span class="sec">6</span> &nbsp;Acceptance criteria</h2>
+<div class="prose">
+  <p>Each row is a test that can pass or fail. A requirement with no row here is not finished being written.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Verifies</th><th>Passes when</th></tr></thead>
+  <tbody>
+    <tr><td class="id">AC-01</td><td>FR-01, FR-07, FR-10</td><td>A known product returns its recorded availability and its exact floor, aisle, rack and shelf</td></tr>
+    <tr><td class="id">AC-02</td><td>FR-02, FR-16</td><td>"milk, bread, eggs" returns three separate results in one response, then one route covering all three</td></tr>
+    <tr><td class="id">AC-03</td><td>FR-05</td><td>A deliberately ambiguous term returns a choice prompt, and the chosen option resolves without re-entering the other terms</td></tr>
+    <tr><td class="id">AC-04</td><td>FR-13</td><td>The returned route distance equals the shortest distance computed independently from the store map for the same pair of points</td></tr>
+    <tr><td class="id">AC-05</td><td>FR-14, FR-17, FR-18</td><td>A basket spanning all three floors returns a route that visits each floor once, in the specified order, ending at a checkout</td></tr>
+    <tr><td class="id">AC-06</td><td>FR-15</td><td>The same product requested from two different start points returns two different, each-correct routes</td></tr>
+    <tr><td class="id">AC-07</td><td>FR-19</td><td>A step-free request returns a route using no stairs or escalators; where none exists, it says so instead of returning one</td></tr>
+    <tr><td class="id">AC-08</td><td>FR-21, FR-22</td><td>A search with three available and one unavailable item groups them, and the single action adds exactly three to the basket</td></tr>
+    <tr><td class="id">AC-09</td><td>FR-25, NFR-08</td><td>A second store folder with a different floor count passes AC-01 to AC-08 with no code changes</td></tr>
+    <tr><td class="id">AC-10</td><td>NFR-01, NFR-02</td><td>No location, distance or stock figure in any response differs from the store data; a deliberately corrupted claim is blocked before display</td></tr>
+    <tr><td class="id">AC-11</td><td>NFR-04</td><td>With every model call forced to fail, each acceptance test above still returns a correct availability and a correct route</td></tr>
+    <tr><td class="id">AC-12</td><td>NFR-05</td><td>Measured over repeated runs, one product completes inside 5 s and ten products inside 10 s</td></tr>
+    <tr><td class="id">AC-13</td><td>NFR-06</td><td>Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call</td></tr>
+    <tr><td class="id">AC-14</td><td>NFR-07</td><td>Each malformed store fixture is rejected at load with a message naming the fault</td></tr>
+    <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout warn">
+  <h4>AC-11 is the test that earns the architecture</h4>
+  <p>It is the only one that proves NFR-01 and NFR-04 rather than asserting them. If every model call can be switched off and the system still returns the right aisle and the right route, then the claim that models never supply facts is demonstrated. If it cannot, the claim is decoration.</p>
+</div>
+
+<h2><span class="sec">7</span> &nbsp;Situations the system must handle</h2>
+<div class="prose">
+  <p>Required behaviours, not solutions. Each becomes a test case.</p>
+</div>
+
+<h4>Input</h4>
+<ul>
+  <li>Empty, one character, or extremely long</li>
+  <li>Misspelled — "paracetomol", "yoghurt"</li>
+  <li>Non-English text, emoji, punctuation only</li>
+  <li>Many items at once; duplicated items; quantities ("2 x milk")</li>
+  <li>Text that is not a product request at all</li>
+  <li>Text written to subvert the system's instructions</li>
+</ul>
+
+<h4>Matching</h4>
+<ul>
+  <li>Synonyms and colloquial names — "coke", "nappies", "kitchen roll"</li>
+  <li>Several sizes or variants of the same product</li>
+  <li>A generic word that is a category rather than a product — "milk", "dairy"</li>
+  <li>A product held in two places at once</li>
+  <li>A product in the catalogue but absent from the planogram</li>
+  <li>A product in the catalogue but not stocked at this branch</li>
+</ul>
+
+<h4>Start point</h4>
+<ul>
+  <li>The entrance; any other aisle; an unrecognised location</li>
+  <li>Standing on a staircase, escalator or in a lift lobby</li>
+  <li>Already standing at the product</li>
+</ul>
+
+<h4>Routing</h4>
+<ul>
+  <li>Same floor; different floor; every floor</li>
+  <li>A connector out of service</li>
+  <li>Step-free requested where no step-free path exists</li>
+  <li>A single item submitted as a multi-product request</li>
+  <li>Chilled and frozen items that should be collected last</li>
+</ul>
+
+<h4>Several products</h4>
+<ul>
+  <li>Spread across all floors</li>
+  <li>One unavailable; all unavailable</li>
+  <li>One ambiguous while the others resolve cleanly</li>
+  <li>A list long enough to need a cap</li>
+</ul>
+
+<h4>Data and system failures</h4>
+<ul>
+  <li>Store map with an unreachable point, a missing point, or duplicate identifiers</li>
+  <li>Planogram referring to a product or a location that does not exist</li>
+  <li>A model returning malformed output, or declining the request</li>
+  <li>A tool failing or timing out</li>
+  <li>A wrong aisle or a wrong distance caught before the shopper sees it</li>
+  <li>A shopper abandoning a choice prompt and never returning</li>
+</ul>
+
+<h2><span class="sec">8</span> &nbsp;Open questions</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Question</th><th>Why it matters now</th></tr></thead>
+  <tbody>
+    <tr><td class="id">OQ-01</td><td><b>Confirm the intended user is a shopper.</b></td><td>The whole specification assumes it. If the intended user is a store colleague, this document needs rewriting rather than extending — it is a different problem, not a later phase</td></tr>
+    <tr><td class="id">OQ-02</td><td><s>Two floors or three in the demo store?</s> — <b>resolved: three</b>, with two for the portability store</td><td>Closed. Reasoning recorded in §3</td></tr>
+    <tr><td class="id">OQ-03</td><td><s>Which single-page framework?</s> — <b>resolved: Streamlit</b></td><td>Closed. Recorded rather than deleted, with the consequences in the note below</td></tr>
+    <tr><td class="id">OQ-04</td><td>Does FR-05 ask a question, or show a ranked list to tap?</td><td>A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built</td></tr>
+    <tr><td class="id">OQ-05</td><td>Is FR-09 wanted at all?</td><td>Substitutes are a commercial nice-to-have and the first thing to cut under time pressure</td></tr>
+    <tr><td class="id">OQ-06</td><td>Approved model platform, data residency, and whether shopper-facing generated text is permitted</td><td>May require the colleague-facing version first</td></tr>
+    <tr><td class="id">OQ-07</td><td>How are age-restricted and locked-cabinet products handled? (FR-12)</td><td>Needs an "ask a colleague" outcome rather than a route</td></tr>
+    <tr><td class="id">OQ-08</td><td>What number proves this worked?</td><td>Without a success metric the project has no finish line</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="callout">
+  <h4>OQ-03 resolved — Streamlit, calling the agent in-process</h4>
+  <p>There is no HTTP layer. The page invokes the compiled agent directly in the same process, which removes the whole API surface and roughly a day of plumbing. The HLD's layer stack loses its API tier and the LLD's API contracts cease to exist.</p>
+  <p><b>What this costs:</b> no other client can consume the system. That is an accepted trade for a one-week proof of concept. Because the design keeps the orchestration and service layers free of any web dependency, putting a service in front of the same agent later changes nothing below the page.</p>
+  <p><b>What this requires of the design</b> — detail belongs in the HLD and LLD, but the decision carries three consequences worth recording here: the page re-executes on every interaction, so the store graph, search index and distance matrices must be built once and cached rather than per interaction; the clarification pause in FR-05 is served by re-invoking the agent with the shopper's answer on the next page run, not by a second HTTP call; and the search box must commit on submit rather than on each keystroke, or NFR-05's budget is spent re-running the agent while the shopper is still typing.</p>
+</div>
+
+<h2><span class="sec">9</span> &nbsp;Glossary</h2>
+<div class="tablewrap">
+<table>
+  <tbody>
+    <tr><td><b>SKU</b></td><td>The store's unique code for one exact product, including size and variant</td></tr>
+    <tr><td><b>Planogram</b></td><td>The shelf-level layout plan: which product sits on which shelf. It records where a product is <i>supposed</i> to be, which is not the same as where it is</td></tr>
+    <tr><td><b>Bay / rack</b></td><td>One section of a shelving unit within an aisle. "Rack" is used throughout this document</td></tr>
+    <tr><td><b>Facing</b></td><td>One product's frontage on a shelf. A product may hold several adjacent facings</td></tr>
+    <tr><td><b>Ranged</b></td><td>Carried by this particular branch. A product can be in the catalogue without being ranged here</td></tr>
+    <tr><td><b>Connector</b></td><td>A lift, escalator or staircase joining two floors</td></tr>
+    <tr><td><b>Step-free</b></td><td>A route using no stairs and no escalators</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="sec">10</span> &nbsp;Differences from the peer specification</h2>
+<div class="prose">
+  <p>Recorded so they are resolved deliberately rather than discovered late. "Peer spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Topic</th><th>Peer spec</th><th>This document</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><b>Location depth</b></td><td>Floor, aisle, shelf</td><td>Floor, aisle, <b>rack</b>, shelf (FR-10)</td><td>Rack-level addressing was asked for directly. Without it an aisle is 20 m long and the distance is not honest</td></tr>
+    <tr><td><b>Floors</b></td><td>Two</td><td>Three, with two as the portability test (A-03)</td><td>Three is the smallest store in which FR-17 is a real decision. The two-floor store becomes the portability test, so the peer spec's shape is still covered</td></tr>
+    <tr><td><b>Route terminus</b></td><td>Not specified</td><td>Ends at a checkout (FR-18)</td><td>Confirmed separately. Makes it a complete shopping trip and places chilled items naturally last</td></tr>
+    <tr><td><b>Floor order</b></td><td>Not specified</td><td>Fixed, one pass per floor (FR-17)</td><td>Confirmed separately. A distance-only optimiser sends shoppers up and down repeatedly</td></tr>
+    <tr><td><b>Basket</b></td><td>Not present</td><td>FR-21 to FR-24</td><td>Grouping results by availability and moving only the in-stock items means no route is ever planned to an empty shelf</td></tr>
+    <tr><td><b>Front end</b></td><td>Streamlit</td><td>Streamlit (C-03)</td><td><b>Aligned.</b> An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists</td></tr>
+    <tr><td><b>Framework</b></td><td>"Agentic", five named agents</td><td>LangGraph (C-01)</td><td>Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement</td></tr>
+    <tr><td><b>Verification</b></td><td>A Verifier agent</td><td>NFR-02, a behaviour</td><td><b>Adopted from the peer spec.</b> Stated as required behaviour so it can be tested, rather than as a component that might be dropped</td></tr>
+    <tr><td><b>Step-free</b></td><td>FR-8, confirmed</td><td>FR-19, confirmed</td><td><b>Adopted.</b> It had been an open question here; it should not have been</td></tr>
+    <tr><td><b>Portability</b></td><td>FR-9 plus an NFR</td><td>FR-25 plus NFR-08</td><td><b>Adopted.</b> A requirement worth having, and AC-09 makes it testable</td></tr>
+    <tr><td><b>Performance</b></td><td>5 s / 10 s</td><td>Same (NFR-05)</td><td><b>Adopted.</b> Concrete targets beat "fast"</td></tr>
+    <tr><td><b>Prompt injection</b></td><td>Named in security</td><td>NFR-06</td><td><b>Adopted.</b> Shopper text reaches a model, so this is a real surface</td></tr>
+  </tbody>
+</table>
+</div>
+
+<footer>
+  Requirements specification · v1 · 25 functional · 11 non-functional · 5 constraints · 6 open · companion documents: HLD, LLD, Schema
+</footer>
+
+</div>
