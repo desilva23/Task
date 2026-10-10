@@ -36,7 +36,8 @@ single-page user interface.
 **Out of scope:** voice input; live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
 loyalty and recommendations; shelf-compliance detection from photographs; more
-than one store running concurrently.
+than one store running concurrently; colleague workflows — order picking,
+replenishment, shelf-edge tasks.
 
 **Inputs:** one store folder holding four data files — the **store map**
 (walkable points, paths between them, and the stairs, escalators and lifts
@@ -57,7 +58,7 @@ store works with no code changes.
 | Actor | Needs | In scope |
 |---|---|---|
 | **Shopper** | Find one or several products quickly; know before walking whether it is worth the trip | Yes — the primary user |
-| **Store colleague** | Answer "where is X" without walking the shopper there; pick online orders | No — but see OQ-01, this may be the real target |
+| **Store colleague** | — | **No.** Not a user of this system. Colleague workflows are out of scope and not planned |
 | **Store data owner** | Onboard a new store by supplying four files | Yes — FR-25 exists for this actor |
 
 ---
@@ -249,7 +250,7 @@ never returning.
 
 | ID | Question | Why it matters now |
 |---|---|---|
-| OQ-01 | **Is the user a shopper or a store colleague?** | A colleague picking a 60-item order needs crush-order and temperature rules and a handheld layout. Different problem, different requirements |
+| OQ-01 | **Confirm the intended user is a shopper.** | The whole specification assumes it. If the intended user is a store colleague, this document needs rewriting rather than extending — it is a different problem, not a later phase |
 | OQ-02 | ~~Two floors or three in the demo store?~~ — **resolved: two**, with three for the portability store | Closed. Consequence for FR-17 recorded in §3 |
 | OQ-03 | ~~Which single-page framework?~~ — **resolved: Streamlit** | Closed. Recorded rather than deleted, with the consequences below |
 | OQ-04 | Does FR-05 ask a question, or show a ranked list to tap? | A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built |
