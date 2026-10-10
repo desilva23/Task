@@ -57,7 +57,8 @@ and still carry stale content. See **Pending work** below.
 | **Fixed floor order**, one picking pass per floor, ending at a checkout | A distance-only optimiser sends shoppers up and down repeatedly |
 | **Basket gate** — batch results grouped by availability, one action moves only in-stock items | The basket, not the search result, is what gets routed, so no route is planned to an empty shelf |
 | **Rack-level addressing**, graph stops at rack | A shelf is not somewhere you walk. ~300 nodes instead of ~1,200, and directions can still name a shelf |
-| **Barcode entry is a camera scan**, not typed digits | A shopper holding the product has already found it, so typed entry was circular. The scan serves the packet-from-home and wrong-variant cases. Typed digits survive only as the degraded path when the camera is declined or unsupported, which keeps the all-digits query branch honest |
+| **Stairs and lifts** between floors, no escalators | A lift is the only step-free way between floors, so without one FR-19 is unsatisfiable. Escalators added a third edge kind for no requirement |
+| **No barcode entry at all** — FR-03 withdrawn | Parked in `notes/`. Typed digits were circular (a shopper holding the product has found it) and the camera scan was descoped. The requirements carry a deliberate gap at FR-03; IDs are stable, so it was not renumbered |
 | **CSV** for the data files, map as two CSVs | Authorable in a spreadsheet, readable without a parser. A graph does not fit one table |
 
 ## The rule the whole design rests on
@@ -101,8 +102,12 @@ gluten free" about products nobody checked.
 
 ## Conventions
 
-- Requirement IDs are stable. A resolved open question is **marked resolved, not
-  deleted**, so decisions keep a trail.
+- Requirement IDs are stable, including across withdrawals — `requirements.md`
+  has a deliberate gap at FR-03. "Withdrawn during review" is a complete answer.
+- **Open questions do not live in the requirements.** They are parked in
+  `notes/internal_notes.md` so the specification contains only committed scope
+  and reads as no promise of future work. A question that gets *answered*
+  becomes a constraint or an assumption in the requirements, with its reasoning.
 - Every requirement has an acceptance criterion. One without is not finished.
 - `notes/` is **gitignored** — internal notes stay out of this public repo. If
   that file is missing locally, it was never in git; ask the owner for it.
@@ -119,20 +124,27 @@ conversation, pass its URL to the Artifact tool rather than publishing fresh.
 
 ## Pending work, in order
 
-1. **Decide who owns startup validation.** `lld.md` §13 lists eleven checks and
+1. **Reconcile `schema.md` with stairs-and-lifts.** FR-14 now commits to stairs
+   and lifts only, but `schema.md` still instantiates an escalator in the demo
+   store — the example rows at §6, V-62/63/65, and the §8 edge arithmetic
+   ("1 escalator pair × 2 spans", plus the 4 one-way arcs). Two defensible
+   answers: keep `escalator` in the `kind` enum as a format-supported but
+   unused value, which FR-25 arguably wants, or strip it entirely. Either way
+   §8's counts change. This is a judgement call about the format, not a sweep.
+2. **Decide who owns startup validation.** `lld.md` §13 lists eleven checks and
    `schema.md` §7 lists forty-seven that supersede them. The rules are schema
    territory; *when they run* and `validation.py` are LLD territory. The likely
    answer is §13 becomes a pointer plus the lifespan ordering, but it is a
    judgement call, not a sweep. Nothing else in `schema.md` §10 is outstanding
    for the LLD except §11 and the edge count, which are items 3 and 4.
-2. **Strip requirements out of `docs/hld.md` §1.** They live in
+3. **Strip requirements out of `docs/hld.md` §1.** They live in
    `requirements.md` now.
-3. **Remove the API contracts from `docs/lld.md` §11** and the `api/` directory
+4. **Remove the API contracts from `docs/lld.md` §11** and the `api/` directory
    from §1, replacing them with the Streamlit mechanics. No HTTP layer exists.
-4. **Sweep the stale node and edge counts.** `schema.md` §8 derives 314 nodes
+5. **Sweep the stale node and edge counts.** `schema.md` §8 derives 314 nodes
    and ~354 edge rows (~704 directed arcs) from a stated layout. The `~900
    edges` figure in `lld.md` §4, `architecture.md` §4 and `hld.md` §5 was never
    derived and is wrong. The ~300-node figure stands.
-5. **Render and publish `docs/pages/locator-schema.html`**, if the HTML pages
+6. **Render and publish `docs/pages/locator-schema.html`**, if the HTML pages
    are being kept in step. The other three have artifacts; the schema has none.
-6. **Then build**, if asked. Nothing has been implemented.
+7. **Then build**, if asked. Nothing has been implemented.

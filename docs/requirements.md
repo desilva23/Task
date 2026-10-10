@@ -31,17 +31,17 @@ replacing the store data, with no code changes.
 product matching against a store catalogue; availability from a mock inventory;
 location to floor, aisle, rack and shelf; shortest route from any start point,
 across floors; one combined route for several products; step-free routing;
-**barcode scanning with the phone camera**; a single-page user interface.
+a single-page user interface.
 
 **Out of scope:** voice input; live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
 loyalty and recommendations; shelf-compliance detection from photographs;
-recognising a product from a photograph — the camera reads a barcode and nothing
-else; more than one store running concurrently; colleague workflows — order picking,
+more than one store running concurrently; colleague workflows — order picking,
 replenishment, shelf-edge tasks.
 
 **Inputs:** one store folder holding four kinds of data — the **store map**
-(walkable points, paths between them, and the staircases connecting floors), the **product catalogue**, the **planogram** (which product
+(walkable points, paths between them, and the stairs and lifts connecting
+floors), the **product catalogue**, the **planogram** (which product
 sits on which shelf) and the **stock position**. File format and structure are
 specified in the Schema document, not here — the map may take more than one
 file, since a graph does not fit a single table.
@@ -73,7 +73,6 @@ store works with no code changes.
 | C-03 | User interface is a single **Streamlit** page | confirmed |
 | C-04 | All store data is **synthetic** and is stated as such wherever shown | confirmed |
 | C-05 | No integration with any live retailer system | confirmed |
-| C-06 | The site is served over **HTTPS**. Camera access requires a secure context, so FR-03 does not work over plain HTTP — including on a local machine addressed by IP | confirmed |
 
 | ID | Assumption | Status | If it later proves wrong |
 |---|---|---|---|
@@ -83,7 +82,29 @@ store works with no code changes.
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
-| A-07 | The shopper's mobile browser can grant camera access and decode an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | Scanning needs a different decoding route, or FR-03 reverts to typed entry only |
+
+### C-03 — Streamlit, calling the agent in-process
+
+There is no HTTP layer. The page invokes the compiled agent directly in the same
+process, which removes the whole API surface and roughly a day of plumbing. The
+HLD's layer stack has no API tier and the LLD specifies no API contracts.
+
+**What this costs:** no other client can consume the system. That is an accepted
+trade. Because the design keeps the orchestration and service layers free of any
+web dependency, putting a service in front of the same agent later changes
+nothing below the page.
+
+**What this requires of the design** — detail belongs in the HLD and LLD, but
+the decision carries three consequences worth recording here:
+
+1. The page re-executes on every interaction, so the store graph, search index
+   and distance matrices must be built **once and cached** rather than per
+   interaction.
+2. The clarification pause in FR-05 is served by **re-invoking the agent with
+   the shopper's answer on the next page run**, not by a second HTTP call.
+3. The search box must **commit on submit** rather than on each keystroke, or
+   NFR-05's budget is spent re-running the agent while the shopper is still
+   typing.
 
 ---
 
@@ -95,7 +116,6 @@ store works with no code changes.
 |---|---|---|
 | FR-01 | A shopper can find a product by typing its name | confirmed |
 | FR-02 | A shopper can request **several products in one search**, separated by commas, semicolons, new lines or the word "and", without first building a basket | confirmed |
-| FR-03 | A shopper can find a product by **scanning its barcode with the phone camera**. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits | confirmed |
 | FR-04 | A request phrased in natural language resolves to real catalogue products — never to an invented one | confirmed |
 | FR-05 | Where more than one product could match, the system **asks the shopper to choose** rather than selecting one | confirmed |
 | FR-06 | Results are ordered so that products stocked at this store rank above products that are not | confirmed |
@@ -121,12 +141,12 @@ store works with no code changes.
 | ID | Requirement | Status |
 |---|---|---|
 | FR-13 | The system gives the **shortest walking route** from the shopper's position to the product | confirmed |
-| FR-14 | A route may cross floors, using the **staircases** recorded in the store map. Stairs are the only vertical connection; there are no lifts or escalators | confirmed |
+| FR-14 | A route may cross floors, using the **stairs and lifts** recorded in the store map | confirmed |
 | FR-15 | The shopper sets their start point by selecting a floor and aisle; the entrance is only the default | confirmed |
 | FR-16 | For several products the system gives **one combined route** visiting all of them, and lists any that are unavailable | confirmed |
 | FR-17 | A combined route visits the floors in a fixed order, with one picking pass per floor | confirmed |
 | FR-18 | A combined route ends at a checkout | confirmed |
-| FR-19 | The shopper can request a **step-free route**. Within a floor one is always returned; to another floor the system states plainly that no step-free route exists, rather than returning one with stairs in it | confirmed |
+| FR-19 | The shopper can request a **step-free route**, which crosses floors by lift and uses no stairs. Where no step-free path exists it says so rather than returning one with stairs in it | confirmed |
 | FR-20 | A route is presented both as step-by-step directions and drawn on a floor map | confirmed |
 
 ### 4.5 Basket
@@ -159,20 +179,8 @@ store works with no code changes.
 | NFR-07 | Data integrity | Invalid or inconsistent store data is rejected when the store is loaded, not discovered during a shopper's request. |
 | NFR-08 | Portability | A differently shaped store passes the same acceptance tests with no code changes. |
 | NFR-09 | Explainability | Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model. |
-| NFR-10 | Accessibility | Route directions are usable by a screen reader. A step-free request is honoured within a floor and refused honestly between floors — see the note below, since a stairs-only store cannot be made step-free by software. |
+| NFR-10 | Accessibility | Step-free routing is available, and route directions are usable by a screen reader. |
 | NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom. |
-
-**A stairs-only store cannot be made accessible by software.** With staircases
-as the only connection between floors, there is no step-free path to another
-floor and no routing algorithm can invent one. FR-19 therefore becomes a
-requirement to *refuse honestly* rather than to route around the problem, and
-NFR-10's accessibility claim shrinks to screen-reader support plus truthful
-refusal.
-
-This is recorded rather than hidden because a reviewer will raise it, and
-because in a real store it would be a legal problem rather than a design choice.
-The fix is a lift in the store map, not a change in code — which is the point:
-the store's shape lives in the data.
 
 **NFR-02 is the one that shapes the system.** Requiring every claim to be
 checked against the store data before display is stronger than requiring the
@@ -195,7 +203,7 @@ finished being written.
 | AC-04 | FR-13 | The returned route distance equals the shortest distance computed independently from the store map for the same pair of points |
 | AC-05 | FR-14, FR-17, FR-18 | A basket spanning all three floors returns a route that visits each floor once, in the specified order, ending at a checkout |
 | AC-06 | FR-15 | The same product requested from two different start points returns two different, each-correct routes |
-| AC-07 | FR-19 | A step-free request within one floor returns a route with no stairs. A step-free request to another floor returns no route and states that none exists — it never silently returns one with stairs |
+| AC-07 | FR-19 | A step-free request returns a route that uses lifts and no stairs, including across floors; where no step-free path exists it says so instead of returning one |
 | AC-08 | FR-21, FR-22 | A search with three available and one unavailable item groups them, and the single action adds exactly three to the basket |
 | AC-09 | FR-25, NFR-08 | A second store folder with a different floor count passes AC-01 to AC-08 with no code changes |
 | AC-10 | NFR-01, NFR-02 | No location, distance or stock figure in any response differs from the store data; a deliberately corrupted claim is blocked before display |
@@ -204,8 +212,7 @@ finished being written.
 | AC-13 | NFR-06 | Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call |
 | AC-14 | NFR-07 | Each malformed store fixture is rejected at load with a message naming the fault |
 | AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
-| AC-16 | FR-03 | A scan of a catalogued product's barcode returns that exact product — no choice prompt; a declined camera permission leaves the shopper a working typed-digit path; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
-| AC-17 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
+| AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
 
 **AC-11 is the test that earns the architecture.** It is the only one that
 proves NFR-01 and NFR-04 rather than asserting them. If every model call can be
@@ -224,13 +231,6 @@ Required behaviours, not solutions. Each becomes a test case.
 duplicated items, quantities ("2 x milk") · text that is not a product request ·
 text written to subvert the system's instructions.
 
-**Scanning** — camera permission declined, or revoked after one successful scan ·
-a browser with no camera, or no decoding support · a damaged, creased or
-partly obscured barcode that will not decode · a barcode decoded correctly but
-absent from this catalogue · a barcode from something that is not a grocery
-product at all · the page opened over plain HTTP, where the camera cannot
-start (C-06).
-
 **Matching** — synonyms and colloquial names ("coke", "nappies", "kitchen
 roll") · several sizes or variants of the same product · a generic word that is
 a category rather than a product ("milk", "dairy") · a product held in two
@@ -238,11 +238,11 @@ places at once · a product in the catalogue but absent from the planogram · a
 product in the catalogue but not stocked at this branch.
 
 **Start point** — the entrance; any other aisle; an unrecognised location ·
-standing on a staircase or a landing · already standing at the
+standing on a staircase or in a lift lobby · already standing at the
 product.
 
 **Routing** — same floor; different floor; every floor · a connector out of
-closed · step-free requested for a product on another floor · a single item
+out of service · step-free requested where no step-free path exists · a single item
 submitted as a multi-product request · chilled and frozen items that should be
 collected last.
 
@@ -259,46 +259,7 @@ never returning.
 
 ---
 
-## 8. Open questions
-
-| ID | Question | Why it matters now |
-|---|---|---|
-| OQ-01 | **Confirm the intended user is a shopper.** | The whole specification assumes it. If the intended user is a store colleague, this document needs rewriting rather than extending — it is a different problem, not a later phase |
-| OQ-02 | ~~Two floors or three in the demo store?~~ — **resolved: three**, with two for the portability store | Closed. Reasoning recorded in §10 |
-| OQ-03 | ~~Which single-page framework?~~ — **resolved: Streamlit** | Closed. Recorded rather than deleted, with the consequences below |
-| OQ-04 | Does FR-05 ask a question, or show a ranked list to tap? | A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built |
-| OQ-05 | Is FR-09 wanted at all? | Substitutes are a commercial nice-to-have and the first thing to cut under time pressure |
-| OQ-06 | Approved model platform, data residency, and whether shopper-facing generated text is permitted | May require the colleague-facing version first |
-| OQ-07 | Does age restriction itself need handling beyond FR-12 — an ID-check prompt, for instance? | FR-12 now settles counter and cabinet locations. What remains open is only whether being age-restricted changes what the shopper is shown |
-| OQ-08 | What number proves this worked? | Without a success metric the project has no finish line |
-| OQ-09 | ~~Is typing a barcode a real shopper journey?~~ — **resolved: no.** A shopper holding the product has already found it, and keying 13 digits is slower than typing the name. FR-03 is now a camera scan, with typed digits kept only as the degraded path | Closed. The objection was that FR-03 as first written was circular |
-
-### OQ-03 resolved — Streamlit, calling the agent in-process
-
-There is no HTTP layer. The page invokes the compiled agent directly in the same
-process, which removes the whole API surface and roughly a day of plumbing. The
-HLD's layer stack loses its API tier and the LLD's API contracts cease to exist.
-
-**What this costs:** no other client can consume the system. That is an accepted
-trade for a one-week proof of concept. Because the design keeps the
-orchestration and service layers free of any web dependency, putting a service
-in front of the same agent later changes nothing below the page.
-
-**What this requires of the design** — detail belongs in the HLD and LLD, but
-the decision carries three consequences worth recording here:
-
-1. The page re-executes on every interaction, so the store graph, search index
-   and distance matrices must be built **once and cached** rather than per
-   interaction.
-2. The clarification pause in FR-05 is served by **re-invoking the agent with
-   the shopper's answer on the next page run**, not by a second HTTP call.
-3. The search box must **commit on submit** rather than on each keystroke, or
-   NFR-05's budget is spent re-running the agent while the shopper is still
-   typing.
-
----
-
-## 9. Glossary
+## 8. Glossary
 
 | Term | Meaning |
 |---|---|
@@ -307,12 +268,12 @@ the decision carries three consequences worth recording here:
 | **Bay / rack** | One section of a shelving unit within an aisle. "Rack" is used throughout this document |
 | **Facing** | One product's frontage on a shelf. A product may hold several adjacent facings |
 | **Ranged** | Carried by this particular branch. A product can be in the catalogue without being ranged here |
-| **Connector** | A staircase joining two floors. In this store it is the only kind |
-| **Step-free** | A route using no stairs. In a stairs-only store this exists only within a single floor |
+| **Connector** | A staircase or a lift joining two floors |
+| **Step-free** | A route using no stairs — between floors, one that travels by lift |
 
 ---
 
-## 10. Differences from the peer specification
+## 9. Differences from the peer specification
 
 Recorded so they are resolved deliberately rather than discovered late. "Peer
 spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.
@@ -327,8 +288,8 @@ spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.
 | **Front end** | Streamlit | Streamlit (C-03) | **Aligned.** An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists |
 | **Framework** | "Agentic", five named agents | LangGraph (C-01) | Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement |
 | **Verification** | A Verifier agent | NFR-02, a behaviour | **Adopted from the peer spec.** Stated as required behaviour so it can be tested, rather than as a component that might be dropped |
-| **Step-free** | FR-8, confirmed | FR-19, narrowed | Adopted, then narrowed. With stairs as the only connection a step-free route between floors cannot exist, so the requirement becomes refusing honestly rather than routing around |
-| **Connectors** | Stairs, escalators and lifts | **Stairs only** (FR-14) | Deliberate simplification. One connector type means one set of edge rules, at the cost of the accessibility story — see §5 |
+| **Step-free** | FR-8, confirmed | FR-19, confirmed | **Adopted.** It had been an open question here; it should not have been |
+| **Connectors** | Stairs, escalators and lifts | **Stairs and lifts** (FR-14) | Escalators dropped. Stairs and a lift are the minimum that keeps FR-19 satisfiable, since a lift is the only step-free way between floors |
 | **Portability** | FR-9 plus an NFR | FR-25 plus NFR-08 | **Adopted.** A requirement worth having, and AC-09 makes it testable |
 | **Performance** | 5 s / 10 s | Same (NFR-05) | **Adopted.** Concrete targets beat "fast" |
 | **Prompt injection** | Named in security | NFR-06 | **Adopted.** Shopper text reaches a model, so this is a real surface |

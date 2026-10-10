@@ -60,11 +60,10 @@
 <header class="prose">
   <div class="eyebrow">Requirements specification · v1</div>
   <h1>Product Finder Requirements</h1>
-  <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, how each requirement is verified, and what is still undecided.</p>
+  <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
-    <span><b>Requirements</b> 25 functional · 11 non-functional</span>
-    <span><b>Constraints</b> 6</span>
-    <span><b>Open</b> 6</span>
+    <span><b>Requirements</b> 24 functional · 11 non-functional</span>
+    <span><b>Constraints</b> 5</span>
   </div>
 </header>
 
@@ -89,7 +88,6 @@
   <li>Shortest route from any start point in the store, across floors</li>
   <li>One combined route for several products</li>
   <li>Step-free routing</li>
-  <li>Barcode scanning with the phone camera</li>
   <li>A single-page user interface</li>
 </ul>
 
@@ -100,14 +98,13 @@
   <li>Integration with any real inventory, planogram or mapping system</li>
   <li>Payments, loyalty and recommendations</li>
   <li>Shelf-compliance detection from photographs</li>
-  <li>Recognising a product from a photograph — the camera reads a barcode and nothing else</li>
   <li>More than one store running concurrently</li>
   <li>Colleague workflows — order picking, replenishment, shelf-edge tasks</li>
 </ul>
 
 <h4>Inputs</h4>
 <div class="prose">
-  <p>One store folder holding four kinds of data: the <b>store map</b> (walkable points, paths between them, and the staircases connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
+  <p>One store folder holding four kinds of data: the <b>store map</b> (walkable points, paths between them, and the stairs and lifts connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
 </div>
 
 <h4>Done when</h4>
@@ -137,7 +134,6 @@
     <tr><td class="id">C-03</td><td>User interface is a single <b>Streamlit</b> page</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">C-04</td><td>All store data is <b>synthetic</b> and is stated as such wherever shown</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">C-05</td><td>No integration with any live retailer system</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-06</td><td>The site is served over <b>HTTPS</b>. Camera access requires a secure context, so FR-03 does not work over plain HTTP — including on a local machine addressed by IP</td><td><span class="tag t-ok">confirmed</span></td></tr>
   </tbody>
 </table>
 </div>
@@ -153,9 +149,15 @@
     <tr><td class="id">A-04</td><td>Catalogue of roughly 150–200 products is representative enough to demonstrate</td><td><span class="tag t-ok">confirmed</span></td><td>Search ranking needs re-tuning at real catalogue scale</td></tr>
     <tr><td class="id">A-05</td><td>"Optimal" means shortest walking distance, not shortest time</td><td><span class="tag t-ok">confirmed</span></td><td>Edge weights become durations; floor transitions re-weighted</td></tr>
     <tr><td class="id">A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td><span class="tag t-ok">confirmed</span></td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
-    <tr><td class="id">A-07</td><td>The shopper's mobile browser can grant camera access and decode an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing</td><td><span class="tag t-ok">confirmed</span></td><td>Scanning needs a different decoding route, or FR-03 reverts to typed entry only</td></tr>
   </tbody>
 </table>
+</div>
+
+<div class="callout">
+  <h4>C-03 — Streamlit, calling the agent in-process</h4>
+  <p>There is no HTTP layer. The page invokes the compiled agent directly in the same process, which removes the whole API surface and roughly a day of plumbing. The HLD's layer stack has no API tier and the LLD specifies no API contracts.</p>
+  <p><b>What this costs:</b> no other client can consume the system. That is an accepted trade. Because the design keeps the orchestration and service layers free of any web dependency, putting a service in front of the same agent later changes nothing below the page.</p>
+  <p><b>What this requires of the design</b> — detail belongs in the HLD and LLD, but the decision carries three consequences worth recording here: the page re-executes on every interaction, so the store graph, search index and distance matrices must be built once and cached rather than per interaction; the clarification pause in FR-05 is served by re-invoking the agent with the shopper's answer on the next page run, not by a second HTTP call; and the search box must commit on submit rather than on each keystroke, or NFR-05's budget is spent re-running the agent while the shopper is still typing.</p>
 </div>
 
 <h2><span class="sec">4</span> &nbsp;Functional requirements</h2>
@@ -167,7 +169,6 @@
   <tbody>
     <tr><td class="id">FR-01</td><td>A shopper can find a product by typing its name</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-02</td><td>A shopper can request <b>several products in one search</b>, separated by commas, semicolons, new lines or the word "and", without first building a basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-03</td><td>A shopper can find a product by <b>scanning its barcode with the phone camera</b>. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-04</td><td>A request phrased in natural language resolves to real catalogue products — never to an invented one</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-05</td><td>Where more than one product could match, the system <b>asks the shopper to choose</b> rather than selecting one</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-06</td><td>Results are ordered so that products stocked at this store rank above products that are not</td><td><span class="tag t-ok">confirmed</span></td></tr>
@@ -205,12 +206,12 @@
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
     <tr><td class="id">FR-13</td><td>The system gives the <b>shortest walking route</b> from the shopper's position to the product</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-14</td><td>A route may cross floors, using the <b>staircases</b> recorded in the store map. Stairs are the only vertical connection; there are no lifts or escalators</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-14</td><td>A route may cross floors, using the <b>stairs and lifts</b> recorded in the store map</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-15</td><td>The shopper sets their start point by selecting a floor and aisle; the entrance is only the default</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-16</td><td>For several products the system gives <b>one combined route</b> visiting all of them, and lists any that are unavailable</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-17</td><td>A combined route visits the floors in a fixed order, with one picking pass per floor</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-18</td><td>A combined route ends at a checkout</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-19</td><td>The shopper can request a <b>step-free route</b>. Within a floor one is always returned; to another floor the system states plainly that no step-free route exists, rather than returning one with stairs in it</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-19</td><td>The shopper can request a <b>step-free route</b>, which crosses floors by lift and uses no stairs. Where no step-free path exists it says so rather than returning one with stairs in it</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-20</td><td>A route is presented both as step-by-step directions and drawn on a floor map</td><td><span class="tag t-ok">confirmed</span></td></tr>
   </tbody>
 </table>
@@ -253,16 +254,10 @@
     <tr><td class="id">NFR-07</td><td>Data integrity</td><td>Invalid or inconsistent store data is rejected when the store is loaded, not discovered during a shopper's request.</td></tr>
     <tr><td class="id">NFR-08</td><td>Portability</td><td>A differently shaped store passes the same acceptance tests with no code changes.</td></tr>
     <tr><td class="id">NFR-09</td><td>Explainability</td><td>Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model.</td></tr>
-    <tr><td class="id">NFR-10</td><td>Accessibility</td><td>Route directions are usable by a screen reader. A step-free request is honoured within a floor and refused honestly between floors — see the note below, since a stairs-only store cannot be made step-free by software.</td></tr>
+    <tr><td class="id">NFR-10</td><td>Accessibility</td><td>Step-free routing is available, and route directions are usable by a screen reader.</td></tr>
     <tr><td class="id">NFR-11</td><td>Mobile layout</td><td>The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom.</td></tr>
   </tbody>
 </table>
-</div>
-
-<div class="callout warn">
-  <h4>A stairs-only store cannot be made accessible by software</h4>
-  <p>With staircases as the only connection between floors, there is no step-free path to another floor and no routing algorithm can invent one. FR-19 therefore becomes a requirement to <i>refuse honestly</i> rather than to route around the problem, and NFR-10's accessibility claim shrinks to screen-reader support plus truthful refusal.</p>
-  <p>This is recorded rather than hidden because a reviewer will raise it, and because in a real store it would be a legal problem rather than a design choice. The fix is a lift in the store map, not a change in code — which is the point: the store's shape lives in the data.</p>
 </div>
 
 <div class="callout">
@@ -284,7 +279,7 @@
     <tr><td class="id">AC-04</td><td>FR-13</td><td>The returned route distance equals the shortest distance computed independently from the store map for the same pair of points</td></tr>
     <tr><td class="id">AC-05</td><td>FR-14, FR-17, FR-18</td><td>A basket spanning all three floors returns a route that visits each floor once, in the specified order, ending at a checkout</td></tr>
     <tr><td class="id">AC-06</td><td>FR-15</td><td>The same product requested from two different start points returns two different, each-correct routes</td></tr>
-    <tr><td class="id">AC-07</td><td>FR-19</td><td>A step-free request within one floor returns a route with no stairs. A step-free request to another floor returns no route and states that none exists — it never silently returns one with stairs</td></tr>
+    <tr><td class="id">AC-07</td><td>FR-19</td><td>A step-free request returns a route that uses lifts and no stairs, including across floors; where no step-free path exists it says so instead of returning one</td></tr>
     <tr><td class="id">AC-08</td><td>FR-21, FR-22</td><td>A search with three available and one unavailable item groups them, and the single action adds exactly three to the basket</td></tr>
     <tr><td class="id">AC-09</td><td>FR-25, NFR-08</td><td>A second store folder with a different floor count passes AC-01 to AC-08 with no code changes</td></tr>
     <tr><td class="id">AC-10</td><td>NFR-01, NFR-02</td><td>No location, distance or stock figure in any response differs from the store data; a deliberately corrupted claim is blocked before display</td></tr>
@@ -293,8 +288,7 @@
     <tr><td class="id">AC-13</td><td>NFR-06</td><td>Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call</td></tr>
     <tr><td class="id">AC-14</td><td>NFR-07</td><td>Each malformed store fixture is rejected at load with a message naming the fault</td></tr>
     <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming</td></tr>
-    <tr><td class="id">AC-16</td><td>FR-03</td><td>A scan of a catalogued product's barcode returns that exact product — no choice prompt; a declined camera permission leaves the shopper a working typed-digit path; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match</td></tr>
-    <tr><td class="id">AC-17</td><td>FR-12</td><td>A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required</td></tr>
+    <tr><td class="id">AC-16</td><td>FR-12</td><td>A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required</td></tr>
   </tbody>
 </table>
 </div>
@@ -319,16 +313,6 @@
   <li>Text written to subvert the system's instructions</li>
 </ul>
 
-<h4>Scanning</h4>
-<ul>
-  <li>Camera permission declined, or revoked after one successful scan</li>
-  <li>A browser with no camera, or no decoding support</li>
-  <li>A damaged, creased or partly obscured barcode that will not decode</li>
-  <li>A barcode decoded correctly but absent from this catalogue</li>
-  <li>A barcode from something that is not a grocery product at all</li>
-  <li>The page opened over plain HTTP, where the camera cannot start (C-06)</li>
-</ul>
-
 <h4>Matching</h4>
 <ul>
   <li>Synonyms and colloquial names — "coke", "nappies", "kitchen roll"</li>
@@ -342,15 +326,15 @@
 <h4>Start point</h4>
 <ul>
   <li>The entrance; any other aisle; an unrecognised location</li>
-  <li>Standing on a staircase or a landing</li>
+  <li>Standing on a staircase or in a lift lobby</li>
   <li>Already standing at the product</li>
 </ul>
 
 <h4>Routing</h4>
 <ul>
   <li>Same floor; different floor; every floor</li>
-  <li>A staircase closed</li>
-  <li>Step-free requested for a product on another floor</li>
+  <li>A connector out of service</li>
+  <li>Step-free requested where no step-free path exists</li>
   <li>A single item submitted as a multi-product request</li>
   <li>Chilled and frozen items that should be collected last</li>
 </ul>
@@ -373,32 +357,7 @@
   <li>A shopper abandoning a choice prompt and never returning</li>
 </ul>
 
-<h2><span class="sec">8</span> &nbsp;Open questions</h2>
-<div class="tablewrap">
-<table>
-  <thead><tr><th>ID</th><th>Question</th><th>Why it matters now</th></tr></thead>
-  <tbody>
-    <tr><td class="id">OQ-01</td><td><b>Confirm the intended user is a shopper.</b></td><td>The whole specification assumes it. If the intended user is a store colleague, this document needs rewriting rather than extending — it is a different problem, not a later phase</td></tr>
-    <tr><td class="id">OQ-02</td><td><s>Two floors or three in the demo store?</s> — <b>resolved: three</b>, with two for the portability store</td><td>Closed. Reasoning recorded in §10</td></tr>
-    <tr><td class="id">OQ-03</td><td><s>Which single-page framework?</s> — <b>resolved: Streamlit</b></td><td>Closed. Recorded rather than deleted, with the consequences in the note below</td></tr>
-    <tr><td class="id">OQ-04</td><td>Does FR-05 ask a question, or show a ranked list to tap?</td><td>A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built</td></tr>
-    <tr><td class="id">OQ-05</td><td>Is FR-09 wanted at all?</td><td>Substitutes are a commercial nice-to-have and the first thing to cut under time pressure</td></tr>
-    <tr><td class="id">OQ-06</td><td>Approved model platform, data residency, and whether shopper-facing generated text is permitted</td><td>May require the colleague-facing version first</td></tr>
-    <tr><td class="id">OQ-07</td><td>Does age restriction itself need handling beyond FR-12 — an ID-check prompt, for instance?</td><td>FR-12 now settles counter and cabinet locations. What remains open is only whether being age-restricted changes what the shopper is shown</td></tr>
-    <tr><td class="id">OQ-08</td><td>What number proves this worked?</td><td>Without a success metric the project has no finish line</td></tr>
-    <tr><td class="id">OQ-09</td><td><s>Is typing a barcode a real shopper journey?</s> — <b>resolved: no.</b> A shopper holding the product has already found it, and keying 13 digits is slower than typing the name. FR-03 is now a camera scan, with typed digits kept only as the degraded path</td><td>Closed. The objection was that FR-03 as first written was circular</td></tr>
-  </tbody>
-</table>
-</div>
-
-<div class="callout">
-  <h4>OQ-03 resolved — Streamlit, calling the agent in-process</h4>
-  <p>There is no HTTP layer. The page invokes the compiled agent directly in the same process, which removes the whole API surface and roughly a day of plumbing. The HLD's layer stack loses its API tier and the LLD's API contracts cease to exist.</p>
-  <p><b>What this costs:</b> no other client can consume the system. That is an accepted trade for a one-week proof of concept. Because the design keeps the orchestration and service layers free of any web dependency, putting a service in front of the same agent later changes nothing below the page.</p>
-  <p><b>What this requires of the design</b> — detail belongs in the HLD and LLD, but the decision carries three consequences worth recording here: the page re-executes on every interaction, so the store graph, search index and distance matrices must be built once and cached rather than per interaction; the clarification pause in FR-05 is served by re-invoking the agent with the shopper's answer on the next page run, not by a second HTTP call; and the search box must commit on submit rather than on each keystroke, or NFR-05's budget is spent re-running the agent while the shopper is still typing.</p>
-</div>
-
-<h2><span class="sec">9</span> &nbsp;Glossary</h2>
+<h2><span class="sec">8</span> &nbsp;Glossary</h2>
 <div class="tablewrap">
 <table>
   <tbody>
@@ -407,13 +366,13 @@
     <tr><td><b>Bay / rack</b></td><td>One section of a shelving unit within an aisle. "Rack" is used throughout this document</td></tr>
     <tr><td><b>Facing</b></td><td>One product's frontage on a shelf. A product may hold several adjacent facings</td></tr>
     <tr><td><b>Ranged</b></td><td>Carried by this particular branch. A product can be in the catalogue without being ranged here</td></tr>
-    <tr><td><b>Connector</b></td><td>A staircase joining two floors. In this store it is the only kind</td></tr>
-    <tr><td><b>Step-free</b></td><td>A route using no stairs. In a stairs-only store this exists only within a single floor</td></tr>
+    <tr><td><b>Connector</b></td><td>A staircase or a lift joining two floors</td></tr>
+    <tr><td><b>Step-free</b></td><td>A route using no stairs — between floors, one that travels by lift</td></tr>
   </tbody>
 </table>
 </div>
 
-<h2><span class="sec">10</span> &nbsp;Differences from the peer specification</h2>
+<h2><span class="sec">9</span> &nbsp;Differences from the peer specification</h2>
 <div class="prose">
   <p>Recorded so they are resolved deliberately rather than discovered late. "Peer spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.</p>
 </div>
@@ -429,8 +388,8 @@
     <tr><td><b>Front end</b></td><td>Streamlit</td><td>Streamlit (C-03)</td><td><b>Aligned.</b> An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists</td></tr>
     <tr><td><b>Framework</b></td><td>"Agentic", five named agents</td><td>LangGraph (C-01)</td><td>Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement</td></tr>
     <tr><td><b>Verification</b></td><td>A Verifier agent</td><td>NFR-02, a behaviour</td><td><b>Adopted from the peer spec.</b> Stated as required behaviour so it can be tested, rather than as a component that might be dropped</td></tr>
-    <tr><td><b>Step-free</b></td><td>FR-8, confirmed</td><td>FR-19, narrowed</td><td>Adopted, then narrowed. With stairs as the only connection a step-free route between floors cannot exist, so the requirement becomes refusing honestly rather than routing around</td></tr>
-    <tr><td><b>Connectors</b></td><td>Stairs, escalators and lifts</td><td><b>Stairs only</b> (FR-14)</td><td>Deliberate simplification. One connector type means one set of edge rules, at the cost of the accessibility story — see §5</td></tr>
+    <tr><td><b>Step-free</b></td><td>FR-8, confirmed</td><td>FR-19, confirmed</td><td><b>Adopted.</b> It had been an open question here; it should not have been</td></tr>
+    <tr><td><b>Connectors</b></td><td>Stairs, escalators and lifts</td><td><b>Stairs and lifts</b> (FR-14)</td><td>Escalators dropped. Stairs and a lift are the minimum that keeps FR-19 satisfiable, since a lift is the only step-free way between floors</td></tr>
     <tr><td><b>Portability</b></td><td>FR-9 plus an NFR</td><td>FR-25 plus NFR-08</td><td><b>Adopted.</b> A requirement worth having, and AC-09 makes it testable</td></tr>
     <tr><td><b>Performance</b></td><td>5 s / 10 s</td><td>Same (NFR-05)</td><td><b>Adopted.</b> Concrete targets beat "fast"</td></tr>
     <tr><td><b>Prompt injection</b></td><td>Named in security</td><td>NFR-06</td><td><b>Adopted.</b> Shopper text reaches a model, so this is a real surface</td></tr>
@@ -439,7 +398,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 25 functional · 11 non-functional · 6 constraints · 6 open · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 24 functional · 11 non-functional · 5 constraints · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>
