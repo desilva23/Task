@@ -126,7 +126,7 @@ the decision carries three consequences worth recording here:
 |---|---|---|
 | FR-07 | The system states whether each requested product is available | confirmed |
 | FR-08 | "Not stocked at this branch" is distinguished from "stocked but sold out" — they are different answers to the shopper | confirmed |
-| FR-09 | An unavailable product offers in-stock alternatives from the same category | assumed |
+| FR-09 | An unavailable product offers in-stock alternatives from the same category | confirmed |
 
 ### 4.3 Location
 
@@ -213,6 +213,7 @@ finished being written.
 | AC-14 | NFR-07 | Each malformed store fixture is rejected at load with a message naming the fault |
 | AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
 | AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
+| AC-17 | FR-09 | An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one |
 
 **AC-11 is the test that earns the architecture.** It is the only one that
 proves NFR-01 and NFR-04 rather than asserting them. If every model call can be

@@ -183,7 +183,7 @@
   <tbody>
     <tr><td class="id">FR-07</td><td>The system states whether each requested product is available</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-08</td><td>"Not stocked at this branch" is distinguished from "stocked but sold out" — they are different answers to the shopper</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-09</td><td>An unavailable product offers in-stock alternatives from the same category</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">FR-09</td><td>An unavailable product offers in-stock alternatives from the same category</td><td><span class="tag t-ok">confirmed</span></td></tr>
   </tbody>
 </table>
 </div>
@@ -289,6 +289,7 @@
     <tr><td class="id">AC-14</td><td>NFR-07</td><td>Each malformed store fixture is rejected at load with a message naming the fault</td></tr>
     <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming</td></tr>
     <tr><td class="id">AC-16</td><td>FR-12</td><td>A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required</td></tr>
+    <tr><td class="id">AC-17</td><td>FR-09</td><td>An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one</td></tr>
   </tbody>
 </table>
 </div>
