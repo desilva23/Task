@@ -77,10 +77,22 @@ store works with no code changes.
 |---|---|---|
 | A-01 | Stock data is treated as current and correct; staleness is not modelled | Availability needs a freshness indicator and an "unknown" state |
 | A-02 | A product present in the planogram with non-zero stock counts as available | — |
-| A-03 | Demo store has **three floors**; the portability test store has two | See OQ-02 |
+| A-03 | Demo store has **two floors**; the portability test store has three | Settled — see OQ-02 and the note below |
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper is on a phone or a kiosk, standing in the store | Layout and latency targets change |
+
+**Two floors satisfies every requirement, but thins one demo.** Two floors is
+enough for FR-14, FR-19 and FR-25, and it halves the store data to author. The
+one thing it weakens is **FR-17**: with two floors, "visit the floors in a fixed
+order, one pass each" reduces to "upstairs, then downstairs". The rule still has
+to be implemented and still prevents a shopper being sent up and down
+repeatedly — it just does not look like much in a demo.
+
+This is why the **portability store has three floors**. Scaling *up* proves more
+than scaling down: it exercises the floor ordering properly, and AC-09 turns
+that into a test rather than a claim. The two stores together demonstrate more
+than either alone.
 
 ---
 
@@ -177,7 +189,7 @@ finished being written.
 | AC-02 | FR-02, FR-16 | "milk, bread, eggs" returns three separate results in one response, then one route covering all three |
 | AC-03 | FR-05 | A deliberately ambiguous term returns a choice prompt, and the chosen option resolves without re-entering the other terms |
 | AC-04 | FR-13 | The returned route distance equals the shortest distance computed independently from the store map for the same pair of points |
-| AC-05 | FR-14, FR-17, FR-18 | A basket spanning three floors returns a route that visits each floor once, in the specified order, ending at a checkout |
+| AC-05 | FR-14, FR-17, FR-18 | A basket spanning both floors returns a route that visits each floor once, in the specified order, ending at a checkout. Repeated on the three-floor portability store, where the ordering is non-trivial |
 | AC-06 | FR-15 | The same product requested from two different start points returns two different, each-correct routes |
 | AC-07 | FR-19 | A step-free request returns a route using no stairs or escalators; where none exists, it says so instead of returning one |
 | AC-08 | FR-21, FR-22 | A search with three available and one unavailable item groups them, and the single action adds exactly three to the basket |
@@ -238,7 +250,7 @@ never returning.
 | ID | Question | Why it matters now |
 |---|---|---|
 | OQ-01 | **Is the user a shopper or a store colleague?** | A colleague picking a 60-item order needs crush-order and temperature rules and a handheld layout. Different problem, different requirements |
-| OQ-02 | **Two floors or three in the demo store?** | Two is the minimum that satisfies FR-14; three makes FR-17's fixed floor order visibly non-trivial. Recommend three for the demo and two for the portability test |
+| OQ-02 | ~~Two floors or three in the demo store?~~ — **resolved: two**, with three for the portability store | Closed. Consequence for FR-17 recorded in §3 |
 | OQ-03 | ~~Which single-page framework?~~ — **resolved: Streamlit** | Closed. Recorded rather than deleted, with the consequences below |
 | OQ-04 | Does FR-05 ask a question, or show a ranked list to tap? | A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built |
 | OQ-05 | Is FR-09 wanted at all? | Substitutes are a commercial nice-to-have and the first thing to cut under time pressure |
@@ -293,7 +305,7 @@ spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.
 | Topic | Peer spec | This document | Why |
 |---|---|---|---|
 | **Location depth** | Floor, aisle, shelf | Floor, aisle, **rack**, shelf (FR-10) | Rack-level addressing was asked for directly. Without it an aisle is 20 m long and the distance is not honest |
-| **Floors** | Two | Three, with two as the portability test (A-03) | Three makes the fixed floor order meaningful. Either satisfies "multiple floors" — OQ-02 |
+| **Floors** | Two | Two, with three as the portability test (A-03) | **Aligned.** Both specs now demo on two floors. The three-floor store exists to exercise FR-17 and prove FR-25 |
 | **Route terminus** | Not specified | Ends at a checkout (FR-18) | Confirmed separately. Makes it a complete shopping trip and places chilled items naturally last |
 | **Floor order** | Not specified | Fixed, one pass per floor (FR-17) | Confirmed separately. A distance-only optimiser sends shoppers up and down repeatedly |
 | **Basket** | Not present | FR-21 to FR-24 | Grouping results by availability and moving only the in-stock items means no route is ever planned to an empty shelf |
