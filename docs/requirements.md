@@ -41,8 +41,7 @@ else; more than one store running concurrently; colleague workflows — order pi
 replenishment, shelf-edge tasks.
 
 **Inputs:** one store folder holding four kinds of data — the **store map**
-(walkable points, paths between them, and the stairs, escalators and lifts
-connecting floors), the **product catalogue**, the **planogram** (which product
+(walkable points, paths between them, and the staircases connecting floors), the **product catalogue**, the **planogram** (which product
 sits on which shelf) and the **stock position**. File format and structure are
 specified in the Schema document, not here — the map may take more than one
 file, since a graph does not fit a single table.
@@ -122,12 +121,12 @@ store works with no code changes.
 | ID | Requirement | Status |
 |---|---|---|
 | FR-13 | The system gives the **shortest walking route** from the shopper's position to the product | confirmed |
-| FR-14 | A route may cross floors, using the lifts, escalators and stairs recorded in the store map | confirmed |
+| FR-14 | A route may cross floors, using the **staircases** recorded in the store map. Stairs are the only vertical connection; there are no lifts or escalators | confirmed |
 | FR-15 | The shopper sets their start point by selecting a floor and aisle; the entrance is only the default | confirmed |
 | FR-16 | For several products the system gives **one combined route** visiting all of them, and lists any that are unavailable | confirmed |
 | FR-17 | A combined route visits the floors in a fixed order, with one picking pass per floor | confirmed |
 | FR-18 | A combined route ends at a checkout | confirmed |
-| FR-19 | The shopper can request a **step-free route** that avoids stairs and escalators | confirmed |
+| FR-19 | The shopper can request a **step-free route**. Within a floor one is always returned; to another floor the system states plainly that no step-free route exists, rather than returning one with stairs in it | confirmed |
 | FR-20 | A route is presented both as step-by-step directions and drawn on a floor map | confirmed |
 
 ### 4.5 Basket
@@ -160,8 +159,20 @@ store works with no code changes.
 | NFR-07 | Data integrity | Invalid or inconsistent store data is rejected when the store is loaded, not discovered during a shopper's request. |
 | NFR-08 | Portability | A differently shaped store passes the same acceptance tests with no code changes. |
 | NFR-09 | Explainability | Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model. |
-| NFR-10 | Accessibility | Step-free routing is available, and route directions are usable by a screen reader. |
+| NFR-10 | Accessibility | Route directions are usable by a screen reader. A step-free request is honoured within a floor and refused honestly between floors — see the note below, since a stairs-only store cannot be made step-free by software. |
 | NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom. |
+
+**A stairs-only store cannot be made accessible by software.** With staircases
+as the only connection between floors, there is no step-free path to another
+floor and no routing algorithm can invent one. FR-19 therefore becomes a
+requirement to *refuse honestly* rather than to route around the problem, and
+NFR-10's accessibility claim shrinks to screen-reader support plus truthful
+refusal.
+
+This is recorded rather than hidden because a reviewer will raise it, and
+because in a real store it would be a legal problem rather than a design choice.
+The fix is a lift in the store map, not a change in code — which is the point:
+the store's shape lives in the data.
 
 **NFR-02 is the one that shapes the system.** Requiring every claim to be
 checked against the store data before display is stronger than requiring the
@@ -184,7 +195,7 @@ finished being written.
 | AC-04 | FR-13 | The returned route distance equals the shortest distance computed independently from the store map for the same pair of points |
 | AC-05 | FR-14, FR-17, FR-18 | A basket spanning all three floors returns a route that visits each floor once, in the specified order, ending at a checkout |
 | AC-06 | FR-15 | The same product requested from two different start points returns two different, each-correct routes |
-| AC-07 | FR-19 | A step-free request returns a route using no stairs or escalators; where none exists, it says so instead of returning one |
+| AC-07 | FR-19 | A step-free request within one floor returns a route with no stairs. A step-free request to another floor returns no route and states that none exists — it never silently returns one with stairs |
 | AC-08 | FR-21, FR-22 | A search with three available and one unavailable item groups them, and the single action adds exactly three to the basket |
 | AC-09 | FR-25, NFR-08 | A second store folder with a different floor count passes AC-01 to AC-08 with no code changes |
 | AC-10 | NFR-01, NFR-02 | No location, distance or stock figure in any response differs from the store data; a deliberately corrupted claim is blocked before display |
@@ -227,11 +238,11 @@ places at once · a product in the catalogue but absent from the planogram · a
 product in the catalogue but not stocked at this branch.
 
 **Start point** — the entrance; any other aisle; an unrecognised location ·
-standing on a staircase, escalator or in a lift lobby · already standing at the
+standing on a staircase or a landing · already standing at the
 product.
 
 **Routing** — same floor; different floor; every floor · a connector out of
-service · step-free requested where no step-free path exists · a single item
+closed · step-free requested for a product on another floor · a single item
 submitted as a multi-product request · chilled and frozen items that should be
 collected last.
 
@@ -296,8 +307,8 @@ the decision carries three consequences worth recording here:
 | **Bay / rack** | One section of a shelving unit within an aisle. "Rack" is used throughout this document |
 | **Facing** | One product's frontage on a shelf. A product may hold several adjacent facings |
 | **Ranged** | Carried by this particular branch. A product can be in the catalogue without being ranged here |
-| **Connector** | A lift, escalator or staircase joining two floors |
-| **Step-free** | A route using no stairs and no escalators |
+| **Connector** | A staircase joining two floors. In this store it is the only kind |
+| **Step-free** | A route using no stairs. In a stairs-only store this exists only within a single floor |
 
 ---
 
@@ -316,7 +327,8 @@ spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.
 | **Front end** | Streamlit | Streamlit (C-03) | **Aligned.** An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists |
 | **Framework** | "Agentic", five named agents | LangGraph (C-01) | Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement |
 | **Verification** | A Verifier agent | NFR-02, a behaviour | **Adopted from the peer spec.** Stated as required behaviour so it can be tested, rather than as a component that might be dropped |
-| **Step-free** | FR-8, confirmed | FR-19, confirmed | **Adopted.** It had been an open question here; it should not have been |
+| **Step-free** | FR-8, confirmed | FR-19, narrowed | Adopted, then narrowed. With stairs as the only connection a step-free route between floors cannot exist, so the requirement becomes refusing honestly rather than routing around |
+| **Connectors** | Stairs, escalators and lifts | **Stairs only** (FR-14) | Deliberate simplification. One connector type means one set of edge rules, at the cost of the accessibility story — see §5 |
 | **Portability** | FR-9 plus an NFR | FR-25 plus NFR-08 | **Adopted.** A requirement worth having, and AC-09 makes it testable |
 | **Performance** | 5 s / 10 s | Same (NFR-05) | **Adopted.** Concrete targets beat "fast" |
 | **Prompt injection** | Named in security | NFR-06 | **Adopted.** Shopper text reaches a model, so this is a real surface |
