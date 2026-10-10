@@ -63,7 +63,7 @@
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, how each requirement is verified, and what is still undecided.</p>
   <div class="meta">
     <span><b>Requirements</b> 25 functional · 11 non-functional</span>
-    <span><b>Constraints</b> 5</span>
+    <span><b>Constraints</b> 6</span>
     <span><b>Open</b> 6</span>
   </div>
 </header>
@@ -89,6 +89,7 @@
   <li>Shortest route from any start point in the store, across floors</li>
   <li>One combined route for several products</li>
   <li>Step-free routing</li>
+  <li>Barcode scanning with the phone camera</li>
   <li>A single-page user interface</li>
 </ul>
 
@@ -99,6 +100,7 @@
   <li>Integration with any real inventory, planogram or mapping system</li>
   <li>Payments, loyalty and recommendations</li>
   <li>Shelf-compliance detection from photographs</li>
+  <li>Recognising a product from a photograph — the camera reads a barcode and nothing else</li>
   <li>More than one store running concurrently</li>
   <li>Colleague workflows — order picking, replenishment, shelf-edge tasks</li>
 </ul>
@@ -135,6 +137,7 @@
     <tr><td class="id">C-03</td><td>User interface is a single <b>Streamlit</b> page</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">C-04</td><td>All store data is <b>synthetic</b> and is stated as such wherever shown</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">C-05</td><td>No integration with any live retailer system</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-06</td><td>The site is served over <b>HTTPS</b>. Camera access requires a secure context, so FR-03 does not work over plain HTTP — including on a local machine addressed by IP</td><td><span class="tag t-ok">confirmed</span></td></tr>
   </tbody>
 </table>
 </div>
@@ -150,15 +153,9 @@
     <tr><td class="id">A-04</td><td>Catalogue of roughly 150–200 products is representative enough to demonstrate</td><td><span class="tag t-ok">confirmed</span></td><td>Search ranking needs re-tuning at real catalogue scale</td></tr>
     <tr><td class="id">A-05</td><td>"Optimal" means shortest walking distance, not shortest time</td><td><span class="tag t-ok">confirmed</span></td><td>Edge weights become durations; floor transitions re-weighted</td></tr>
     <tr><td class="id">A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td><span class="tag t-ok">confirmed</span></td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
+    <tr><td class="id">A-07</td><td>The shopper's mobile browser can grant camera access and decode an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing</td><td><span class="tag t-ok">confirmed</span></td><td>Scanning needs a different decoding route, or FR-03 reverts to typed entry only</td></tr>
   </tbody>
 </table>
-</div>
-
-<div class="callout">
-  <h4>Why three floors costs almost nothing</h4>
-  <p>The catalogue and the planogram do not grow with floor count. The same roughly 180 products still sit somewhere; three floors simply spreads them across more aisles, so the row counts are unchanged. Only the <b>map</b> grows — in the order of 150 walkable points to 220, plus the extra paths and one more floor plate to draw.</p>
-  <p>Three floors is worth that, because it is the smallest store in which <b>FR-17</b> is a real decision rather than a formality. With two floors, "visit the floors in a fixed order, one pass each" reduces to "upstairs, then downstairs" — the rule still has to be built, and still stops a shopper being sent up and down repeatedly, but nothing in a demo shows whether it works.</p>
-  <p>The <b>portability store therefore has two floors</b>. What AC-09 proves is that the store's shape lives in the data rather than the code, and a differently shaped store proves that whether it is larger or smaller. Two floors is also the cheaper second store to author.</p>
 </div>
 
 <h2><span class="sec">4</span> &nbsp;Functional requirements</h2>
@@ -170,7 +167,7 @@
   <tbody>
     <tr><td class="id">FR-01</td><td>A shopper can find a product by typing its name</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-02</td><td>A shopper can request <b>several products in one search</b>, separated by commas, semicolons, new lines or the word "and", without first building a basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-03</td><td>A shopper can find a product by entering its barcode</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">FR-03</td><td>A shopper can find a product by <b>scanning its barcode with the phone camera</b>. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-04</td><td>A request phrased in natural language resolves to real catalogue products — never to an invented one</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-05</td><td>Where more than one product could match, the system <b>asks the shopper to choose</b> rather than selecting one</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-06</td><td>Results are ordered so that products stocked at this store rank above products that are not</td><td><span class="tag t-ok">confirmed</span></td></tr>
@@ -197,7 +194,7 @@
   <tbody>
     <tr><td class="id">FR-10</td><td>Location is given as <b>floor, aisle, rack and shelf</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">FR-11</td><td>A product held in more than one place shows all of them; routing uses the nearest</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-12</td><td>A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf</td><td><span class="tag t-as">assumed</span></td></tr>
+    <tr><td class="id">FR-12</td><td>A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf</td><td><span class="tag t-ok">confirmed</span></td></tr>
   </tbody>
 </table>
 </div>
@@ -290,6 +287,8 @@
     <tr><td class="id">AC-13</td><td>NFR-06</td><td>Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call</td></tr>
     <tr><td class="id">AC-14</td><td>NFR-07</td><td>Each malformed store fixture is rejected at load with a message naming the fault</td></tr>
     <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming</td></tr>
+    <tr><td class="id">AC-16</td><td>FR-12</td><td>A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required</td></tr>
+    <tr><td class="id">AC-16</td><td>FR-03</td><td>A scan of a catalogued product's barcode returns that exact product — no choice prompt; a declined camera permission leaves the shopper a working typed-digit path; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match</td></tr>
   </tbody>
 </table>
 </div>
@@ -312,6 +311,16 @@
   <li>Many items at once; duplicated items; quantities ("2 x milk")</li>
   <li>Text that is not a product request at all</li>
   <li>Text written to subvert the system's instructions</li>
+</ul>
+
+<h4>Scanning</h4>
+<ul>
+  <li>Camera permission declined, or revoked after one successful scan</li>
+  <li>A browser with no camera, or no decoding support</li>
+  <li>A damaged, creased or partly obscured barcode that will not decode</li>
+  <li>A barcode decoded correctly but absent from this catalogue</li>
+  <li>A barcode from something that is not a grocery product at all</li>
+  <li>The page opened over plain HTTP, where the camera cannot start (C-06)</li>
 </ul>
 
 <h4>Matching</h4>
@@ -364,13 +373,14 @@
   <thead><tr><th>ID</th><th>Question</th><th>Why it matters now</th></tr></thead>
   <tbody>
     <tr><td class="id">OQ-01</td><td><b>Confirm the intended user is a shopper.</b></td><td>The whole specification assumes it. If the intended user is a store colleague, this document needs rewriting rather than extending — it is a different problem, not a later phase</td></tr>
-    <tr><td class="id">OQ-02</td><td><s>Two floors or three in the demo store?</s> — <b>resolved: three</b>, with two for the portability store</td><td>Closed. Reasoning recorded in §3</td></tr>
+    <tr><td class="id">OQ-02</td><td><s>Two floors or three in the demo store?</s> — <b>resolved: three</b>, with two for the portability store</td><td>Closed. Reasoning recorded in §10</td></tr>
     <tr><td class="id">OQ-03</td><td><s>Which single-page framework?</s> — <b>resolved: Streamlit</b></td><td>Closed. Recorded rather than deleted, with the consequences in the note below</td></tr>
     <tr><td class="id">OQ-04</td><td>Does FR-05 ask a question, or show a ranked list to tap?</td><td>A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built</td></tr>
     <tr><td class="id">OQ-05</td><td>Is FR-09 wanted at all?</td><td>Substitutes are a commercial nice-to-have and the first thing to cut under time pressure</td></tr>
     <tr><td class="id">OQ-06</td><td>Approved model platform, data residency, and whether shopper-facing generated text is permitted</td><td>May require the colleague-facing version first</td></tr>
-    <tr><td class="id">OQ-07</td><td>How are age-restricted and locked-cabinet products handled? (FR-12)</td><td>Needs an "ask a colleague" outcome rather than a route</td></tr>
+    <tr><td class="id">OQ-07</td><td>Does age restriction itself need handling beyond FR-12 — an ID-check prompt, for instance?</td><td>FR-12 now settles counter and cabinet locations. What remains open is only whether being age-restricted changes what the shopper is shown</td></tr>
     <tr><td class="id">OQ-08</td><td>What number proves this worked?</td><td>Without a success metric the project has no finish line</td></tr>
+    <tr><td class="id">OQ-09</td><td><s>Is typing a barcode a real shopper journey?</s> — <b>resolved: no.</b> A shopper holding the product has already found it, and keying 13 digits is slower than typing the name. FR-03 is now a camera scan, with typed digits kept only as the degraded path</td><td>Closed. The objection was that FR-03 as first written was circular</td></tr>
   </tbody>
 </table>
 </div>
@@ -422,7 +432,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 25 functional · 11 non-functional · 5 constraints · 6 open · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 25 functional · 11 non-functional · 6 constraints · 6 open · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>

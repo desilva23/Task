@@ -38,7 +38,8 @@ backend/
   errors.py               error taxonomy (§12)
   validation.py           startup checks (§13)
 data/
-  products.json  planogram.json  stock.json  store_graph.json
+  SBY-DEMO-001/           store.csv  products.csv  stock.csv
+                          planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
 frontend/
   index.html  app.js  store-map.svg
 tests/
@@ -54,150 +55,33 @@ model — which is what makes the fallbacks in §6 honest rather than aspiration
 
 ## 2. Identifier scheme
 
-| Entity | Format | Example | Graph node? |
-|---|---|---|---|
-| Rack | `F{level}-A{aisle:02}-R{rack:02}` | `F1-A07-R03` | **yes** |
-| Aisle end | `F{level}-A{aisle:02}-{N\|S}` | `F1-A07-N` | yes |
-| Cross-aisle point | `F{level}-X{n:02}` | `F1-X04` | yes |
-| Vertical core | `F{level}-CORE-{FRONT\|REAR}` | `F1-CORE-REAR` | yes |
-| Entrance | `F0-ENTRANCE` | — | yes |
-| Checkout | `F0-TILL-{n:02}` | `F0-TILL-01` | yes |
-| Shelf | `S{n:02}` | `S02` | **no** — an attribute |
-| Facing | `P{n}` | `P1` | **no** — an attribute |
+**Moved to [`schema.md`](schema.md) §3.** An identifier is a data format, so it
+belongs with the schema.
 
-**The graph stops at rack level.** A shelf is not somewhere you walk, so it is
-an attribute of a placement rather than a node. That keeps the graph at ~300
-nodes instead of ~1,200 and still lets directions name a shelf:
-
-```
-F1 · A07 · R03   ·   S02 · P1
-└── routable ──┘     └ attributes ┘
-   a graph node        spoken, not walked
-```
+It is unchanged where the two overlap, and extends with three node types this
+document never gave a format to — `counter`, `cabinet` and `bin`. §3 below
+required `location_type` values of `COUNTER`, `ASSISTED` and `DUMP_BIN` that had
+to route *somewhere*, and a deli counter is not a rack.
 
 ---
 
 ## 3. Data file schemas
 
-### 3.1 products.json
+**Moved to [`schema.md`](schema.md) §4.** This section described four JSON
+files. The data is six CSVs, so nothing of it survives but the reasoning, which
+moved with it:
 
-```jsonc
-{
-  "sku":            "7123456",          // str, primary key
-  "name":           "Coca-Cola Classic",
-  "brand":          "Coca-Cola",
-  "size":           "500ml",            // parsed for variant match
-  "barcode":        "5449000000996",    // EAN-13, nullable
-  "department":     "Drinks",
-  "aisle_category": "Soft Drinks",      // drives category queries
-  "synonyms":       ["coke", "cola"],   // feeds the search index
-  "dietary": {
-    "gluten_free":  true,               // bool | null — null means UNKNOWN
-    "vegan":        true,
-    "vegetarian":   true,
-    "halal":        null,
-    "contains":     ["none"]            // allergens, authoritative
-  },
-  "age_restricted": false,
-  "price_gbp":      1.65,
-  "own_brand":      false,
-  "popularity":     0.82                // 0..1, ranking tiebreak
-}
-```
+| Was here | Now in `schema.md` |
+|---|---|
+| `products.json`, and why `null` is not `false` | §4.2, and §2.2 — which is the same argument made harder, because CSV has no null and an empty cell reads as `NaN` |
+| `planogram.json`, the `location_type` table | §4.4, plus a node-compatibility matrix this section had no way to express |
+| `stock.json`, and why `ranged` is load-bearing | §4.3 |
+| `store_graph.json`, and why the lift penalty is in metres | §4.5 and §4.6 |
 
-**`null` is not `false`.** A dietary flag has three states: true, false and
-*unknown*. Open Food Facts leaves fields absent routinely, so collapsing null to
-false would silently assert "not gluten free" about products nobody checked.
-Every read site treats null as unknown and says so. This is the field that makes
-the allergen guardrail real rather than a sentence in a document.
-
-### 3.2 planogram.json
-
-```jsonc
-{
-  "store_id": "SBY-DEMO-001",
-  "version":  "2026-10-01",             // a range change bumps this; cache key
-  "placements": [{
-    "sku":           "7123456",
-    "node_id":       "F1-A07-R03",      // MUST exist in store_graph.nodes
-    "shelf":         2,                 // 1 = top
-    "facing":        1,                 // 1 = leftmost
-    "facings":       3,
-    "location_type": "HOME",
-    "seasonal":      false
-  }]
-}
-```
-
-| `location_type` | Meaning | Routable | Edge case |
-|---|---|---|---|
-| `HOME` | Primary planogram position | yes | — |
-| `PROMO_ENDCAP` | Promotional end cap | yes | EC-20 |
-| `SEASONAL` | Seasonal gondola | yes, suppressed at zero stock | EC-24 |
-| `DUMP_BIN` | Front-of-store bin | yes | — |
-| `CHILLER` | Chilled or frozen unit | yes, deferred to last floor pass | EC-33 |
-| `ASSISTED` | Locked cabinet — spirits, formula, blades | route to cabinet, colleague required | EC-22 |
-| `COUNTER` | Deli, fish, pharmacy | route to counter, no shelf or facing | EC-23 |
-
-### 3.3 stock.json
-
-```jsonc
-{
-  "store_id": "SBY-DEMO-001",
-  "as_of":    "2026-10-09T08:40:00Z",
-  "positions": {
-    "7123456": { "shelf_qty": 14, "ranged": true  },
-    "7123999": { "shelf_qty":  0, "ranged": true  },   // out of stock
-    "7124555": { "shelf_qty":  0, "ranged": false }    // NOT STOCKED HERE
-  }
-}
-```
-
-`ranged` is load-bearing. `ranged: false` and `shelf_qty: 0` are different
-answers to the shopper — "we don't carry it at this branch" versus "we carry it
-and it's sold out" — and they take different paths through the graph.
-Conflating them is EC-04.
-
-### 3.4 store_graph.json
-
-```jsonc
-{
-  "store_id": "SBY-DEMO-001",
-  "min_level": 0,
-  "max_level": 2,
-  "floors": [{ "level": 0, "name": "Fresh & Tills", "zones": ["Produce", "Chilled"] }],
-  "nodes": [
-    { "id": "F1-A07-R03", "type": "rack", "level": 1, "aisle": 7, "rack": 3,
-      "x": 42.0, "y": 18.0, "zone": "Ambient" },
-    { "id": "F1-CORE-REAR", "type": "core", "level": 1, "x": 78.0, "y": 4.0 }
-  ],
-  "edges": [
-    { "from": "F1-A07-R03", "to": "F1-A07-N",
-      "weight_m": 6.0, "bidirectional": true, "kind": "aisle" },
-
-    { "from": "F0-CORE-REAR", "to": "F1-CORE-REAR",
-      "weight_m": 6.0, "penalty_m": 25.0, "bidirectional": true,
-      "kind": "lift", "step_free": true, "trolley": true },
-
-    { "from": "F0-CORE-REAR", "to": "F1-CORE-REAR",
-      "weight_m": 14.0, "penalty_m": 4.0, "bidirectional": false,
-      "kind": "escalator", "step_free": false, "trolley": false }
-  ]
-}
-```
-
-**Why the lift penalty is in metres.** A lift ride is 6 m of travel plus maybe
-30 seconds of waiting. Rather than mixing units the wait is converted to its
-walking equivalent, so the matrix stays in one unit and Dijkstra needs no
-special handling for vertical edges. Effective weight is
-`weight_m + penalty_m`.
-
-It is also the single tuning knob for "stop bouncing between floors": raise the
-penalty and the router clusters by floor harder. If "optimal" is later redefined
-as time, convert every weight to seconds and the same code runs unchanged.
-
-Note the escalator is `bidirectional: false` — an up escalator is genuinely
-one-way, which is why the graph is built directed.
+**Both sections are kept as numbered stubs rather than cut out.** Renumbering
+§4–§15 would break every cross-reference to them from `hld.md`, `schema.md`,
+`CLAUDE.md` and §1 of this document — and a moved decision keeps a trail, the
+same convention the requirements register follows for a resolved question.
 
 ---
 

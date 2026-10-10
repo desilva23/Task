@@ -8,15 +8,15 @@ Not a programme. The design is right-sized for that, and
 [`docs/proposed-scope.md`](docs/proposed-scope.md) is explicit about what is in,
 what is out, and what is being assumed.
 
-**The four documents** (being separated; Requirements is done, the other three
-still need the requirements and schema content lifted out of them):
+**The four documents** (Requirements and Schema are standalone; the HLD still
+carries a requirements register and the LLD still carries the API contracts):
 
 | Document | Status |
 |---|---|
 | [`docs/requirements.md`](docs/requirements.md) · [rendered](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | **v1 — standalone.** What the system must do, acceptance criteria, open questions |
 | [`docs/hld.md`](docs/hld.md) · [rendered](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | Needs §1 requirements removed — they now live in requirements.md |
-| [`docs/lld.md`](docs/lld.md) · [rendered](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | Needs §3 data schemas lifted into a Schema document |
-| Schema | Not yet written — to be extracted from LLD §2 and §3 |
+| [`docs/lld.md`](docs/lld.md) · [rendered](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | §2 and §3 now point at `schema.md`. Still needs §11's API contracts removed |
+| [`docs/schema.md`](docs/schema.md) | **v1 — standalone.** The six store CSVs, every column, the identifier scheme, referential rules and load-time validation |
 
 **Other rendered pages:**
 · [High-level design](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) — search design, basket gate, edge cases
@@ -79,8 +79,9 @@ because it is the only real answer to point 2 above.
 |---|---|---|
 | 1 | [`docs/proposed-scope.md`](docs/proposed-scope.md) | **Start here.** The POC definition, in/out of scope, assumptions register, stack, six-day build plan |
 | 1b | [`docs/hld.md`](docs/hld.md) | **The review document.** Consolidated requirements register, the search design, 46 edge cases, and answers to the questions most likely to be asked |
-| 1c | [`docs/lld.md`](docs/lld.md) | Low-level design: identifier scheme, file schemas, graph state, node contracts, search and routing internals, API contracts, startup validation, test plan |
-| 1d | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
+| 1c | [`docs/lld.md`](docs/lld.md) | Low-level design: graph state, node contracts, search and routing internals, startup validation, test plan |
+| 1d | [`docs/schema.md`](docs/schema.md) | The data schema: six CSVs, the identifier scheme, the three-state boolean, referential integrity, validation rules, sizing |
+| 1e | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
 | 2 | [`docs/use-case-understanding.md`](docs/use-case-understanding.md) | What a planogram is, the use case decomposed, and the customer vs. colleague split |
 | 3 | [`docs/clarifying-questions.md`](docs/clarifying-questions.md) | Questions for the stakeholder, prioritised, each with why it matters |
 | 4 | [`docs/solution-sketch.md`](docs/solution-sketch.md) | Data model, store graph, the tiered routing answer, API shape, risks |

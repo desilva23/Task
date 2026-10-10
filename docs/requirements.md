@@ -30,13 +30,14 @@ replacing the store data, with no code changes.
 **In scope:** typed requests (single, several at once, natural language);
 product matching against a store catalogue; availability from a mock inventory;
 location to floor, aisle, rack and shelf; shortest route from any start point,
-across floors; one combined route for several products; step-free routing; a
-single-page user interface.
+across floors; one combined route for several products; step-free routing;
+**barcode scanning with the phone camera**; a single-page user interface.
 
 **Out of scope:** voice input; live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
-loyalty and recommendations; shelf-compliance detection from photographs; more
-than one store running concurrently; colleague workflows — order picking,
+loyalty and recommendations; shelf-compliance detection from photographs;
+recognising a product from a photograph — the camera reads a barcode and nothing
+else; more than one store running concurrently; colleague workflows — order picking,
 replenishment, shelf-edge tasks.
 
 **Inputs:** one store folder holding four kinds of data — the **store map**
@@ -73,6 +74,7 @@ store works with no code changes.
 | C-03 | User interface is a single **Streamlit** page | confirmed |
 | C-04 | All store data is **synthetic** and is stated as such wherever shown | confirmed |
 | C-05 | No integration with any live retailer system | confirmed |
+| C-06 | The site is served over **HTTPS**. Camera access requires a secure context, so FR-03 does not work over plain HTTP — including on a local machine addressed by IP | confirmed |
 
 | ID | Assumption | Status | If it later proves wrong |
 |---|---|---|---|
@@ -82,23 +84,7 @@ store works with no code changes.
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
-
-**Why three floors costs almost nothing.** The catalogue and the planogram do
-not grow with floor count. The same roughly 180 products still sit somewhere;
-three floors simply spreads them across more aisles, so the row counts are
-unchanged. Only the **map** grows — in the order of 150 walkable points to 220,
-plus the extra paths and one more floor plate to draw.
-
-Three floors is worth that, because it is the smallest store in which **FR-17**
-is a real decision rather than a formality. With two floors, "visit the floors
-in a fixed order, one pass each" reduces to "upstairs, then downstairs" — the
-rule still has to be built, and still stops a shopper being sent up and down
-repeatedly, but nothing in a demo shows whether it works.
-
-The **portability store therefore has two floors**. What AC-09 proves is that
-the store's shape lives in the data rather than the code, and a differently
-shaped store proves that whether it is larger or smaller. Two floors is also the
-cheaper second store to author.
+| A-07 | The shopper's mobile browser can grant camera access and decode an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | Scanning needs a different decoding route, or FR-03 reverts to typed entry only |
 
 ---
 
@@ -110,7 +96,7 @@ cheaper second store to author.
 |---|---|---|
 | FR-01 | A shopper can find a product by typing its name | confirmed |
 | FR-02 | A shopper can request **several products in one search**, separated by commas, semicolons, new lines or the word "and", without first building a basket | confirmed |
-| FR-03 | A shopper can find a product by entering its barcode | assumed |
+| FR-03 | A shopper can find a product by **scanning its barcode with the phone camera**. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits | confirmed |
 | FR-04 | A request phrased in natural language resolves to real catalogue products — never to an invented one | confirmed |
 | FR-05 | Where more than one product could match, the system **asks the shopper to choose** rather than selecting one | confirmed |
 | FR-06 | Results are ordered so that products stocked at this store rank above products that are not | confirmed |
@@ -129,7 +115,7 @@ cheaper second store to author.
 |---|---|---|
 | FR-10 | Location is given as **floor, aisle, rack and shelf** | confirmed |
 | FR-11 | A product held in more than one place shows all of them; routing uses the nearest | confirmed |
-| FR-12 | A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf | assumed |
+| FR-12 | A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf | confirmed |
 
 ### 4.4 Routing
 
@@ -207,6 +193,8 @@ finished being written.
 | AC-13 | NFR-06 | Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call |
 | AC-14 | NFR-07 | Each malformed store fixture is rejected at load with a message naming the fault |
 | AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
+| AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
+| AC-16 | FR-03 | A scan of a catalogued product's barcode returns that exact product — no choice prompt; a declined camera permission leaves the shopper a working typed-digit path; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
 
 **AC-11 is the test that earns the architecture.** It is the only one that
 proves NFR-01 and NFR-04 rather than asserting them. If every model call can be
@@ -224,6 +212,13 @@ Required behaviours, not solutions. Each becomes a test case.
 "yoghurt") · non-English text, emoji, punctuation only · many items at once,
 duplicated items, quantities ("2 x milk") · text that is not a product request ·
 text written to subvert the system's instructions.
+
+**Scanning** — camera permission declined, or revoked after one successful scan ·
+a browser with no camera, or no decoding support · a damaged, creased or
+partly obscured barcode that will not decode · a barcode decoded correctly but
+absent from this catalogue · a barcode from something that is not a grocery
+product at all · the page opened over plain HTTP, where the camera cannot
+start (C-06).
 
 **Matching** — synonyms and colloquial names ("coke", "nappies", "kitchen
 roll") · several sizes or variants of the same product · a generic word that is
@@ -258,13 +253,14 @@ never returning.
 | ID | Question | Why it matters now |
 |---|---|---|
 | OQ-01 | **Confirm the intended user is a shopper.** | The whole specification assumes it. If the intended user is a store colleague, this document needs rewriting rather than extending — it is a different problem, not a later phase |
-| OQ-02 | ~~Two floors or three in the demo store?~~ — **resolved: three**, with two for the portability store | Closed. Reasoning recorded in §3 |
+| OQ-02 | ~~Two floors or three in the demo store?~~ — **resolved: three**, with two for the portability store | Closed. Reasoning recorded in §10 |
 | OQ-03 | ~~Which single-page framework?~~ — **resolved: Streamlit** | Closed. Recorded rather than deleted, with the consequences below |
 | OQ-04 | Does FR-05 ask a question, or show a ranked list to tap? | A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built |
 | OQ-05 | Is FR-09 wanted at all? | Substitutes are a commercial nice-to-have and the first thing to cut under time pressure |
 | OQ-06 | Approved model platform, data residency, and whether shopper-facing generated text is permitted | May require the colleague-facing version first |
-| OQ-07 | How are age-restricted and locked-cabinet products handled? (FR-12) | Needs an "ask a colleague" outcome rather than a route |
+| OQ-07 | Does age restriction itself need handling beyond FR-12 — an ID-check prompt, for instance? | FR-12 now settles counter and cabinet locations. What remains open is only whether being age-restricted changes what the shopper is shown |
 | OQ-08 | What number proves this worked? | Without a success metric the project has no finish line |
+| OQ-09 | ~~Is typing a barcode a real shopper journey?~~ — **resolved: no.** A shopper holding the product has already found it, and keying 13 digits is slower than typing the name. FR-03 is now a camera scan, with typed digits kept only as the degraded path | Closed. The objection was that FR-03 as first written was circular |
 
 ### OQ-03 resolved — Streamlit, calling the agent in-process
 

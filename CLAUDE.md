@@ -12,6 +12,8 @@ route to it, across floors. Built as an agentic system on synthetic data.
 
 **Current state: design documents only. No code has been written yet.**
 
+All four documents now exist. `docs/schema.md` is v1 and has no rendered page yet.
+
 Sainsbury's is the reference retailer, but all data is synthetic and no real
 retailer system is involved. The repository is **public** — keep anything
 sensitive out of it.
@@ -24,8 +26,8 @@ This separation is deliberate and was asked for explicitly. Do not merge them.
 |---|---|---|
 | `docs/requirements.md` | What the system must do. FR/NFR/AC/OQ register | Architecture, algorithms, schemas, technology choices beyond the stated constraints |
 | `docs/hld.md` | Component architecture, search design, edge cases | Requirements (they live in requirements.md), field-level schemas |
-| `docs/lld.md` | Module layout, signatures, algorithms, thresholds | Requirements, and eventually the data schemas |
-| Schema | **Not yet written.** Data file layouts | — |
+| `docs/lld.md` | Module layout, signatures, algorithms, thresholds | Requirements, and the data schemas — §2 and §3 are now stubs pointing at `schema.md` |
+| `docs/schema.md` | The six store CSVs, columns, identifier scheme, referential rules, load-time validation | Requirements, architecture, algorithms |
 
 A requirement that names a technique cannot be challenged without re-opening the
 design; a design hiding inside a requirement never gets reviewed. That is why
@@ -55,6 +57,7 @@ and still carry stale content. See **Pending work** below.
 | **Fixed floor order**, one picking pass per floor, ending at a checkout | A distance-only optimiser sends shoppers up and down repeatedly |
 | **Basket gate** — batch results grouped by availability, one action moves only in-stock items | The basket, not the search result, is what gets routed, so no route is planned to an empty shelf |
 | **Rack-level addressing**, graph stops at rack | A shelf is not somewhere you walk. ~300 nodes instead of ~1,200, and directions can still name a shelf |
+| **Barcode entry is a camera scan**, not typed digits | A shopper holding the product has already found it, so typed entry was circular. The scan serves the packet-from-home and wrong-variant cases. Typed digits survive only as the degraded path when the camera is declined or unsupported, which keeps the all-digits query branch honest |
 | **CSV** for the data files, map as two CSVs | Authorable in a spreadsheet, readable without a parser. A graph does not fit one table |
 
 ## The rule the whole design rests on
@@ -116,16 +119,20 @@ conversation, pass its URL to the Artifact tool rather than publishing fresh.
 
 ## Pending work, in order
 
-1. **Write the Schema document.** The only one of the four that does not exist.
-   Extract from LLD §2 (identifier scheme) and §3 (file schemas), converted to
-   the CSV layout: `products.csv`, `planogram.csv`, `stock.csv`,
-   `map_nodes.csv`, `map_edges.csv`. `planogram.csv` is the join table —
-   `sku` into products, `node_id` into map_nodes.
+1. **Decide who owns startup validation.** `lld.md` §13 lists eleven checks and
+   `schema.md` §7 lists forty-seven that supersede them. The rules are schema
+   territory; *when they run* and `validation.py` are LLD territory. The likely
+   answer is §13 becomes a pointer plus the lifespan ordering, but it is a
+   judgement call, not a sweep. Nothing else in `schema.md` §10 is outstanding
+   for the LLD except §11 and the edge count, which are items 3 and 4.
 2. **Strip requirements out of `docs/hld.md` §1.** They live in
    `requirements.md` now.
 3. **Remove the API contracts from `docs/lld.md` §11** and the `api/` directory
    from §1, replacing them with the Streamlit mechanics. No HTTP layer exists.
-4. **Sweep the stale floor counts and node counts.** Several older documents
-   still describe a three-floor store with figures computed for it; the counts
-   need checking against the current shape rather than assumed.
-5. **Then build**, if asked. Nothing has been implemented.
+4. **Sweep the stale node and edge counts.** `schema.md` §8 derives 314 nodes
+   and ~354 edge rows (~704 directed arcs) from a stated layout. The `~900
+   edges` figure in `lld.md` §4, `architecture.md` §4 and `hld.md` §5 was never
+   derived and is wrong. The ~300-node figure stands.
+5. **Render and publish `docs/pages/locator-schema.html`**, if the HTML pages
+   are being kept in step. The other three have artifacts; the schema has none.
+6. **Then build**, if asked. Nothing has been implemented.
