@@ -4,15 +4,6 @@
 **Version:** 1
 Rendered: **https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz** (private — share from the page's Share menu)
 
-> **What this document is, and is not.** It states *what* the system must do and
-> how each requirement will be shown to be met. It contains no architecture, no
-> algorithms, no data schemas and no technology choices beyond the constraints
-> in §3 — those belong in the HLD, the LLD and the Schema document.
->
-> That separation is deliberate. A requirement that names a technique cannot be
-> challenged without re-opening the design, and a design that hides inside a
-> requirement never gets reviewed.
-
 ---
 
 ## 1. Overview
