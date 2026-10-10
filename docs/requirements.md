@@ -68,7 +68,7 @@ store works with no code changes.
 |---|---|---|
 | C-01 | Agentic framework is **LangGraph** | Mandated |
 | C-02 | Implementation language is **Python** | Mandated |
-| C-03 | User interface is a **single page** — framework undecided, see §8 | **open** |
+| C-03 | User interface is a single **Streamlit** page | confirmed |
 | C-04 | All store data is **synthetic** and is stated as such wherever shown | Mandated |
 | C-05 | One developer, approximately one week | Given |
 | C-06 | No integration with any live retailer system | Given |
@@ -239,24 +239,35 @@ never returning.
 |---|---|---|
 | OQ-01 | **Is the user a shopper or a store colleague?** | A colleague picking a 60-item order needs crush-order and temperature rules and a handheld layout. Different problem, different requirements |
 | OQ-02 | **Two floors or three in the demo store?** | Two is the minimum that satisfies FR-14; three makes FR-17's fixed floor order visibly non-trivial. Recommend three for the demo and two for the portability test |
-| OQ-03 | **Which single-page framework?** (C-03) | Decides whether an HTTP API exists at all. See below |
+| OQ-03 | ~~Which single-page framework?~~ — **resolved: Streamlit** | Closed. Recorded rather than deleted, with the consequences below |
 | OQ-04 | Does FR-05 ask a question, or show a ranked list to tap? | A shopper on a phone may prefer tapping one of six breads to answering a question. Changes what gets built |
 | OQ-05 | Is FR-09 wanted at all? | Substitutes are a commercial nice-to-have and the first thing to cut under time pressure |
 | OQ-06 | Approved model platform, data residency, and whether shopper-facing generated text is permitted | May require the colleague-facing version first |
 | OQ-07 | How are age-restricted and locked-cabinet products handled? (FR-12) | Needs an "ask a colleague" outcome rather than a route |
 | OQ-08 | What number proves this worked? | Without a success metric the project has no finish line |
 
-**OQ-03 needs deciding before the HLD is finalised.** Two shapes are on the
-table. A **Streamlit page calling the agent in-process** removes the HTTP layer
-entirely — fewer moving parts, faster to build, and Streamlit can still render a
-floor map and a route overlay. A **service plus a static page** keeps a clean
-API boundary, which matters if a different front end comes later, at the cost of
-a day's plumbing.
+### OQ-03 resolved — Streamlit, calling the agent in-process
 
-For one developer and one week, Streamlit is the better trade: FR-20's map is
-the only hard part and it is achievable either way. The API contracts currently
-in the LLD disappear under that choice, which is why this cannot stay open for
-long.
+There is no HTTP layer. The page invokes the compiled agent directly in the same
+process, which removes the whole API surface and roughly a day of plumbing. The
+HLD's layer stack loses its API tier and the LLD's API contracts cease to exist.
+
+**What this costs:** no other client can consume the system. That is an accepted
+trade for a one-week proof of concept. Because the design keeps the
+orchestration and service layers free of any web dependency, putting a service
+in front of the same agent later changes nothing below the page.
+
+**What this requires of the design** — detail belongs in the HLD and LLD, but
+the decision carries three consequences worth recording here:
+
+1. The page re-executes on every interaction, so the store graph, search index
+   and distance matrices must be built **once and cached** rather than per
+   interaction.
+2. The clarification pause in FR-05 is served by **re-invoking the agent with
+   the shopper's answer on the next page run**, not by a second HTTP call.
+3. The search box must **commit on submit** rather than on each keystroke, or
+   NFR-05's budget is spent re-running the agent while the shopper is still
+   typing.
 
 ---
 
@@ -286,7 +297,7 @@ spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.
 | **Route terminus** | Not specified | Ends at a checkout (FR-18) | Confirmed separately. Makes it a complete shopping trip and places chilled items naturally last |
 | **Floor order** | Not specified | Fixed, one pass per floor (FR-17) | Confirmed separately. A distance-only optimiser sends shoppers up and down repeatedly |
 | **Basket** | Not present | FR-21 to FR-24 | Grouping results by availability and moving only the in-stock items means no route is ever planned to an empty shelf |
-| **Front end** | Streamlit | Undecided (C-03) | An earlier choice here was a service plus a static page. Needs settling — OQ-03 |
+| **Front end** | Streamlit | Streamlit (C-03) | **Aligned.** An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists |
 | **Framework** | "Agentic", five named agents | LangGraph (C-01) | Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement |
 | **Verification** | A Verifier agent | NFR-02, a behaviour | **Adopted from the peer spec.** Stated as required behaviour so it can be tested, rather than as a component that might be dropped |
 | **Step-free** | FR-8, confirmed | FR-19, confirmed | **Adopted.** It had been an open question here; it should not have been |
