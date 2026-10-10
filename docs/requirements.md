@@ -67,21 +67,20 @@ store works with no code changes.
 
 | ID | Constraint | Source |
 |---|---|---|
-| C-01 | Agentic framework is **LangGraph** | Mandated |
-| C-02 | Implementation language is **Python** | Mandated |
+| C-01 | Agentic framework is **LangGraph** | confirmed |
+| C-02 | Implementation language is **Python** | confirmed |
 | C-03 | User interface is a single **Streamlit** page | confirmed |
-| C-04 | All store data is **synthetic** and is stated as such wherever shown | Mandated |
-| C-05 | One developer, approximately one week | Given |
-| C-06 | No integration with any live retailer system | Given |
+| C-04 | All store data is **synthetic** and is stated as such wherever shown | confirmed |
+| C-05 | No integration with any live retailer system | confirmed |
 
-| ID | Assumption | If wrong |
-|---|---|---|
-| A-01 | Stock data is treated as current and correct; staleness is not modelled | Availability needs a freshness indicator and an "unknown" state |
-| A-02 | A product present in the planogram with non-zero stock counts as available | — |
-| A-03 | Demo store has **two floors**; the portability test store has three | Settled — see OQ-02 and the note below |
-| A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | Search ranking needs re-tuning at real catalogue scale |
-| A-05 | "Optimal" means shortest walking distance, not shortest time | Edge weights become durations; floor transitions re-weighted |
-| A-06 | The shopper is on a phone or a kiosk, standing in the store | Layout and latency targets change |
+| ID | Assumption | Status | If it later proves wrong |
+|---|---|---|---|
+| A-01 | Stock data is treated as current and correct; staleness is not modelled | confirmed | Availability needs a freshness indicator and an "unknown" state |
+| A-02 | A product present in the planogram with non-zero stock counts as available | confirmed | — |
+| A-03 | Demo store has **two floors**; the portability test store has three | confirmed | Floor count changes, and FR-17's ordering becomes more or less visible |
+| A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
+| A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
+| A-06 | The shopper is on a phone or a kiosk, standing in the store | confirmed | Layout and latency targets change |
 
 **Two floors satisfies every requirement, but thins one demo.** Two floors is
 enough for FR-14, FR-19 and FR-25, and it halves the store data to author. The
