@@ -204,8 +204,8 @@ finished being written.
 | AC-13 | NFR-06 | Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call |
 | AC-14 | NFR-07 | Each malformed store fixture is rejected at load with a message naming the fault |
 | AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
-| AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
 | AC-16 | FR-03 | A scan of a catalogued product's barcode returns that exact product — no choice prompt; a declined camera permission leaves the shopper a working typed-digit path; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
+| AC-17 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
 
 **AC-11 is the test that earns the architecture.** It is the only one that
 proves NFR-01 and NFR-04 rather than asserting them. If every model call can be
