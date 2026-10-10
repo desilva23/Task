@@ -8,8 +8,18 @@ Not a programme. The design is right-sized for that, and
 [`docs/proposed-scope.md`](docs/proposed-scope.md) is explicit about what is in,
 what is out, and what is being assumed.
 
-**Rendered pages:**
-· [High-level design](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) — requirements, search design, basket gate, edge cases
+**The four documents** (being separated; Requirements is done, the other three
+still need the requirements and schema content lifted out of them):
+
+| Document | Status |
+|---|---|
+| [`docs/requirements.md`](docs/requirements.md) · [rendered](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | **v1 — standalone.** What the system must do, acceptance criteria, open questions |
+| [`docs/hld.md`](docs/hld.md) · [rendered](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | Needs §1 requirements removed — they now live in requirements.md |
+| [`docs/lld.md`](docs/lld.md) · [rendered](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | Needs §3 data schemas lifted into a Schema document |
+| Schema | Not yet written — to be extracted from LLD §2 and §3 |
+
+**Other rendered pages:**
+· [High-level design](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) — search design, basket gate, edge cases
 · [Low-level design](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) — schemas, node contracts, algorithms, API
 · [Architecture note](https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C) — LangGraph graph, store model, routing
 
