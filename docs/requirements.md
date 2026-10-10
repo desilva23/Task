@@ -83,29 +83,6 @@ store works with no code changes.
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
 
-### C-03 — Streamlit, calling the agent in-process
-
-There is no HTTP layer. The page invokes the compiled agent directly in the same
-process, which removes the whole API surface and roughly a day of plumbing. The
-HLD's layer stack has no API tier and the LLD specifies no API contracts.
-
-**What this costs:** no other client can consume the system. That is an accepted
-trade. Because the design keeps the orchestration and service layers free of any
-web dependency, putting a service in front of the same agent later changes
-nothing below the page.
-
-**What this requires of the design** — detail belongs in the HLD and LLD, but
-the decision carries three consequences worth recording here:
-
-1. The page re-executes on every interaction, so the store graph, search index
-   and distance matrices must be built **once and cached** rather than per
-   interaction.
-2. The clarification pause in FR-05 is served by **re-invoking the agent with
-   the shopper's answer on the next page run**, not by a second HTTP call.
-3. The search box must **commit on submit** rather than on each keystroke, or
-   NFR-05's budget is spent re-running the agent while the shopper is still
-   typing.
-
 ---
 
 ## 4. Functional requirements
@@ -271,26 +248,3 @@ never returning.
 | **Ranged** | Carried by this particular branch. A product can be in the catalogue without being ranged here |
 | **Connector** | A staircase or a lift joining two floors |
 | **Step-free** | A route using no stairs — between floors, one that travels by lift |
-
----
-
-## 9. Differences from the peer specification
-
-Recorded so they are resolved deliberately rather than discovered late. "Peer
-spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.
-
-| Topic | Peer spec | This document | Why |
-|---|---|---|---|
-| **Location depth** | Floor, aisle, shelf | Floor, aisle, **rack**, shelf (FR-10) | Rack-level addressing was asked for directly. Without it an aisle is 20 m long and the distance is not honest |
-| **Floors** | Two | Three, with two as the portability test (A-03) | Three is the smallest store in which FR-17 is a real decision. The two-floor store becomes the portability test, so the peer spec's shape is still covered |
-| **Route terminus** | Not specified | Ends at a checkout (FR-18) | Confirmed separately. Makes it a complete shopping trip and places chilled items naturally last |
-| **Floor order** | Not specified | Fixed, one pass per floor (FR-17) | Confirmed separately. A distance-only optimiser sends shoppers up and down repeatedly |
-| **Basket** | Not present | FR-21 to FR-24 | Grouping results by availability and moving only the in-stock items means no route is ever planned to an empty shelf |
-| **Front end** | Streamlit | Streamlit (C-03) | **Aligned.** An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists |
-| **Framework** | "Agentic", five named agents | LangGraph (C-01) | Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement |
-| **Verification** | A Verifier agent | NFR-02, a behaviour | **Adopted from the peer spec.** Stated as required behaviour so it can be tested, rather than as a component that might be dropped |
-| **Step-free** | FR-8, confirmed | FR-19, confirmed | **Adopted.** It had been an open question here; it should not have been |
-| **Connectors** | Stairs, escalators and lifts | **Stairs and lifts** (FR-14) | Escalators dropped. Stairs and a lift are the minimum that keeps FR-19 satisfiable, since a lift is the only step-free way between floors |
-| **Portability** | FR-9 plus an NFR | FR-25 plus NFR-08 | **Adopted.** A requirement worth having, and AC-09 makes it testable |
-| **Performance** | 5 s / 10 s | Same (NFR-05) | **Adopted.** Concrete targets beat "fast" |
-| **Prompt injection** | Named in security | NFR-06 | **Adopted.** Shopper text reaches a model, so this is a real surface |

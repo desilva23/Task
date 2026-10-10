@@ -153,13 +153,6 @@
 </table>
 </div>
 
-<div class="callout">
-  <h4>C-03 — Streamlit, calling the agent in-process</h4>
-  <p>There is no HTTP layer. The page invokes the compiled agent directly in the same process, which removes the whole API surface and roughly a day of plumbing. The HLD's layer stack has no API tier and the LLD specifies no API contracts.</p>
-  <p><b>What this costs:</b> no other client can consume the system. That is an accepted trade. Because the design keeps the orchestration and service layers free of any web dependency, putting a service in front of the same agent later changes nothing below the page.</p>
-  <p><b>What this requires of the design</b> — detail belongs in the HLD and LLD, but the decision carries three consequences worth recording here: the page re-executes on every interaction, so the store graph, search index and distance matrices must be built once and cached rather than per interaction; the clarification pause in FR-05 is served by re-invoking the agent with the shopper's answer on the next page run, not by a second HTTP call; and the search box must commit on submit rather than on each keystroke, or NFR-05's budget is spent re-running the agent while the shopper is still typing.</p>
-</div>
-
 <h2><span class="sec">4</span> &nbsp;Functional requirements</h2>
 
 <h3>4.1 &nbsp;Search and request handling</h3>
@@ -369,31 +362,6 @@
     <tr><td><b>Ranged</b></td><td>Carried by this particular branch. A product can be in the catalogue without being ranged here</td></tr>
     <tr><td><b>Connector</b></td><td>A staircase or a lift joining two floors</td></tr>
     <tr><td><b>Step-free</b></td><td>A route using no stairs — between floors, one that travels by lift</td></tr>
-  </tbody>
-</table>
-</div>
-
-<h2><span class="sec">9</span> &nbsp;Differences from the peer specification</h2>
-<div class="prose">
-  <p>Recorded so they are resolved deliberately rather than discovered late. "Peer spec" is the Multi-Floor Store Product Finder requirements dated 9 October 2026.</p>
-</div>
-<div class="tablewrap">
-<table>
-  <thead><tr><th>Topic</th><th>Peer spec</th><th>This document</th><th>Why</th></tr></thead>
-  <tbody>
-    <tr><td><b>Location depth</b></td><td>Floor, aisle, shelf</td><td>Floor, aisle, <b>rack</b>, shelf (FR-10)</td><td>Rack-level addressing was asked for directly. Without it an aisle is 20 m long and the distance is not honest</td></tr>
-    <tr><td><b>Floors</b></td><td>Two</td><td>Three, with two as the portability test (A-03)</td><td>Three is the smallest store in which FR-17 is a real decision. The two-floor store becomes the portability test, so the peer spec's shape is still covered</td></tr>
-    <tr><td><b>Route terminus</b></td><td>Not specified</td><td>Ends at a checkout (FR-18)</td><td>Confirmed separately. Makes it a complete shopping trip and places chilled items naturally last</td></tr>
-    <tr><td><b>Floor order</b></td><td>Not specified</td><td>Fixed, one pass per floor (FR-17)</td><td>Confirmed separately. A distance-only optimiser sends shoppers up and down repeatedly</td></tr>
-    <tr><td><b>Basket</b></td><td>Not present</td><td>FR-21 to FR-24</td><td>Grouping results by availability and moving only the in-stock items means no route is ever planned to an empty shelf</td></tr>
-    <tr><td><b>Front end</b></td><td>Streamlit</td><td>Streamlit (C-03)</td><td><b>Aligned.</b> An earlier choice here was a service plus a static page; settled in favour of Streamlit, so no HTTP layer exists</td></tr>
-    <tr><td><b>Framework</b></td><td>"Agentic", five named agents</td><td>LangGraph (C-01)</td><td>Named explicitly as a constraint. The agent decomposition is an HLD matter, not a requirement</td></tr>
-    <tr><td><b>Verification</b></td><td>A Verifier agent</td><td>NFR-02, a behaviour</td><td><b>Adopted from the peer spec.</b> Stated as required behaviour so it can be tested, rather than as a component that might be dropped</td></tr>
-    <tr><td><b>Step-free</b></td><td>FR-8, confirmed</td><td>FR-19, confirmed</td><td><b>Adopted.</b> It had been an open question here; it should not have been</td></tr>
-    <tr><td><b>Connectors</b></td><td>Stairs, escalators and lifts</td><td><b>Stairs and lifts</b> (FR-14)</td><td>Escalators dropped. Stairs and a lift are the minimum that keeps FR-19 satisfiable, since a lift is the only step-free way between floors</td></tr>
-    <tr><td><b>Portability</b></td><td>FR-9 plus an NFR</td><td>FR-25 plus NFR-08</td><td><b>Adopted.</b> A requirement worth having, and AC-09 makes it testable</td></tr>
-    <tr><td><b>Performance</b></td><td>5 s / 10 s</td><td>Same (NFR-05)</td><td><b>Adopted.</b> Concrete targets beat "fast"</td></tr>
-    <tr><td><b>Prompt injection</b></td><td>Named in security</td><td>NFR-06</td><td><b>Adopted.</b> Shopper text reaches a model, so this is a real surface</td></tr>
   </tbody>
 </table>
 </div>
