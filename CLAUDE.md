@@ -25,7 +25,7 @@ This separation is deliberate and was asked for explicitly. Do not merge them.
 | Document | Owns | Must not contain |
 |---|---|---|
 | `docs/requirements.md` | What the system must do. FR/NFR/AC/OQ register | Architecture, algorithms, schemas, technology choices beyond the stated constraints |
-| `docs/hld.md` | Component architecture, search design, edge cases | Requirements (they live in requirements.md), field-level schemas |
+| `docs/hld.md` | Component architecture, agent decomposition, search design, interface, edge cases | Requirements (they live in requirements.md), field-level schemas |
 | `docs/lld.md` | Module layout, signatures, algorithms, thresholds | Requirements, and the data schemas — §2 and §3 are now stubs pointing at `schema.md` |
 | `docs/schema.md` | The six store CSVs, columns, identifier scheme, referential rules, load-time validation | Requirements, architecture, algorithms |
 
@@ -137,14 +137,13 @@ conversation, pass its URL to the Artifact tool rather than publishing fresh.
    answer is §13 becomes a pointer plus the lifespan ordering, but it is a
    judgement call, not a sweep. Nothing else in `schema.md` §10 is outstanding
    for the LLD except §11 and the edge count, which are items 3 and 4.
-3. **Strip requirements out of `docs/hld.md` §1.** They live in
-   `requirements.md` now.
+3. **Re-render `docs/pages/locator-hld.html`.** The markdown was repaired in
+   commit `d9c7021` — §1 register stripped, §2.1 agent decomposition added, §4
+   interface section added, sections renumbered — and the HTML is behind it.
+   Until it is re-rendered the published HLD artifact shows the old document.
 4. **Remove the API contracts from `docs/lld.md` §11** and the `api/` directory
    from §1, replacing them with the Streamlit mechanics. No HTTP layer exists.
-5. **Sweep the stale node and edge counts.** `schema.md` §8 derives 314 nodes
-   and ~354 edge rows (~704 directed arcs) from a stated layout. The `~900
-   edges` figure in `lld.md` §4, `architecture.md` §4 and `hld.md` §5 was never
-   derived and is wrong. The ~300-node figure stands.
-6. **Render and publish `docs/pages/locator-schema.html`**, if the HTML pages
+   `models/api.py` in §1 goes too.
+5. **Render and publish `docs/pages/locator-schema.html`**, if the HTML pages
    are being kept in step. The other three have artifacts; the schema has none.
-7. **Then build**, if asked. Nothing has been implemented.
+6. **Then build**, if asked. Nothing has been implemented.

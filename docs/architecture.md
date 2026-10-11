@@ -183,7 +183,7 @@ Cost, once, at startup:
 
 | Approach | Operations | Verdict |
 |---|---|---|
-| Dijkstra from all ~300 sources | ~1M | **Chosen.** Sparse graph (~900 edges), so per-source Dijkstra wins |
+| Dijkstra from all ~300 sources | ~1M | **Chosen.** Sparse graph (~700 edges), so per-source Dijkstra wins |
 | Floyd–Warshall | 300³ ≈ 27M | Also fine at this size; simpler to reason about |
 
 Both finish in well under a second in compiled C. The matrices cost about 1 MB

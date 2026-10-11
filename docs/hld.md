@@ -450,7 +450,7 @@ no training pipeline.
 **Shouldn't we train a model on the store data so it learns the map?** No, and
 this is the most common misconception about this kind of system. **The store map
 is not a pattern to learn, it is a fact to look up.** Training is for rules you
-cannot enumerate; this map is 314 nodes and about 354 edge rows in a file. Training a
+cannot enumerate; this map is 314 nodes and about 700 directed edges in six CSV files. Training a
 model to hold it is like training one to remember a phone number instead of
 writing it down.
 

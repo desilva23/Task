@@ -132,7 +132,7 @@ def path(self, u, v, step_free=False):
 | Quantity | Value |
 |---|---|
 | Nodes V | ~300 (216 racks + aisle ends + cross-aisle + 6 cores + entrance + tills) |
-| Edges E | ~900, directed |
+| Edges E | ~700, directed |
 | Build cost | ~1M operations per run, two runs, well under a second |
 | Memory | D 720 KB + P 360 KB per matrix, ~2 MB for both pairs |
 | Query cost | `distance` O(1); `path` O(len), ~15 hops |
