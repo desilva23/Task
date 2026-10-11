@@ -120,29 +120,35 @@ conversation, pass its URL to the Artifact tool rather than publishing fresh.
 - Requirements — https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz
 - HLD — https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB
 - LLD — https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf
+- Schema — https://claude.ai/artifact/AqRDBHcHJ97xXCxKS6TQzf
 - Architecture note — https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C
+
+Claude Docs versions, which export to PDF cleanly and carry drawn figures:
+
+- Requirements — https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b
+- HLD — https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77
+
+**`locator-lld.html` and `locator-schema.html` are generated from their
+markdown**, not hand-edited — rerun the render script rather than patching the
+HTML. The requirements and HLD pages are still hand-maintained, which is how
+the LLD page came to sit two versions behind its markdown.
 
 ## Pending work, in order
 
-1. **Reconcile `schema.md` with stairs-and-lifts.** FR-14 now commits to stairs
-   and lifts only, but `schema.md` still instantiates an escalator in the demo
-   store — the example rows at §6, V-62/63/65, and the §8 edge arithmetic
-   ("1 escalator pair × 2 spans", plus the 4 one-way arcs). Two defensible
-   answers: keep `escalator` in the `kind` enum as a format-supported but
-   unused value, which FR-25 arguably wants, or strip it entirely. Either way
-   §8's counts change. This is a judgement call about the format, not a sweep.
-2. **Decide who owns startup validation.** `lld.md` §13 lists eleven checks and
-   `schema.md` §7 lists forty-seven that supersede them. The rules are schema
-   territory; *when they run* and `validation.py` are LLD territory. The likely
-   answer is §13 becomes a pointer plus the lifespan ordering, but it is a
-   judgement call, not a sweep. Nothing else in `schema.md` §10 is outstanding
-   for the LLD except §11 and the edge count, which are items 3 and 4.
-3. **Bring the LLD up to the HLD.** The HLD now has an eleventh node,
-   `verify`, which the LLD does not: it needs a node contract in §6, a state
-   field, and a place in the routers. The LLD is also the next document due.
-4. **Remove the API contracts from `docs/lld.md` §11** and the `api/` directory
-   from §1, replacing them with the Streamlit mechanics. No HTTP layer exists.
-   `models/api.py` in §1 goes too.
-5. **Render and publish `docs/pages/locator-schema.html`**, if the HTML pages
-   are being kept in step. The other three have artifacts; the schema has none.
-6. **Then build**, if asked. Nothing has been implemented.
+All four documents exist, are internally consistent, and are published. What
+is left is tidying and, if asked, building.
+
+1. **`solution-sketch.md` is stale throughout.** Pre-split data model — `bay`
+   for `rack`, `total_qty`, `band`, `as_of` per position, `store_id` per row.
+   Superseded by `schema.md` rather than correctable; either mark it
+   historical at the top or delete it.
+2. **`README.md` has no Schema row** in the four-document table or the reading
+   order.
+3. **`architecture.md` predates the four-document split.** The edge count and
+   the DATA layer are fixed, but it still reads as a fifth document with its
+   own view of the design. Decide whether it is historical or current.
+4. **The LLD and Schema have no Claude Docs version.** The Requirements and
+   HLD do, and that is what exports to PDF well. The LLD one would want a
+   class diagram and two sequence diagrams (verifier rejects a draft, model
+   failure falls back) — the two figures the peer LLD has and ours does not.
+5. **Then build**, if asked. Nothing has been implemented.
