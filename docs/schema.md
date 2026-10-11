@@ -6,26 +6,17 @@ Companions: [requirements](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) ·
 [HLD](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) ·
 [LLD](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf)
 
-> **What this document owns, and what it does not.** It owns the layout of the
-> store data files: every file, every column, every type, every enumeration,
-> every referential rule, and the validation that runs before the first query is
-> served. It owns the identifier scheme, because an identifier is a data format.
->
-> It contains no requirements (`requirements.md`), no component architecture or
-> edge-case behaviour (`hld.md`), and no module layout, signatures, algorithms
-> or thresholds (`lld.md`). Where a rule here exists to serve a named edge case
-> or acceptance criterion, it cites the ID rather than restating the behaviour.
->
-> **It supersedes LLD §2 and §3.** Those sections describe a JSON layout that
-> this document replaces with CSV. See §10.
+> **What this document is.** The six CSV files that describe one store: every
+> column, every type, every referential rule, and the checks that run before the
+> first search. It is the contract for onboarding a store. Rules cite the
+> requirement or edge case they serve rather than restating it.
 
 ---
 
 ## 1. The store folder
 
-One store is one folder. **The folder name is the store identifier** — there is
-no store ID threaded through every row, because running more than one store
-concurrently is out of scope and a repeated key is a repeated chance to disagree.
+One store is one folder, and **the folder name is the store identifier** — no
+store ID is repeated on every row.
 
 ```
 data/
@@ -51,56 +42,28 @@ data/
 | `map_nodes.csv` | store map | one row per walkable point | ~310 |
 | `map_edges.csv` | store map | one row per path | ~350 |
 
-**Why six files and not the four FR-25 names.** FR-25 says a different store
-works by replacing the data files only, and the requirements count four *kinds*
-of data. A graph does not fit one table, so the map is two files — that was
-settled. `store.csv` is the sixth, and it exists because three facts are
-properties of the store rather than of any row: the planogram version, the stock
-extract time, and the statement that the data is synthetic (C-04). The
-alternative is repeating all three on every row of three files, where they can
-drift apart. **FR-25's wording should read "the data files" rather than "the four
-data files"** — the requirement is unchanged, the count was never the point.
+The map is two files because a graph does not fit one table. `store.csv` holds
+the three facts that belong to the store rather than to any row: the planogram
+version, the stock extract time, and the statement that the data is synthetic
+(C-04).
 
-### 1.2 The join graph
+### 1.2 How they join
 
-```
-store.csv ─── no foreign keys. Provenance only.
+`planogram.csv` is the join table: `sku` into the catalogue, `node_id` into the
+map. Three cardinalities carry meaning, and §6 enforces them:
 
-              products.csv
-                sku  (PK, text)
-                 ▲                      ▲
-    1:1, total   │                      │   N:1, partial
-                 │                      │
-          stock.csv                planogram.csv
-            sku  (PK, FK)            sku      (FK) ─┘
-                                     node_id  (FK) ─┐
-                                     PK = (sku, node_id, shelf_no, facing_from)
-                                                    │
-                                                    ▼
-                                              map_nodes.csv
-                                                node_id  (PK, text)
-                                                 ▲           ▲
-                                     from_node   │           │  to_node
-                                                 └─ map_edges.csv ─┘
-                                                      edge_id (PK)
-```
-
-Three cardinalities carry meaning and are enforced in §6:
-
-- **`stock.csv` is total over `products.csv`.** Every SKU has a stock row. A
-  missing row is an authoring mistake, never a meaning — "we don't carry it" is
-  said with `ranged=false`, not with absence.
-- **`planogram.csv` is partial.** A SKU with no placement is legitimate: it is
-  not ranged here (EC-04), or it is ranged but has no recorded shelf (EC-19).
-- **`planogram.csv` is many-to-one on both keys.** One SKU may hold several
+- **`stock.csv` is total over `products.csv`.** Every SKU has a stock row. "We
+  don't carry it" is said with `ranged=false`, never with a missing row.
+- **`planogram.csv` is partial.** A SKU with no placement is legitimate — not
+  ranged here (EC-04), or ranged with no recorded shelf (EC-19).
+- **`planogram.csv` is many-to-one both ways.** One SKU may hold several
   placements (EC-20, the normal case) and one node holds many SKUs.
 
 ---
 
 ## 2. CSV conventions
 
-These are not stylistic. Each one closes a failure mode that CSV introduces and
-JSON did not have.
+Each one closes a failure mode CSV introduces.
 
 ### 2.1 File format
 
@@ -117,10 +80,8 @@ JSON did not have.
 
 ### 2.2 The three-state boolean
 
-**This is the single most important rule in the document.**
-
-A dietary flag has three states: `true`, `false` and *unknown*. CSV has no null,
-so the encoding is explicit and the vocabulary is closed:
+**The single most important rule here.** A dietary flag has three states, and
+CSV has no null, so the vocabulary is explicit and closed:
 
 | Cell content | Means |
 |---|---|
@@ -128,32 +89,25 @@ so the encoding is explicit and the vocabulary is closed:
 | `false` | False. **Recorded**, negative — someone checked |
 | *(empty)* | **Unknown.** Nobody checked |
 
-Nothing else is accepted. `TRUE`, `True`, `T`, `1`, `0`, `yes`, `Y`, `NULL`,
-`N/A`, `-`, `n/a` and a cell of spaces are all refusals (V-04), including in the
-two-state columns. A loader that coerces is a loader that guesses.
+`TRUE`, `T`, `1`, `0`, `yes`, `NULL`, `N/A`, `-` and a cell of spaces are all
+refusals (V-04). A loader that coerces is a loader that guesses.
 
-**The trap this closes.** `pandas.read_csv` reads an empty cell as `NaN`, and
-`NaN` is falsy in Python. So `if product.diet_gluten_free:` silently means "not
-gluten free" for every product nobody checked — the exact collapse NFR-03
-forbids, arrived at by doing nothing wrong in particular. The loader must read
-these columns as strings and map the three tokens explicitly. Never `dtype=bool`,
-never `fillna(False)`, never a truthiness test at a read site.
+**The trap.** `pandas.read_csv` reads an empty cell as `NaN`, which is falsy, so
+`if product.diet_gluten_free:` silently means "not gluten free" for every
+product nobody checked — the collapse NFR-03 forbids. Read these columns as
+strings and map the three tokens explicitly. Never `dtype=bool`, never
+`fillna(False)`.
 
-**Which columns are three-state, and which are two.** Every `diet_*` column is
-three-state — that is what the prefix is for, so the rule is one rule and not a
-list to remember. `age_restricted`, `own_brand`, `ranged`, `seasonal`,
-`bidirectional`, `step_free`, `trolley` and `is_open` are **two-state and
-required**: an empty cell is a refusal. Age restriction is a legal fact the
-retailer knows about every line it sells, and an edge either is step-free or it
-is not. Unknown is not a state those fields have, and pretending otherwise
-would make the three-state rule look like decoration rather than a safety
-property.
+**Every `diet_*` column is three-state.** `age_restricted`, `own_brand`,
+`ranged`, `seasonal`, `bidirectional`, `step_free`, `trolley` and `is_open` are
+**two-state and required** — an empty cell is a refusal. Those fields have no
+unknown state.
 
 ### 2.3 List-valued columns
 
-`synonyms` and `allergens_contains` hold lists. They are **pipe-delimited**
-(`|`), not comma-delimited, because a comma is the field delimiter and the
-quoting that would be needed does not survive a round trip through a spreadsheet.
+`synonyms` and `allergens_contains` are **pipe-delimited** (`|`) — a comma is
+the field delimiter, and the quoting needed to escape it does not survive a
+round trip through a spreadsheet.
 
 ```
 coke|cola|coca cola
@@ -163,8 +117,7 @@ coke|cola|coca cola
 - No empty segments, no leading or trailing `|` (V-05).
 - An empty cell is an empty list — **except for `allergens_contains`**, below.
 
-**`allergens_contains` is three-state at list level.** This is §2.2's rule again,
-one level up, and it is easy to get wrong:
+**`allergens_contains` is three-state at list level** — §2.2's rule one level up:
 
 | Cell content | Means |
 |---|---|
@@ -172,9 +125,9 @@ one level up, and it is easy to get wrong:
 | `none` | **Checked. Contains none of the declared allergens** |
 | *(empty)* | **Unknown.** The declaration has not been recorded |
 
-The literal `none` is a value, not a convention — it is how the data says
-"somebody looked and the answer was nothing", which is a different claim from an
-empty cell. `none` may not appear alongside another allergen (V-22).
+`none` is a value, not a convention: it says somebody looked and found nothing,
+which is a different claim from an empty cell. It may not appear alongside
+another allergen (V-22).
 
 ### 2.4 Columns that must be read as text
 
@@ -184,13 +137,9 @@ empty cell. `none` may not appear alongside another allergen (V-22).
 | `barcode` | EAN-13 is 13 digits. Excel renders it as `5.449E+12` and **saves it that way** |
 | `node_id`, `edge_id`, `from_node`, `to_node` | Safe in practice (they start with a letter) but declared text for consistency |
 
-The authoring guidance is one line: **format these columns as Text before typing
-in them, and never open a store folder in Excel without doing so.** A loader
-cannot reliably detect the damage after the fact — `5449000000996` and
-`5.449E+12` are both plausible cell contents, and a lost leading zero leaves a
-valid-looking SKU. V-21 catches the length violation on `barcode`; nothing
-catches a mangled `sku` except a broken join, which is why the convention is
-that SKUs do not begin with a zero.
+**Format these columns as Text before typing in them.** A loader cannot detect
+the damage afterwards — a lost leading zero leaves a valid-looking SKU. Hence
+the convention that SKUs never begin with a zero.
 
 ### 2.5 Numbers and units
 
@@ -204,20 +153,17 @@ that SKUs do not begin with a zero.
 | Timestamp (`stock_as_of`) | ISO 8601, UTC, `Z` suffix | `2026-10-09T08:40:00Z` |
 | Date (`planogram_version`) | ISO 8601 date | `2026-10-01` |
 
-**Coordinates are presentational and distances are authoritative.** `x_m`/`y_m`
-exist to draw the floor plate and the route overlay (FR-20). They are **never**
-used to compute a distance — every distance comes from `weight_m` on the edges.
-The two can legitimately disagree: an aisle you cannot walk straight down is
-longer than the gap between its endpoints. W-03 warns when they disagree beyond
-a tolerance, because a large disagreement is usually a typo rather than a dogleg.
+**Coordinates are presentational; distances are authoritative.** `x_m`/`y_m`
+draw the floor plate (FR-20) and are never used to compute a distance — that
+comes from `weight_m`. They may legitimately disagree, so W-03 warns rather than
+refuses.
 
 ---
 
 ## 3. Identifier scheme
 
-Every walkable point has an identifier that encodes where it is. The format is
-load-bearing: it makes a wrong identifier visible by eye, and it lets the UI
-label a location without a lookup.
+Every walkable point has an identifier that encodes where it is, so a wrong one
+is visible by eye.
 
 | Entity | Format | Example | Graph node? |
 |---|---|---|---|
@@ -233,11 +179,10 @@ label a location without a lookup.
 | Shelf | `shelf_no` | `2` | **no** — a column on a placement |
 | Facing | `facing_from` | `1` | **no** — a column on a placement |
 
-Levels are integers, `0` upward, and are contiguous — `F0`, `F1`, `F2`. Aisle
-and rack numbers are zero-padded to two digits in the identifier and stored
-unpadded in their own integer columns; both are present, and V-50 checks they
-agree. The redundancy is deliberate: the identifier is for humans reading a
-diff, the columns are for the code.
+Levels are integers from `0` and contiguous. Aisle and rack numbers appear
+zero-padded in the identifier and unpadded in their own columns; V-50 checks
+they agree. The identifier is for humans reading a diff, the columns are for the
+code.
 
 **The graph stops at rack level.** A shelf is not somewhere you walk, so it is a
 column on a placement rather than a node. That keeps the map at roughly 310 rows
@@ -249,12 +194,9 @@ F1 · A07 · R03   ·   S02 · P1
    a graph node        spoken, not walked
 ```
 
-**Three node types are new here**, and they close a gap: LLD §2 had no format
-for a counter, a locked cabinet or a dump bin, while LLD §3.2 required
-`location_type` values of `COUNTER`, `ASSISTED` and `DUMP_BIN` that must route
-*somewhere*. A deli counter is not a rack — it has no shelf and no facing — so
-it gets its own type rather than being a rack that lies about itself. This is
-what makes V-46's compatibility check expressible.
+**`counter`, `cabinet` and `bin` are new here.** The LLD could label a product
+as being at a counter but had no node format to route to — and a deli counter is
+not a rack, because it has no shelf and no facing.
 
 ---
 
@@ -265,8 +207,8 @@ permitted and meaningful · **3** three-state per §2.2.
 
 ### 4.1 `store.csv`
 
-Two columns, `key` and `value`, one row per key. The key set is closed: a
-missing key and an unknown key are both refusals (V-10).
+Two columns, `key` and `value`. The key set is closed — a missing or unknown key
+is a refusal (V-10).
 
 | `key` | `value` | Example |
 |---|---|---|
@@ -276,17 +218,12 @@ missing key and an unknown key are both refusals (V-10).
 | `planogram_version` | ISO date; bumped by a range change | `2026-10-01` |
 | `stock_as_of` | ISO 8601 UTC timestamp | `2026-10-09T08:40:00Z` |
 
-**Why key–value rather than columns.** This is the one file whose content is not
-a list of records, and a two-column shape means adding a store-level fact later
-never changes a header. `data_provenance` earns its row by making C-04's
-"synthetic data" statement a property of the data: the portability store cannot
-be onboarded without declaring it, so the banner cannot be lost by forgetting to
-hard-code it.
+`data_provenance` makes C-04's synthetic-data statement a property of the data,
+so the banner cannot be lost by forgetting to hard-code it.
 
-**Not in this file:** `min_level` and `max_level`, which are derived from
-`map_nodes.level`, and the default start node, which is the sole `entrance` node.
-Both were fields in LLD §3.4. Deriving them removes a class of disagreement
-between the map and the thing describing the map, and retires LLD §13 check 10.
+**Not here:** `min_level` and `max_level`, derived from `map_nodes.level`, and
+the start node, which is the sole `entrance`. Deriving them removes a chance for
+the map and its description to disagree.
 
 ### 4.2 `products.csv`
 
@@ -313,10 +250,8 @@ this branch.
 | `own_brand` | bool | Y | Two-state. Ranking tiebreak |
 | `popularity` | float | Y | 0.0–1.0, 2 dp. Ranking tiebreak |
 
-`department` and `aisle_category` are free text rather than enumerations on
-purpose: a new store brings its own category names, and FR-25 says a different
-store needs no code change. They are validated for internal consistency (W-01)
-rather than against a fixed list.
+`department` and `aisle_category` are free text, not enumerations: a new store
+brings its own category names and FR-25 forbids a code change for that.
 
 ### 4.3 `stock.csv`
 
@@ -329,21 +264,13 @@ One row per SKU, total over `products.csv`. The branch position.
 | `shelf_qty` | int | Y | ≥ 0 |
 
 **`ranged` is load-bearing.** `ranged=false` and `shelf_qty=0` are different
-answers to a shopper — "we don't carry it at this branch" against "we carry it
-and it's sold out" — they take different paths through the graph, and FR-08
-requires the distinction. Conflating them is EC-04.
+answers to a shopper — "we don't carry it here" against "we carry it and it's
+sold out" — and FR-08 requires the distinction. `ranged=false` with
+`shelf_qty>0` is contradictory and refused (V-31).
 
-`ranged=false` with `shelf_qty>0` is **contradictory and refused** (V-31). A
-real feed does produce it, for a line being run out, and that is a third answer
-("last few, then gone") rather than a variation on the first two. It is not
-modelled, so it is not permitted — a run-out state would be a new column here,
-not new code.
-
-**There is no encoding for "quantity unknown."** EC-18's unknown-availability
-state is a runtime condition — the stock service unreachable in a real build —
-and this is a file, which is either present or not. An empty `shelf_qty` is a
-refusal rather than an unknown, so nobody can introduce a silent third state
-into the one column where a guess becomes a shopper walking to an empty shelf.
+**There is no "quantity unknown".** EC-18 is a runtime condition, not a data
+state; an empty `shelf_qty` is a refusal. This is the one column where a guess
+sends a shopper to an empty shelf.
 
 ### 4.4 `planogram.csv`
 
@@ -360,16 +287,9 @@ into the map.
 | `facing_count` | int | N | ≥ 1. Same rule as `shelf_no` |
 | `seasonal` | bool | Y | Two-state. Suppressed at zero stock (EC-24) |
 
-**PK is the composite `(sku, node_id, shelf_no, facing_from)`.** No surrogate
-`placement_id`, because nothing references a placement — unlike an edge, which
-needs a name so it can be taken out of service. A SKU legitimately appears twice
-on the same rack at different shelves, so the composite is the natural key and
-`(sku, node_id)` alone is not unique.
-
-**Column names differ from LLD §3.2** — `shelf`→`shelf_no`, `facing`→
-`facing_from`, `facings`→`facing_count`. In a JSON object `facing` and `facings`
-are merely similar; as adjacent CSV headers they are a transcription error
-waiting to happen.
+**PK is the composite `(sku, node_id, shelf_no, facing_from)`** — a SKU can
+appear twice on one rack at different shelves, so `(sku, node_id)` is not
+unique. There is no surrogate key, because nothing references a placement.
 
 #### `location_type`
 
@@ -385,9 +305,9 @@ waiting to happen.
 
 #### Compatibility with the target node (V-46)
 
-A placement's `location_type` constrains what kind of node it may point at, and
-whether the shelf columns are set. This is the check that stops a deli counter
-acquiring a shelf number.
+`location_type` constrains the kind of node a placement may point at and whether
+the shelf columns are set. This is what stops a deli counter acquiring a shelf
+number.
 
 | `location_type` | Permitted `node_type` | `shelf_no` · `facing_from` · `facing_count` |
 |---|---|---|
@@ -399,8 +319,7 @@ acquiring a shelf number.
 | `ASSISTED` | `cabinet` | **forbidden** |
 | `COUNTER` | `counter` | **forbidden** |
 
-"Forbidden" means the cell is empty. This supersedes LLD §13 check 11, which
-covered only `ASSISTED` and `COUNTER` and only the shelf.
+"Forbidden" means the cell is empty.
 
 ### 4.5 `map_nodes.csv`
 
@@ -420,29 +339,15 @@ One row per walkable point.
 | `y_m` | float | Y | Presentational (§2.5) |
 | `is_open` | bool | Y | Two-state. `false` removes the node and its edges before the matrices are built (EC-32) |
 
-**`floor_name` is denormalised on purpose.** It is a property of a level and
-repeats on every node of that level. The alternatives were a third map file or a
-mixed-shape `store.csv`, and the map is two files by settled decision. A
-spreadsheet author fills the column down; V-51 refuses a store where two nodes
-on one level disagree. The repetition is paid for by one validation rule.
+Three columns need a word.
 
-**`aisle` is optional on a counter, a cabinet and a bin** because their
-identifiers encode no aisle (§3) and directions still want to say one — "aisle
-12, the locked cabinet on your left" is a better instruction than "the locked
-cabinet". It is context for the phrasing, not an address: the node_id is the
-address, and V-50 does not cross-check this column for these three types
-because there is nothing in the identifier to check it against.
-
-**`shelf_count` is new.** Without it, `shelf_no` has no upper bound and
-"eye level" cannot be derived from a shelf number — shelf 2 of 3 is eye level,
-shelf 2 of 6 is not. FR-10 asks for a shelf, and the directions in FR-20 want to
-say it in words.
-
-**`zone` is a label, and closures are per-node.** EC-32 speaks of a zone
-carrying an open flag; `is_open` is on the node instead. A node is the thing
-with a position, closing an arbitrary set of nodes is strictly more capable than
-closing whole zones, and it needs no zone table — so `zone` stays a string used
-for grouping and labelling, with nothing hanging off it.
+- **`floor_name`** repeats on every node of a level. An author fills it down;
+  V-51 refuses a store where two nodes on one level disagree.
+- **`shelf_count`** bounds `shelf_no` and lets "eye level" be derived — shelf 2
+  of 3 is eye level, shelf 2 of 6 is not.
+- **`zone`** is a label with nothing hanging off it. Closures are per-node via
+  `is_open`, which is more capable than closing whole zones and needs no zone
+  table.
 
 ### 4.6 `map_edges.csv`
 
@@ -462,40 +367,22 @@ according to `bidirectional`**; the loader expands it into the directed graph.
 | `trolley` | bool | Y | Two-state. `false` for `stairs` (V-62) |
 | `is_open` | bool | Y | Two-state. `false` removes the edge (EC-30) |
 
-**Effective weight is `weight_m + penalty_m`,** and that is the only arithmetic
-the loader does to an edge.
+Four rules the loader must follow.
 
-**Why the lift penalty is in metres.** A lift ride is about 6 m of travel plus
-perhaps 30 seconds of waiting. Rather than mixing units, the wait is converted
-to its walking equivalent, so the matrix stays in one unit and Dijkstra needs no
-special case for vertical edges. It is also the single tuning knob for "stop
-bouncing between floors": raise the penalty and the router clusters harder by
-floor. If "optimal" is later redefined as time (A-05), convert every weight to
-seconds and nothing else changes.
-
-**Why `edge_id` exists when `placement` has no surrogate key.** Two nodes can be
-joined by more than one path — the rear core carries both a lift and stairs
-between the same pair of core nodes — so `(from_node, to_node)` is not
-unique and the table is a multigraph. An out-of-service connector also has to be
-nameable: LLD §4's `invalidate(disabled)` needs a handle, and "the rear lift
-between floors 1 and 2" is `E0137`.
-
-**The loader must collapse parallel edges to the minimum effective weight.** A
-sparse adjacency matrix holds one value per cell, so three rows joining the same
-pair become one entry — the cheapest. For the step-free matrix, filter to
-`step_free=true` **first and then** take the minimum, or the stairs' lower
-weight hides the lift that the step-free route depends on. Doing it in the wrong
-order produces a step-free matrix that is quietly the same as the full one,
-which AC-07 would catch and a reviewer might not.
-
-**Vertical edges** join two `core` nodes at the same core position (`FRONT` or
-`REAR`) on different levels (V-63). Non-adjacent levels are permitted — an
-express lift is a real thing — but the pair must still be the same core, because
-a lift that arrives in a different part of the building is two connectors.
-`bidirectional=false` exists for escalators, which are genuinely one-way, and
-is why the graph is built directed. The demo store has none, so every row in it
-is bidirectional — but the matrix build must not assume that, or the first
-store with an escalator routes shoppers the wrong way up one.
+- **Effective weight is `weight_m + penalty_m`.** The only arithmetic done to an
+  edge.
+- **The lift penalty is in metres**, not seconds: a 30-second wait becomes its
+  walking equivalent, so the matrix stays in one unit. It is also the tuning
+  knob for floor-bouncing — raise it and the router clusters harder by floor.
+- **Parallel edges collapse to the minimum effective weight.** The rear core
+  carries both a lift and stairs between the same pair of nodes, so
+  `(from_node, to_node)` is not unique — which is why `edge_id` exists. **For
+  the step-free matrix, filter to `step_free=true` first and then take the
+  minimum**, or the stairs' lower weight hides the lift. The wrong order gives a
+  step-free matrix quietly identical to the full one.
+- **A vertical edge joins two `core` nodes at the same core position on
+  different levels** (V-63). Non-adjacent levels are allowed — an express lift
+  is real — but a connector arriving at a different core is two connectors.
 
 ---
 
@@ -539,13 +426,13 @@ E0137,F0-CORE-REAR,F1-CORE-REAR,lift,6.0,25.0,true,true,true,true
 E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true
 ```
 
-Four things to read off it. `diet_halal` is **empty** — unknown, not false, and
-a halal requirement will not be satisfied by this product (NFR-03).
-`allergens_contains` is `none` — checked, and the declaration is empty, which is
-a stronger claim than the empty cell above it. The end-cap placement has three
-empty shelf columns, because an end cap has no shelf (V-46). And `E0137`,
-`E0138` and `E0139` are three parallel rows on one pair of nodes, which is why
-`edge_id` exists and why the loader takes a minimum.
+Four things to read off it. `diet_halal` is **empty** — unknown, not false, so a
+halal requirement will not be satisfied (NFR-03). `allergens_contains` is
+`none` — checked and empty, a stronger claim than the blank cell above it. The
+end-cap placement leaves the three shelf columns empty, because an end cap has
+no shelf (V-46). And `E0137` and `E0139` are parallel rows on one pair of
+nodes — the lift and the stairs — which is why `edge_id` exists and why the
+loader takes a minimum.
 
 ---
 
@@ -665,14 +552,13 @@ Run after the open nodes and edges are expanded into the directed graph.
 | V-73 | Every node with a placement is reachable from the `entrance` | A product on an orphaned rack |
 | V-74 | Every `till` node reachable from every level | FR-18 unsatisfiable from upstairs |
 
-V-70 and V-72 are run on the graph **after** `is_open=false` rows are removed,
-because that is the graph the matrices are built from. Closing a node or a
-connector can disconnect a store, and the right moment to find out is at load.
+V-70 and V-72 run **after** `is_open=false` rows are removed, because that is
+the graph the matrices are built from.
 
 ### 7.9 Warnings
 
-These load the store and log. Each describes data that is suspicious but has a
-defined meaning, and refusing would block a legitimate case.
+These load the store and log. Each is suspicious but has a defined meaning, so
+refusing would block a legitimate case.
 
 | ID | Warning | Why not a refusal |
 |---|---|---|
@@ -682,19 +568,17 @@ defined meaning, and refusing would block a legitimate case.
 | W-04 | A node of type `rack` with no placements on it | An empty rack is real; a floor of them means the planogram was not finished |
 | W-05 | A `diet_*` column empty for more than half the catalogue | Honest unknown, but it makes dietary filtering useless, and silently so |
 
-**W-02 and V-32 are the same shape of problem with different answers**, and the
-difference is the point. A missing *stock* row has no meaning, so it is refused.
-A missing *placement* has a defined meaning that the system already handles, so
-it warns. A validation tier that refuses everything suspicious cannot be lived
-with, and one that warns about everything is not validation.
+The line between the tiers: a missing *stock* row has no meaning, so it is
+refused. A missing *placement* has a meaning the system already handles, so it
+warns.
 
 ---
 
 ## 8. Sizing
 
-Row counts for the two stores. **The catalogue and the stock position do not
-grow with floor count** — the same ~180 products sit somewhere, so only the map
-changes shape. That is what makes a three-floor demo nearly free.
+**The catalogue and the stock position do not grow with floor count** — the same
+~180 products sit somewhere, so only the map changes shape. That is what makes a
+three-floor demo nearly free.
 
 | File | Demo — 3 floors | Portability — 2 floors |
 |---|---|---|
@@ -705,7 +589,7 @@ changes shape. That is what makes a three-floor demo nearly free.
 | `map_nodes.csv` | **314** | **143** |
 | `map_edges.csv` | **352 rows → 704 arcs** | **160 rows → 320 arcs** |
 
-Node arithmetic for the demo store, with the authoring choices named:
+Where the 314 nodes come from:
 
 | Term | Count | From |
 |---|---|---|
@@ -727,16 +611,9 @@ Edge rows: 180 rack-to-rack (5 per aisle × 36) + 72 rack-to-aisle-end +
 Every row in the demo store is bidirectional, so expanding each into two arcs
 gives **704 directed arcs**.
 
-**This corrects the "~900 edges" figure** carried in `lld.md` §4,
-`architecture.md` §4 and the HLD's review answers. Those numbers predate the
-rack-level layout being pinned down and were never derived; ~700 is what the
-arithmetic above gives. The node figure of ~300 stands — 314 against an
-estimated 300. Neither changes any conclusion: Dijkstra from every node is ~1M
-operations either way, and the matrices are about 2 MB for both pairs.
-
 The aisle, rack and till counts are **authoring choices**, not derived facts.
-Changing them changes only `map_nodes.csv`, `map_edges.csv` and the `node_id`
-values in `planogram.csv` — which is precisely what FR-25 and AC-09 test.
+Changing them touches only the two map files and the `node_id` values in
+`planogram.csv` — which is what FR-25 and AC-09 test.
 
 ---
 
@@ -754,33 +631,3 @@ values in `planogram.csv` — which is precisely what FR-25 and AC-09 test.
 | **Any shopper or colleague data** | No PII reaches a file in a public repository. Baskets and threads are runtime state |
 | **Timestamps per stock position** | A-01 does not model staleness. One `stock_as_of` for the extract (§4.1) |
 | **A "quantity unknown" encoding** | EC-18 is a runtime condition, not a data state (§4.3) |
-
----
-
-## 10. Consequences for the other documents
-
-This document took ownership of territory previously held elsewhere. Recorded
-so the duplication is closed deliberately rather than left to drift, and kept
-after the fact so the trail survives.
-
-**Closed, as of 12 October 2026:**
-
-| Document | What changed |
-|---|---|
-| `lld.md` §2 | Now a numbered stub pointing at §3 here. Kept as a stub, not cut, so cross-references to §4–§15 still resolve |
-| `lld.md` §3 | Now a numbered stub pointing at §4 here, with a table of what moved where |
-| `lld.md` §1 | `data/` lists the six CSVs. The `api/` package and the separate frontend went with it — there is no HTTP layer |
-| `lld.md` §4 | `~900 edges` → `~700` |
-| `lld.md` §13 | Stopped listing rules. §7 here owns them; §13 owns when they run, in five ordered phases |
-| `lld.md` §11 | Replaced by the Streamlit interface |
-| `hld.md` | Edge count corrected; the review answers renumbered with the document |
-| `architecture.md` §4 | Edge count corrected; the DATA layer says six CSVs rather than JSON in memory |
-| `requirements.md` FR-25 | `the four data files` → `its data files`, and the same in the users table and the HLD. The map is two files, so a fixed count was never right |
-
-**Still open:**
-
-| Document | What it needs |
-|---|---|
-| `solution-sketch.md` | Its data model predates the four-document split — `bay` for `rack`, `total_qty`, `band`, `as_of` per position, `store_id` per row. Stale throughout, and superseded rather than corrected |
-| `README.md` | Add the Schema row to the four-document table and the reading order |
-| This document | No rendered page yet. The other three have artifacts; the rack-elevation figure from the old LLD §2 belongs on it, since the identifier scheme it illustrates now lives here |
