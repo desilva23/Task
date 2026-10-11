@@ -426,7 +426,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | **Speed** (NFR-05) | All-pairs shortest paths are precomputed at startup, so routing is a matrix lookup. BM25 index and distance matrices are cached across page runs | AC-12 |
 | **Input safety** (NFR-06) | Shopper text is passed as data, never concatenated into instructions. Tool arguments are typed and validated. Catalogue text is treated as untrusted — it is editable outside the retailer | AC-13 |
 | **Data integrity** (NFR-07) | The store folder is validated at load: orphan SKUs, placements pointing at missing map points, disconnected components and non-positive edge weights all refuse startup | AC-14 |
-| **Portability** (NFR-08) | Nothing store-specific exists above the data layer. A second store with a different floor count is four replaced files | AC-09 |
+| **Portability** (NFR-08) | Nothing store-specific exists above the data layer. A second store with a different floor count is a replaced set of data files | AC-09 |
 | **Explainability** (NFR-09) | Ranking is a lexicographic tuple sort, so the order can be stated as a reason rather than a score. A route can be read back as the node path it came from | — |
 | **Accessibility** (NFR-10) | Step-free routing runs over a second distance matrix built on the lift-only subgraph. The directions list is the accessible route, not a caption on the map | AC-07 |
 | **Mobile** (NFR-11) | Single column at 390 px, floor plate scaled to width, no horizontal scroll | AC-15 |
@@ -516,7 +516,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 
 ## 7. Onboarding a new store
 
-FR-25 says a different store is four replaced files and no code changes. This
+FR-25 says a different store is a replaced set of data files and no code changes. This
 is what that costs in practice, and it is the honest answer to "could we run
 this in a real branch?"
 

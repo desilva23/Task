@@ -667,7 +667,7 @@ Crayons are out of stock and left out of the route.</pre>
     <tr><td><b>Speed</b><br>NFR-05</td><td>All-pairs shortest paths are precomputed at startup, so routing is a matrix lookup. Index and matrices are cached across page runs</td><td class="id">AC-12</td></tr>
     <tr><td><b>Input safety</b><br>NFR-06</td><td>Shopper text is passed as data, never concatenated into instructions. Tool arguments are typed and validated. Catalogue text is treated as untrusted — it is editable outside the retailer</td><td class="id">AC-13</td></tr>
     <tr><td><b>Data integrity</b><br>NFR-07</td><td>The store folder is validated at load: orphan SKUs, placements pointing at missing map points, disconnected components and non-positive edge weights all refuse startup</td><td class="id">AC-14</td></tr>
-    <tr><td><b>Portability</b><br>NFR-08</td><td>Nothing store-specific exists above the data layer. A second store with a different floor count is four replaced files</td><td class="id">AC-09</td></tr>
+    <tr><td><b>Portability</b><br>NFR-08</td><td>Nothing store-specific exists above the data layer. A second store with a different floor count is a replaced set of data files</td><td class="id">AC-09</td></tr>
     <tr><td><b>Explainability</b><br>NFR-09</td><td>Ranking is a lexicographic tuple sort, so the order can be stated as a reason rather than a score. A route reads back as the node path it came from</td><td class="id">—</td></tr>
     <tr><td><b>Accessibility</b><br>NFR-10</td><td>Step-free routing runs over a second distance matrix built on the lift-only subgraph. The directions list is the accessible route, not a caption on the map</td><td class="id">AC-07</td></tr>
     <tr><td><b>Mobile</b><br>NFR-11</td><td>Single column at 390 px, floor plate scaled to width, no horizontal scroll</td><td class="id">AC-15</td></tr>
@@ -784,7 +784,7 @@ Crayons are out of stock and left out of the route.</pre>
 
 <h2><span class="sec">7</span> &nbsp;Onboarding a new store</h2>
 <div class="prose">
-  <p>FR-25 says a different store is four replaced files and no code changes. This is what that costs in practice, and it is the honest answer to "could we run this in a real branch?"</p>
+  <p>FR-25 says a different store is a replaced set of data files and no code changes. This is what that costs in practice, and it is the honest answer to "could we run this in a real branch?"</p>
 </div>
 <div class="tablewrap">
 <table>

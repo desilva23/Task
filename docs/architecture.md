@@ -34,7 +34,8 @@ LANGGRAPH      9 nodes · 3 conditional edges · 1 cycle · 1 interrupt
    │ plain function calls — no model
 SERVICES       catalogue · planogram · stock · routing (matrix + TSP)
    │
-DATA           store_graph · planogram · products · stock  (JSON, in memory)
+DATA           map_nodes · map_edges · planogram · products · stock · store
+               (six CSVs, loaded and cached once — schema.md §1)
 ```
 
 The load-bearing property: **the orchestrator holds no facts.** Gen AI lives

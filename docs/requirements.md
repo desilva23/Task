@@ -51,7 +51,7 @@ store works with no code changes.
 |---|---|---|
 | **Shopper** | Find one or several products quickly; know before walking whether it is worth the trip | Yes |
 | **Store colleague** | — | No |
-| **Store data owner** | Onboard a new store by supplying four files | Yes |
+| **Store data owner** | Onboard a new store by supplying its data files | Yes |
 
 ---
 
@@ -130,7 +130,7 @@ store works with no code changes.
 
 | ID | Requirement | Status |
 |---|---|---|
-| FR-25 | A **different store works by replacing the four data files only** — no code changes, including a store with a different number of floors | confirmed |
+| FR-25 | A **different store works by replacing its data files only** — no code changes, including a store with a different number of floors | confirmed |
 
 ---
 

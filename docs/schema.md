@@ -454,7 +454,7 @@ according to `bidirectional`**; the loader expands it into the directed graph.
 | `edge_id` | text | Y | **PK.** `E{n:04}`, e.g. `E0137` |
 | `from_node` | text | Y | FK → `map_nodes.node_id` |
 | `to_node` | text | Y | FK → `map_nodes.node_id`, ≠ `from_node` |
-| `kind` | enum | Y | `aisle` · `corridor` · `lift` · `escalator` · `stairs` |
+| `kind` | enum | Y | `aisle` · `corridor` · `lift` · `escalator` · `stairs`. The demo store uses no `escalator` — FR-14 commits to stairs and lifts — but the format accepts one, because FR-25 means another store may have them |
 | `weight_m` | float | Y | **> 0.** Walking distance in metres |
 | `penalty_m` | float | Y | ≥ 0. Wait cost as its walking equivalent |
 | `bidirectional` | bool | Y | Two-state. `false` = `from_node` → `to_node` only |
@@ -474,8 +474,8 @@ floor. If "optimal" is later redefined as time (A-05), convert every weight to
 seconds and nothing else changes.
 
 **Why `edge_id` exists when `placement` has no surrogate key.** Two nodes can be
-joined by more than one path — the rear core carries a lift, an escalator and
-stairs between the same pair of core nodes — so `(from_node, to_node)` is not
+joined by more than one path — the rear core carries both a lift and stairs
+between the same pair of core nodes — so `(from_node, to_node)` is not
 unique and the table is a multigraph. An out-of-service connector also has to be
 nameable: LLD §4's `invalidate(disabled)` needs a handle, and "the rear lift
 between floors 1 and 2" is `E0137`.
@@ -483,7 +483,7 @@ between floors 1 and 2" is `E0137`.
 **The loader must collapse parallel edges to the minimum effective weight.** A
 sparse adjacency matrix holds one value per cell, so three rows joining the same
 pair become one entry — the cheapest. For the step-free matrix, filter to
-`step_free=true` **first and then** take the minimum, or the escalator's lower
+`step_free=true` **first and then** take the minimum, or the stairs' lower
 weight hides the lift that the step-free route depends on. Doing it in the wrong
 order produces a step-free matrix that is quietly the same as the full one,
 which AC-07 would catch and a reviewer might not.
@@ -492,8 +492,10 @@ which AC-07 would catch and a reviewer might not.
 `REAR`) on different levels (V-63). Non-adjacent levels are permitted — an
 express lift is a real thing — but the pair must still be the same core, because
 a lift that arrives in a different part of the building is two connectors.
-`bidirectional=false` is for escalators, which are genuinely one-way, and is why
-the graph is built directed.
+`bidirectional=false` exists for escalators, which are genuinely one-way, and
+is why the graph is built directed. The demo store has none, so every row in it
+is bidirectional — but the matrix build must not assume that, or the first
+store with an escalator routes shoppers the wrong way up one.
 
 ---
 
@@ -534,7 +536,6 @@ edge_id,from_node,to_node,kind,weight_m,penalty_m,bidirectional,step_free,trolle
 E0412,F1-A07-R03,F1-A07-R02,aisle,3.2,0.0,true,true,true,true
 E0413,F1-A07-R03,F1-A07-R04,aisle,3.2,0.0,true,true,true,true
 E0137,F0-CORE-REAR,F1-CORE-REAR,lift,6.0,25.0,true,true,true,true
-E0138,F0-CORE-REAR,F1-CORE-REAR,escalator,14.0,4.0,false,false,false,true
 E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true
 ```
 
@@ -702,7 +703,7 @@ changes shape. That is what makes a three-floor demo nearly free.
 | `stock.csv` | 180 | 180 |
 | `planogram.csv` | ~250 | ~250 |
 | `map_nodes.csv` | **314** | **143** |
-| `map_edges.csv` | **354 rows → ~704 arcs** | **162 rows → ~320 arcs** |
+| `map_edges.csv` | **352 rows → 704 arcs** | **160 rows → 320 arcs** |
 
 Node arithmetic for the demo store, with the authoring choices named:
 
@@ -721,10 +722,10 @@ Node arithmetic for the demo store, with the authoring choices named:
 
 Edge rows: 180 rack-to-rack (5 per aisle × 36) + 72 rack-to-aisle-end +
 66 corridor segments between adjacent aisle ends + 12 junction links +
-10 vertical (2 lifts × 2 spans, 1 escalator pair × 2 spans, 1 stair × 2 spans)
-+ 1 entrance + 6 till + 7 counter, cabinet and bin links = **354 rows**.
-Expanding bidirectional rows into two arcs and leaving the 4 one-way escalator
-rows alone gives **~704 directed arcs**.
+8 vertical (2 lifts × 2 spans, 2 stairs × 2 spans — no escalators, FR-14)
++ 1 entrance + 6 till + 7 counter, cabinet and bin links = **352 rows**.
+Every row in the demo store is bidirectional, so expanding each into two arcs
+gives **704 directed arcs**.
 
 **This corrects the "~900 edges" figure** carried in `lld.md` §4,
 `architecture.md` §4 and the HLD's review answers. Those numbers predate the
@@ -758,23 +759,28 @@ values in `planogram.csv` — which is precisely what FR-25 and AC-09 test.
 
 ## 10. Consequences for the other documents
 
-This document takes ownership of territory currently held elsewhere. Listed so
-the duplication is closed deliberately rather than left to drift.
+This document took ownership of territory previously held elsewhere. Recorded
+so the duplication is closed deliberately rather than left to drift, and kept
+after the fact so the trail survives.
 
-| Document | Change needed |
+**Closed, as of 12 October 2026:**
+
+| Document | What changed |
 |---|---|
-| `lld.md` §2 | **Delete.** The identifier scheme is §3 here, extended with `counter`, `cabinet` and `bin` |
-| `lld.md` §3 | **Delete.** The JSON file schemas are replaced by §4 here |
-| `lld.md` §1 | `data/` lists four `.json` files; replace with the six CSVs of §1 |
-| `lld.md` §4, §13 | `~900 edges` → `~700` (§8). §13's eleven checks are superseded by §7; check 10 is retired, checks 6, 7, 8, 9, 11 and 1–5 map to the V-IDs cited in §7 |
-| `lld.md` §11 | Already slated for removal (no HTTP layer). Its `shelf` / `facing` field names are renamed here (§4.4) |
-| `hld.md` §5 | `300 nodes and 900 edges in a file` → `~310 nodes and ~700 edges in six CSV files` |
-| `architecture.md` §4 | Same edge-count correction; `DATA` layer says `JSON, in memory` and should say CSV |
-| `solution-sketch.md` | Its data model predates the four-document split: `bay` for `rack`, `total_qty`, `band`, `as_of` per position, `store_id` per row. Stale throughout |
-| `requirements.md` FR-25 | `the four data files` → `the data files` (§1.1) |
-| `README.md` | Add the Schema row to the four-document table and the reading order |
+| `lld.md` §2 | Now a numbered stub pointing at §3 here. Kept as a stub, not cut, so cross-references to §4–§15 still resolve |
+| `lld.md` §3 | Now a numbered stub pointing at §4 here, with a table of what moved where |
+| `lld.md` §1 | `data/` lists the six CSVs. The `api/` package and the separate frontend went with it — there is no HTTP layer |
+| `lld.md` §4 | `~900 edges` → `~700` |
+| `lld.md` §13 | Stopped listing rules. §7 here owns them; §13 owns when they run, in five ordered phases |
+| `lld.md` §11 | Replaced by the Streamlit interface |
+| `hld.md` | Edge count corrected; the review answers renumbered with the document |
+| `architecture.md` §4 | Edge count corrected; the DATA layer says six CSVs rather than JSON in memory |
+| `requirements.md` FR-25 | `the four data files` → `its data files`, and the same in the users table and the HLD. The map is two files, so a fixed count was never right |
 
-Items 2, 3 and 4 of the pending-work list in `CLAUDE.md` cover most of this.
-**The one that matters now is `lld.md` §2 and §3**: until they go, two documents
-own the schema and they already disagree, because this one is CSV and that one
-is JSON.
+**Still open:**
+
+| Document | What it needs |
+|---|---|
+| `solution-sketch.md` | Its data model predates the four-document split — `bay` for `rack`, `total_qty`, `band`, `as_of` per position, `store_id` per row. Stale throughout, and superseded rather than corrected |
+| `README.md` | Add the Schema row to the four-document table and the reading order |
+| This document | No rendered page yet. The other three have artifacts; the rack-elevation figure from the old LLD §2 belongs on it, since the identifier scheme it illustrates now lives here |
