@@ -1,0 +1,799 @@
+<title>Product Locator Schema</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+  /* Layout: reference document — dense tables and code, prose to ~66ch */
+  :root {
+    --paper: #f6f7f8; --surface: #ffffff; --code: #eef1f3; --ink: #1c2730; --ink-2: #55656f; --rule: #d5dbdf;
+    --fn: #2f6f8f; --llm: #a8620c; --pause: #7a3e9d; --ok: #2d6a4a; --risk: #9c2f34;
+    --display: "IBM Plex Sans Condensed", "Helvetica Neue", Arial, sans-serif;
+    --body: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --paper: #13191d; --surface: #1b2328; --code: #10161a; --ink: #e3e8eb; --ink-2: #9aa7b0; --rule: #2e3a41;
+    --fn: #6fb3d2; --llm: #e0a355; --pause: #be92dc; --ok: #6cc49a; --risk: #e8848a; color-scheme: dark;
+  } }
+  :root[data-theme="dark"] {
+    --paper: #13191d; --surface: #1b2328; --code: #10161a; --ink: #e3e8eb; --ink-2: #9aa7b0; --rule: #2e3a41;
+    --fn: #6fb3d2; --llm: #e0a355; --pause: #be92dc; --ok: #6cc49a; --risk: #e8848a; color-scheme: dark;
+  }
+  body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 980px; margin: 0 auto; padding-inline: 20px; padding-block: 44px 72px; }
+  .prose { max-width: 66ch; }
+
+  h1,h2,h3,h4 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+  h1 { font-size: clamp(30px,5vw,44px); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: clamp(21px,3vw,27px); font-weight: 600; margin-top: 54px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  h3 { font-size: 18px; font-weight: 600; margin-top: 32px; }
+  h4 { font-size: 13px; font-weight: 600; margin-top: 24px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); }
+  p { margin: 13px 0; }
+  .sec { font-family: var(--mono); font-size: 12px; color: var(--ink-2); }
+  .eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 12px; }
+  .standfirst { font-size: 18px; color: var(--ink-2); font-style: italic; margin-top: 16px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 26px; font-family: var(--mono); font-size: 12px; color: var(--ink-2); margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); }
+  .meta b { color: var(--ink); font-weight: 500; }
+
+  pre { background: var(--code); border: 1px solid var(--rule); border-radius: 3px; padding: 14px 16px; overflow-x: auto; margin: 18px 0; }
+  pre code { font-family: var(--mono); font-size: 12.5px; line-height: 1.62; color: var(--ink); }
+  code { font-family: var(--mono); font-size: 0.86em; }
+  p code, li code, td code { background: var(--code); padding: 1px 4px; border-radius: 2px; }
+
+  .tablewrap { overflow-x: auto; margin: 20px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 14px 8px 0; border-bottom: 1px solid var(--rule); min-width: 0; }
+  th { font-family: var(--display); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-2); font-weight: 600; }
+  td.m { font-family: var(--mono); font-size: 12px; white-space: nowrap; }
+  td.mw { font-family: var(--mono); font-size: 12px; }
+
+  figure { margin: 30px 0; padding: 20px 16px 14px; background: var(--surface); border: 1px solid var(--rule); border-radius: 3px; }
+  figure .scroller { overflow-x: auto; }
+  figure svg { display: block; max-width: 100%; height: auto; margin: 0 auto; color: var(--ink); min-width: 560px; }
+  figcaption { font-family: var(--display); font-size: 13px; line-height: 1.5; color: var(--ink-2); margin-top: 14px; padding-top: 11px; border-top: 1px solid var(--rule); }
+  figcaption b { color: var(--ink); font-weight: 600; }
+
+  ul, ol { padding-left: 20px; margin: 13px 0; }
+  li { margin: 6px 0; }
+  .callout { background: var(--surface); border: 1px solid var(--rule); border-left: 3px solid var(--fn); border-radius: 3px; padding: 16px 18px; margin: 22px 0; font-size: 15px; }
+  .callout.warn { border-left-color: var(--llm); }
+  .callout h4 { margin-top: 0; }
+  .callout p:last-child { margin-bottom: 0; }
+  footer { margin-top: 54px; padding-top: 16px; border-top: 1px solid var(--rule); font-family: var(--mono); font-size: 11.5px; color: var(--ink-2); }
+</style>
+
+<div class="wrap">
+
+<header class="prose">
+  <div class="eyebrow">Data schema · proof of concept</div>
+  <h1>Product Locator Schema</h1>
+  <p class="standfirst">The six CSV files that describe one store: columns, types, identifier scheme, referential rules and the forty-seven checks that run before the first search. This is the contract for onboarding a store.</p>
+  <div class="meta">
+    <span><b>Files</b> six CSVs, one folder per store</span>
+    <span><b>Demo store</b> 314 nodes · 352 edge rows · 3 floors</span>
+    <span><b>Validation</b> 47 checks, V-01 to V-47</span>
+  </div>
+</header>
+
+<h2><span class="sec">1</span> &nbsp;The store folder</h2>
+<div class="prose">
+  <p>One store is one folder. <b>The folder name is the store identifier</b> — there is no store ID threaded through every row, because running more than one store concurrently is out of scope and a repeated key is a repeated chance to disagree.</p>
+</div>
+<pre><code>data/
+  SBY-DEMO-001/          ← three-floor demo store
+    store.csv
+    products.csv
+    stock.csv
+    planogram.csv
+    map_nodes.csv
+    map_edges.csv
+  SBY-PORT-002/          ← two-floor portability store (AC-09)
+    …the same six files</code></pre>
+<h3>1.1 &nbsp;Six files, four kinds of data</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>File</th><th>Kind</th><th>Shape</th><th>Rows</th></tr></thead>
+  <tbody>
+    <tr><td><code>store.csv</code></td><td>provenance</td><td>key–value</td><td>5</td></tr>
+    <tr><td><code>products.csv</code></td><td>catalogue</td><td>one row per SKU</td><td>~180</td></tr>
+    <tr><td><code>stock.csv</code></td><td>stock position</td><td>one row per SKU</td><td>~180</td></tr>
+    <tr><td><code>planogram.csv</code></td><td>planogram</td><td>one row per placement — <b>the join table</b></td><td>~250</td></tr>
+    <tr><td><code>map_nodes.csv</code></td><td>store map</td><td>one row per walkable point</td><td>~310</td></tr>
+    <tr><td><code>map_edges.csv</code></td><td>store map</td><td>one row per path</td><td>~350</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>Why six files and not the four FR-25 names.</b> FR-25 says a different store works by replacing the data files only, and the requirements count four <i>kinds</i> of data. A graph does not fit one table, so the map is two files — that was settled. <code>store.csv</code> is the sixth, and it exists because three facts are properties of the store rather than of any row: the planogram version, the stock extract time, and the statement that the data is synthetic (C-04). The alternative is repeating all three on every row of three files, where they can drift apart. <b>FR-25's wording should read "the data files" rather than "the four data files"</b> — the requirement is unchanged, the count was never the point.</p>
+</div>
+<h3>1.2 &nbsp;The join graph</h3>
+<pre><code>store.csv ─── no foreign keys. Provenance only.
+
+              products.csv
+                sku  (PK, text)
+                 ▲                      ▲
+    1:1, total   │                      │   N:1, partial
+                 │                      │
+          stock.csv                planogram.csv
+            sku  (PK, FK)            sku      (FK) ─┘
+                                     node_id  (FK) ─┐
+                                     PK = (sku, node_id, shelf_no, facing_from)
+                                                    │
+                                                    ▼
+                                              map_nodes.csv
+                                                node_id  (PK, text)
+                                                 ▲           ▲
+                                     from_node   │           │  to_node
+                                                 └─ map_edges.csv ─┘
+                                                      edge_id (PK)</code></pre>
+<div class="prose">
+  <p>Three cardinalities carry meaning and are enforced in §6:</p>
+</div>
+<div class="prose">
+<ul>
+  <li><b><code>stock.csv</code> is total over <code>products.csv</code>.</b> Every SKU has a stock row. A missing row is an authoring mistake, never a meaning — "we don't carry it" is said with <code>ranged=false</code>, not with absence.</li>
+  <li><b><code>planogram.csv</code> is partial.</b> A SKU with no placement is legitimate: it is not ranged here (EC-04), or it is ranged but has no recorded shelf (EC-19).</li>
+  <li><b><code>planogram.csv</code> is many-to-one on both keys.</b> One SKU may hold several placements (EC-20, the normal case) and one node holds many SKUs.</li>
+</ul>
+</div>
+<h2><span class="sec">2</span> &nbsp;CSV conventions</h2>
+<div class="prose">
+  <p>These are not stylistic. Each one closes a failure mode that CSV introduces and JSON did not have.</p>
+</div>
+<h3>2.1 &nbsp;File format</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Rule</th><th>Value</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>Encoding</td><td><b>UTF-8, no BOM</b></td><td>Excel writes a BOM by default; it becomes part of the first column's name and the header check fails confusingly</td></tr>
+    <tr><td>Line ending</td><td>LF</td><td>Keeps the diff readable in a public repo</td></tr>
+    <tr><td>Quoting</td><td>RFC 4180 — double quotes, doubled to escape</td><td>Product names contain commas and apostrophes</td></tr>
+    <tr><td>Header</td><td><b>Required, exact</b></td><td>Unknown and missing columns are both refusals (V-01). A typo'd header otherwise silently drops a column</td></tr>
+    <tr><td>Column order</td><td>Not significant</td><td>Columns are read by name</td></tr>
+    <tr><td>Row order</td><td>Not significant</td><td>But files are <b>sorted by primary key</b> so a range change produces a small diff</td></tr>
+    <tr><td>Empty file</td><td>Refusal</td><td>A header with no rows is a refusal for every file except <code>planogram.csv</code></td></tr>
+    <tr><td>Trailing blank line</td><td>Permitted, ignored</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>2.2 &nbsp;The three-state boolean</h3>
+<div class="prose">
+  <p><b>This is the single most important rule in the document.</b></p>
+  <p>A dietary flag has three states: <code>true</code>, <code>false</code> and <i>unknown</i>. CSV has no null, so the encoding is explicit and the vocabulary is closed:</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Cell content</th><th>Means</th></tr></thead>
+  <tbody>
+    <tr><td><code>true</code></td><td>True. Recorded, affirmative</td></tr>
+    <tr><td><code>false</code></td><td>False. <b>Recorded</b>, negative — someone checked</td></tr>
+    <tr><td><i>(empty)</i></td><td><b>Unknown.</b> Nobody checked</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>Nothing else is accepted. <code>TRUE</code>, <code>True</code>, <code>T</code>, <code>1</code>, <code>0</code>, <code>yes</code>, <code>Y</code>, <code>NULL</code>, <code>N/A</code>, <code>-</code>, <code>n/a</code> and a cell of spaces are all refusals (V-04), including in the two-state columns. A loader that coerces is a loader that guesses.</p>
+  <p><b>The trap this closes.</b> <code>pandas.read_csv</code> reads an empty cell as <code>NaN</code>, and <code>NaN</code> is falsy in Python. So <code>if product.diet_gluten_free:</code> silently means "not gluten free" for every product nobody checked — the exact collapse NFR-03 forbids, arrived at by doing nothing wrong in particular. The loader must read these columns as strings and map the three tokens explicitly. Never <code>dtype=bool</code>, never <code>fillna(False)</code>, never a truthiness test at a read site.</p>
+  <p><b>Which columns are three-state, and which are two.</b> Every <code>diet_*</code> column is three-state — that is what the prefix is for, so the rule is one rule and not a list to remember. <code>age_restricted</code>, <code>own_brand</code>, <code>ranged</code>, <code>seasonal</code>, <code>bidirectional</code>, <code>step_free</code>, <code>trolley</code> and <code>is_open</code> are <b>two-state and required</b>: an empty cell is a refusal. Age restriction is a legal fact the retailer knows about every line it sells, and an edge either is step-free or it is not. Unknown is not a state those fields have, and pretending otherwise would make the three-state rule look like decoration rather than a safety property.</p>
+</div>
+<h3>2.3 &nbsp;List-valued columns</h3>
+<div class="prose">
+  <p><code>synonyms</code> and <code>allergens_contains</code> hold lists. They are <b>pipe-delimited</b> (<code>|</code>), not comma-delimited, because a comma is the field delimiter and the quoting that would be needed does not survive a round trip through a spreadsheet.</p>
+</div>
+<pre><code>coke|cola|coca cola</code></pre>
+<div class="prose">
+<ul>
+  <li>Segments are trimmed of surrounding spaces; inner spaces are kept.</li>
+  <li>No empty segments, no leading or trailing <code>|</code> (V-05).</li>
+  <li>An empty cell is an empty list — <b>except for <code>allergens_contains</code></b>, below.</li>
+</ul>
+</div>
+<div class="prose">
+  <p><b><code>allergens_contains</code> is three-state at list level.</b> This is §2.2's rule again, one level up, and it is easy to get wrong:</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Cell content</th><th>Means</th></tr></thead>
+  <tbody>
+    <tr><td>`milk\</td><td>soya`</td><td>Checked. Contains milk and soya</td></tr>
+    <tr><td><code>none</code></td><td><b>Checked. Contains none of the declared allergens</b></td></tr>
+    <tr><td><i>(empty)</i></td><td><b>Unknown.</b> The declaration has not been recorded</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>The literal <code>none</code> is a value, not a convention — it is how the data says "somebody looked and the answer was nothing", which is a different claim from an empty cell. <code>none</code> may not appear alongside another allergen (V-22).</p>
+</div>
+<h3>2.4 &nbsp;Columns that must be read as text</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Column</th><th>Risk</th></tr></thead>
+  <tbody>
+    <tr><td><code>sku</code></td><td>A spreadsheet reads <code>7123456</code> as a number. Any SKU with a leading zero loses it, permanently and silently</td></tr>
+    <tr><td><code>barcode</code></td><td>EAN-13 is 13 digits. Excel renders it as <code>5.449E+12</code> and <b>saves it that way</b></td></tr>
+    <tr><td><code>node_id</code>, <code>edge_id</code>, <code>from_node</code>, <code>to_node</code></td><td>Safe in practice (they start with a letter) but declared text for consistency</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>The authoring guidance is one line: <b>format these columns as Text before typing in them, and never open a store folder in Excel without doing so.</b> A loader cannot reliably detect the damage after the fact — <code>5449000000996</code> and <code>5.449E+12</code> are both plausible cell contents, and a lost leading zero leaves a valid-looking SKU. V-21 catches the length violation on <code>barcode</code>; nothing catches a mangled <code>sku</code> except a broken join, which is why the convention is that SKUs do not begin with a zero.</p>
+</div>
+<h3>2.5 &nbsp;Numbers and units</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Quantity</th><th>Type</th><th>Convention</th></tr></thead>
+  <tbody>
+    <tr><td>Distance (<code>weight_m</code>, <code>penalty_m</code>)</td><td>float, metres</td><td>One decimal place. Metres throughout — <b>the only unit in the data</b></td></tr>
+    <tr><td>Coordinates (<code>x_m</code>, <code>y_m</code>)</td><td>float, metres</td><td>One decimal. Per-store origin, <b>shared across floors</b> so the cores line up vertically</td></tr>
+    <tr><td>Counts (<code>shelf_qty</code>, <code>shelf_no</code>, <code>facing_from</code>, <code>facing_count</code>, <code>shelf_count</code>, <code>aisle</code>, <code>rack</code>)</td><td>int ≥ 0</td><td>No thousands separators</td></tr>
+    <tr><td><code>price_gbp</code></td><td>decimal, 2 dp</td><td><b>Display only.</b> Never summed, never compared. Pounds, no symbol</td></tr>
+    <tr><td><code>popularity</code></td><td>float, 0.0–1.0</td><td>2 dp. A ranking tiebreak, nothing else</td></tr>
+    <tr><td>Timestamp (<code>stock_as_of</code>)</td><td>ISO 8601, UTC, <code>Z</code> suffix</td><td><code>2026-10-09T08:40:00Z</code></td></tr>
+    <tr><td>Date (<code>planogram_version</code>)</td><td>ISO 8601 date</td><td><code>2026-10-01</code></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>Coordinates are presentational and distances are authoritative.</b> <code>x_m</code>/<code>y_m</code> exist to draw the floor plate and the route overlay (FR-20). They are <b>never</b> used to compute a distance — every distance comes from <code>weight_m</code> on the edges. The two can legitimately disagree: an aisle you cannot walk straight down is longer than the gap between its endpoints. W-03 warns when they disagree beyond a tolerance, because a large disagreement is usually a typo rather than a dogleg.</p>
+</div>
+<h2><span class="sec">3</span> &nbsp;Identifier scheme</h2>
+<div class="prose">
+  <p>Every walkable point has an identifier that encodes where it is. The format is load-bearing: it makes a wrong identifier visible by eye, and it lets the UI label a location without a lookup.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Entity</th><th>Format</th><th>Example</th><th>Graph node?</th></tr></thead>
+  <tbody>
+    <tr><td>Rack</td><td><code>F{level}-A{aisle:02}-R{rack:02}</code></td><td><code>F1-A07-R03</code></td><td><b>yes</b></td></tr>
+    <tr><td>Aisle end</td><td>`F{level}-A{aisle:02}-{N\</td><td>S}`</td><td><code>F1-A07-N</code></td><td>yes</td></tr>
+    <tr><td>Corridor junction</td><td><code>F{level}-X{n:02}</code></td><td><code>F1-X04</code></td><td>yes</td></tr>
+    <tr><td>Vertical core</td><td>`F{level}-CORE-{FRONT\</td><td>REAR}`</td><td><code>F1-CORE-REAR</code></td><td>yes</td></tr>
+    <tr><td>Service counter</td><td><code>F{level}-CTR-{n:02}</code></td><td><code>F0-CTR-01</code></td><td>yes</td></tr>
+    <tr><td>Assisted cabinet</td><td><code>F{level}-CAB-{n:02}</code></td><td><code>F1-CAB-01</code></td><td>yes</td></tr>
+    <tr><td>Dump bin</td><td><code>F{level}-BIN-{n:02}</code></td><td><code>F0-BIN-01</code></td><td>yes</td></tr>
+    <tr><td>Entrance</td><td><code>F0-ENTRANCE</code></td><td>—</td><td>yes</td></tr>
+    <tr><td>Checkout</td><td><code>F0-TILL-{n:02}</code></td><td><code>F0-TILL-01</code></td><td>yes</td></tr>
+    <tr><td>Shelf</td><td><code>shelf_no</code></td><td><code>2</code></td><td><b>no</b> — a column on a placement</td></tr>
+    <tr><td>Facing</td><td><code>facing_from</code></td><td><code>1</code></td><td><b>no</b> — a column on a placement</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>Levels are integers, <code>0</code> upward, and are contiguous — <code>F0</code>, <code>F1</code>, <code>F2</code>. Aisle and rack numbers are zero-padded to two digits in the identifier and stored unpadded in their own integer columns; both are present, and V-50 checks they agree. The redundancy is deliberate: the identifier is for humans reading a diff, the columns are for the code.</p>
+  <p><b>The graph stops at rack level.</b> A shelf is not somewhere you walk, so it is a column on a placement rather than a node. That keeps the map at roughly 310 rows instead of 1,200 and still lets directions name a shelf:</p>
+</div>
+<pre><code>F1 · A07 · R03   ·   S02 · P1
+└── routable ──┘     └ columns ┘
+   a graph node        spoken, not walked</code></pre>
+<div class="prose">
+  <p><b>Three node types are new here</b>, and they close a gap: LLD §2 had no format for a counter, a locked cabinet or a dump bin, while LLD §3.2 required <code>location_type</code> values of <code>COUNTER</code>, <code>ASSISTED</code> and <code>DUMP_BIN</code> that must route <i>somewhere</i>. A deli counter is not a rack — it has no shelf and no facing — so it gets its own type rather than being a rack that lies about itself. This is what makes V-46's compatibility check expressible.</p>
+</div>
+<figure>
+  <div class="scroller">
+  <svg viewBox="0 0 720 320" role="img" aria-label="A rack elevation with four shelves sits beside an aisle corridor. A single graph node on the corridor represents the whole rack. The full location address F1 A07 R03 S02 P1 is decomposed beneath, with the first three parts marked as the routable graph node and the last two as attributes describing where on the rack the product sits.">
+    <defs><marker id="l1" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="6" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Sans Condensed, sans-serif">
+
+      <line x1="40" y1="56" x2="270" y2="56" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+      <text x="40" y="44" font-size="11" fill="currentColor" opacity="0.6">aisle 7 corridor</text>
+      <circle cx="152" cy="56" r="7" fill="var(--fn)"/>
+      <text x="166" y="52" font-size="11" font-family="IBM Plex Mono, monospace" fill="var(--fn)" font-weight="600">F1-A07-R03</text>
+      <text x="166" y="65" font-size="10" fill="currentColor" opacity="0.6">one graph node per rack</text>
+      <line x1="152" y1="66" x2="152" y2="92" stroke="currentColor" stroke-width="1.3" marker-end="url(#l1)"/>
+
+      <rect x="62" y="96" width="180" height="176" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <g stroke="currentColor" stroke-width="1" opacity="0.4">
+        <line x1="62" y1="140" x2="242" y2="140"/><line x1="62" y1="184" x2="242" y2="184"/><line x1="62" y1="228" x2="242" y2="228"/>
+      </g>
+      <g font-size="10" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.55">
+        <text x="70" y="113">S01</text><text x="70" y="157">S02</text><text x="70" y="201">S03</text><text x="70" y="245">S04</text>
+      </g>
+      <rect x="104" y="144" width="40" height="36" rx="1.5" fill="var(--fn)" opacity="0.3" stroke="var(--fn)" stroke-width="1.5"/>
+      <text x="124" y="166" font-size="10" text-anchor="middle" font-family="IBM Plex Mono, monospace" fill="currentColor" font-weight="600">P1</text>
+      <text x="152" y="290" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.6">rack elevation · 4 shelves</text>
+
+      <g font-family="IBM Plex Mono, monospace">
+        <text x="330" y="118" font-size="20" font-weight="600" fill="var(--fn)">F1 · A07 · R03</text>
+        <text x="562" y="118" font-size="20" font-weight="600" fill="currentColor" opacity="0.6">· S02 · P1</text>
+      </g>
+      <line x1="330" y1="132" x2="548" y2="132" stroke="var(--fn)" stroke-width="2"/>
+      <line x1="562" y1="132" x2="680" y2="132" stroke="currentColor" stroke-width="2" opacity="0.5" stroke-dasharray="4 3"/>
+      <g font-family="IBM Plex Sans Condensed, sans-serif">
+        <text x="330" y="152" font-size="12" font-weight="700" fill="var(--fn)">ROUTABLE</text>
+        <text x="330" y="169" font-size="11.5" fill="currentColor" opacity="0.75">a node in the graph —</text>
+        <text x="330" y="184" font-size="11.5" fill="currentColor" opacity="0.75">Dijkstra routes here</text>
+        <text x="562" y="152" font-size="12" font-weight="700" fill="currentColor" opacity="0.6">ATTRIBUTES</text>
+        <text x="562" y="169" font-size="11.5" fill="currentColor" opacity="0.75">where on the rack —</text>
+        <text x="562" y="184" font-size="11.5" fill="currentColor" opacity="0.75">spoken, not walked</text>
+      </g>
+      <g font-family="IBM Plex Sans Condensed, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">
+        <text x="330" y="222">floor</text><text x="398" y="222">aisle</text><text x="474" y="222">rack</text>
+        <text x="566" y="222">shelf</text><text x="636" y="222">facing</text>
+      </g>
+      <text x="330" y="262" font-size="11.5" fill="currentColor" opacity="0.75">"Aisle 7, rack 3 — two-thirds down on your right, at eye level."</text>
+      <text x="330" y="282" font-size="11" fill="currentColor" opacity="0.55">The first three parts find it. The last two describe it.</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>The graph stops at rack level.</b> A shelf is not somewhere you walk, so it is a column on a placement rather than a node — which keeps the map at 314 nodes instead of ~1,200 and still lets directions name a shelf. This is what FR-10's rack-level addressing buys, and why <code>placement</code> carries <code>shelf_level</code> while <code>map_nodes</code> does not.</figcaption>
+</figure>
+
+<h2><span class="sec">4</span> &nbsp;File schemas</h2>
+<div class="prose">
+  <p>Legend for the <b>Req</b> column: <b>Y</b> required, non-empty · <b>N</b> optional, empty permitted and meaningful · <b>3</b> three-state per §2.2.</p>
+</div>
+<h3>4.1 &nbsp;<code>store.csv</code></h3>
+<div class="prose">
+  <p>Two columns, <code>key</code> and <code>value</code>, one row per key. The key set is closed: a missing key and an unknown key are both refusals (V-10).</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th><code>key</code></th><th><code>value</code></th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>store_id</code></td><td>text, must equal the folder name</td><td><code>SBY-DEMO-001</code></td></tr>
+    <tr><td><code>store_name</code></td><td>text, shown in the UI</td><td><code>Sainsbury's Demo Superstore</code></td></tr>
+    <tr><td><code>data_provenance</code></td><td><code>synthetic</code> — the only accepted value</td><td><code>synthetic</code></td></tr>
+    <tr><td><code>planogram_version</code></td><td>ISO date; bumped by a range change</td><td><code>2026-10-01</code></td></tr>
+    <tr><td><code>stock_as_of</code></td><td>ISO 8601 UTC timestamp</td><td><code>2026-10-09T08:40:00Z</code></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>Why key–value rather than columns.</b> This is the one file whose content is not a list of records, and a two-column shape means adding a store-level fact later never changes a header. <code>data_provenance</code> earns its row by making C-04's "synthetic data" statement a property of the data: the portability store cannot be onboarded without declaring it, so the banner cannot be lost by forgetting to hard-code it.</p>
+  <p><b>Not in this file:</b> <code>min_level</code> and <code>max_level</code>, which are derived from <code>map_nodes.level</code>, and the default start node, which is the sole <code>entrance</code> node. Both were fields in LLD §3.4. Deriving them removes a class of disagreement between the map and the thing describing the map, and retires LLD §13 check 10.</p>
+</div>
+<h3>4.2 &nbsp;<code>products.csv</code></h3>
+<div class="prose">
+  <p>One row per SKU. The catalogue — what the store <i>could</i> sell, independent of this branch.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Req</th><th>Constraint / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>sku</code></td><td>text</td><td>Y</td><td><b>PK.</b> 7 digits, no leading zero (§2.4)</td></tr>
+    <tr><td><code>name</code></td><td>text</td><td>Y</td><td>Display name. Feeds the search index</td></tr>
+    <tr><td><code>brand</code></td><td>text</td><td>Y</td><td><code>Own Brand</code> for own-label lines</td></tr>
+    <tr><td><code>size</code></td><td>text</td><td>Y</td><td><code>500ml</code>, <code>1.5l</code>, <code>6 pack</code>. Parsed for variant match</td></tr>
+    <tr><td><code>barcode</code></td><td>text</td><td>N</td><td>EAN-13, exactly 13 digits when present</td></tr>
+    <tr><td><code>department</code></td><td>text</td><td>Y</td><td>Top-level grouping, e.g. <code>Drinks</code></td></tr>
+    <tr><td><code>aisle_category</code></td><td>text</td><td>Y</td><td>Drives category queries (EC-09) and substitute candidacy (FR-09)</td></tr>
+    <tr><td><code>synonyms</code></td><td>list</td><td>N</td><td>Pipe-delimited. `coke\</td><td>cola`</td></tr>
+    <tr><td><code>diet_gluten_free</code></td><td>bool</td><td>3</td><td>—</td></tr>
+    <tr><td><code>diet_vegan</code></td><td>bool</td><td>3</td><td>—</td></tr>
+    <tr><td><code>diet_vegetarian</code></td><td>bool</td><td>3</td><td>—</td></tr>
+    <tr><td><code>diet_halal</code></td><td>bool</td><td>3</td><td>—</td></tr>
+    <tr><td><code>allergens_contains</code></td><td>list</td><td>3</td><td>Pipe-delimited, or <code>none</code>, or empty. §2.3</td></tr>
+    <tr><td><code>age_restricted</code></td><td>bool</td><td>Y</td><td>Two-state. Drives the colleague-required outcome (OQ-07)</td></tr>
+    <tr><td><code>price_gbp</code></td><td>decimal</td><td>Y</td><td>2 dp, display only</td></tr>
+    <tr><td><code>own_brand</code></td><td>bool</td><td>Y</td><td>Two-state. Ranking tiebreak</td></tr>
+    <tr><td><code>popularity</code></td><td>float</td><td>Y</td><td>0.0–1.0, 2 dp. Ranking tiebreak</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><code>department</code> and <code>aisle_category</code> are free text rather than enumerations on purpose: a new store brings its own category names, and FR-25 says a different store needs no code change. They are validated for internal consistency (W-01) rather than against a fixed list.</p>
+</div>
+<h3>4.3 &nbsp;<code>stock.csv</code></h3>
+<div class="prose">
+  <p>One row per SKU, total over <code>products.csv</code>. The branch position.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Req</th><th>Constraint / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>sku</code></td><td>text</td><td>Y</td><td><b>PK and FK</b> → <code>products.sku</code></td></tr>
+    <tr><td><code>ranged</code></td><td>bool</td><td>Y</td><td>Two-state. Carried by <i>this</i> branch</td></tr>
+    <tr><td><code>shelf_qty</code></td><td>int</td><td>Y</td><td>≥ 0</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b><code>ranged</code> is load-bearing.</b> <code>ranged=false</code> and <code>shelf_qty=0</code> are different answers to a shopper — "we don't carry it at this branch" against "we carry it and it's sold out" — they take different paths through the graph, and FR-08 requires the distinction. Conflating them is EC-04.</p>
+  <p><code>ranged=false</code> with <code>shelf_qty&gt;0</code> is <b>contradictory and refused</b> (V-31). A real feed does produce it, for a line being run out, and that is a third answer ("last few, then gone") rather than a variation on the first two. It is not modelled, so it is not permitted — a run-out state would be a new column here, not new code.</p>
+  <p><b>There is no encoding for "quantity unknown."</b> EC-18's unknown-availability state is a runtime condition — the stock service unreachable in a real build — and this is a file, which is either present or not. An empty <code>shelf_qty</code> is a refusal rather than an unknown, so nobody can introduce a silent third state into the one column where a guess becomes a shopper walking to an empty shelf.</p>
+</div>
+<h3>4.4 &nbsp;<code>planogram.csv</code></h3>
+<div class="prose">
+  <p>One row per placement. <b>The join table</b> — <code>sku</code> into the catalogue, <code>node_id</code> into the map.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Req</th><th>Constraint / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>sku</code></td><td>text</td><td>Y</td><td>FK → <code>products.sku</code></td></tr>
+    <tr><td><code>node_id</code></td><td>text</td><td>Y</td><td>FK → <code>map_nodes.node_id</code></td></tr>
+    <tr><td><code>location_type</code></td><td>enum</td><td>Y</td><td>Table below</td></tr>
+    <tr><td><code>shelf_no</code></td><td>int</td><td>N</td><td>1 = top. Required for shelved types, forbidden otherwise</td></tr>
+    <tr><td><code>facing_from</code></td><td>int</td><td>N</td><td>1 = leftmost. Same rule as <code>shelf_no</code></td></tr>
+    <tr><td><code>facing_count</code></td><td>int</td><td>N</td><td>≥ 1. Same rule as <code>shelf_no</code></td></tr>
+    <tr><td><code>seasonal</code></td><td>bool</td><td>Y</td><td>Two-state. Suppressed at zero stock (EC-24)</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>PK is the composite <code>(sku, node_id, shelf_no, facing_from)</code>.</b> No surrogate <code>placement_id</code>, because nothing references a placement — unlike an edge, which needs a name so it can be taken out of service. A SKU legitimately appears twice on the same rack at different shelves, so the composite is the natural key and <code>(sku, node_id)</code> alone is not unique.</p>
+  <p><b>Column names differ from LLD §3.2</b> — <code>shelf</code>→<code>shelf_no</code>, <code>facing</code>→ <code>facing_from</code>, <code>facings</code>→<code>facing_count</code>. In a JSON object <code>facing</code> and <code>facings</code> are merely similar; as adjacent CSV headers they are a transcription error waiting to happen.</p>
+</div>
+<h4><code>location_type</code></h4>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Value</th><th>Meaning</th><th>Routable</th><th>Edge case</th></tr></thead>
+  <tbody>
+    <tr><td><code>HOME</code></td><td>Primary planogram position</td><td>yes</td><td>—</td></tr>
+    <tr><td><code>PROMO_ENDCAP</code></td><td>Promotional end cap</td><td>yes</td><td>EC-20</td></tr>
+    <tr><td><code>SEASONAL</code></td><td>Seasonal gondola</td><td>yes, suppressed at zero stock</td><td>EC-24</td></tr>
+    <tr><td><code>DUMP_BIN</code></td><td>Front-of-store bin</td><td>yes</td><td>—</td></tr>
+    <tr><td><code>CHILLER</code></td><td>Chilled or frozen unit</td><td>yes, deferred to the last floor pass</td><td>EC-33</td></tr>
+    <tr><td><code>ASSISTED</code></td><td>Locked cabinet — spirits, formula, blades</td><td>route to the cabinet, colleague required</td><td>EC-22</td></tr>
+    <tr><td><code>COUNTER</code></td><td>Deli, fish, pharmacy</td><td>route to the counter, no shelf or facing</td><td>EC-23</td></tr>
+  </tbody>
+</table>
+</div>
+<h4>Compatibility with the target node (V-46)</h4>
+<div class="prose">
+  <p>A placement's <code>location_type</code> constrains what kind of node it may point at, and whether the shelf columns are set. This is the check that stops a deli counter acquiring a shelf number.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th><code>location_type</code></th><th>Permitted <code>node_type</code></th><th><code>shelf_no</code> · <code>facing_from</code> · <code>facing_count</code></th></tr></thead>
+  <tbody>
+    <tr><td><code>HOME</code></td><td><code>rack</code></td><td><b>required</b></td></tr>
+    <tr><td><code>CHILLER</code></td><td><code>rack</code></td><td><b>required</b></td></tr>
+    <tr><td><code>SEASONAL</code></td><td><code>rack</code>, <code>bin</code></td><td>required on <code>rack</code>, forbidden on <code>bin</code></td></tr>
+    <tr><td><code>PROMO_ENDCAP</code></td><td><code>aisle_end</code></td><td><b>forbidden</b></td></tr>
+    <tr><td><code>DUMP_BIN</code></td><td><code>bin</code></td><td><b>forbidden</b></td></tr>
+    <tr><td><code>ASSISTED</code></td><td><code>cabinet</code></td><td><b>forbidden</b></td></tr>
+    <tr><td><code>COUNTER</code></td><td><code>counter</code></td><td><b>forbidden</b></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>"Forbidden" means the cell is empty. This supersedes LLD §13 check 11, which covered only <code>ASSISTED</code> and <code>COUNTER</code> and only the shelf.</p>
+</div>
+<h3>4.5 &nbsp;<code>map_nodes.csv</code></h3>
+<div class="prose">
+  <p>One row per walkable point.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Req</th><th>Constraint / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>node_id</code></td><td>text</td><td>Y</td><td><b>PK.</b> Format per §3, consistent with <code>node_type</code></td></tr>
+    <tr><td><code>node_type</code></td><td>enum</td><td>Y</td><td><code>rack</code> · <code>aisle_end</code> · <code>junction</code> · <code>core</code> · <code>counter</code> · <code>cabinet</code> · <code>bin</code> · <code>entrance</code> · <code>till</code></td></tr>
+    <tr><td><code>level</code></td><td>int</td><td>Y</td><td>≥ 0, contiguous across the store</td></tr>
+    <tr><td><code>floor_name</code></td><td>text</td><td>N</td><td>Repeated per level; must agree (V-51)</td></tr>
+    <tr><td><code>aisle</code></td><td>int</td><td>N</td><td>Required for <code>rack</code> and <code>aisle_end</code>; optional on <code>counter</code>, <code>cabinet</code> and <code>bin</code>; empty otherwise</td></tr>
+    <tr><td><code>rack</code></td><td>int</td><td>N</td><td>Required for <code>rack</code>, else empty</td></tr>
+    <tr><td><code>shelf_count</code></td><td>int</td><td>N</td><td>Required for <code>rack</code>, ≥ 1, else empty. Bounds <code>shelf_no</code> and lets "eye level" be derived</td></tr>
+    <tr><td><code>zone</code></td><td>text</td><td>N</td><td>A label, not an entity — see below</td></tr>
+    <tr><td><code>x_m</code></td><td>float</td><td>Y</td><td>Presentational (§2.5)</td></tr>
+    <tr><td><code>y_m</code></td><td>float</td><td>Y</td><td>Presentational (§2.5)</td></tr>
+    <tr><td><code>is_open</code></td><td>bool</td><td>Y</td><td>Two-state. <code>false</code> removes the node and its edges before the matrices are built (EC-32)</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b><code>floor_name</code> is denormalised on purpose.</b> It is a property of a level and repeats on every node of that level. The alternatives were a third map file or a mixed-shape <code>store.csv</code>, and the map is two files by settled decision. A spreadsheet author fills the column down; V-51 refuses a store where two nodes on one level disagree. The repetition is paid for by one validation rule.</p>
+  <p><b><code>aisle</code> is optional on a counter, a cabinet and a bin</b> because their identifiers encode no aisle (§3) and directions still want to say one — "aisle 12, the locked cabinet on your left" is a better instruction than "the locked cabinet". It is context for the phrasing, not an address: the node_id is the address, and V-50 does not cross-check this column for these three types because there is nothing in the identifier to check it against.</p>
+  <p><b><code>shelf_count</code> is new.</b> Without it, <code>shelf_no</code> has no upper bound and "eye level" cannot be derived from a shelf number — shelf 2 of 3 is eye level, shelf 2 of 6 is not. FR-10 asks for a shelf, and the directions in FR-20 want to say it in words.</p>
+  <p><b><code>zone</code> is a label, and closures are per-node.</b> EC-32 speaks of a zone carrying an open flag; <code>is_open</code> is on the node instead. A node is the thing with a position, closing an arbitrary set of nodes is strictly more capable than closing whole zones, and it needs no zone table — so <code>zone</code> stays a string used for grouping and labelling, with nothing hanging off it.</p>
+</div>
+<h3>4.6 &nbsp;<code>map_edges.csv</code></h3>
+<div class="prose">
+  <p>One row per path between two nodes. The row is <b>undirected or directed according to <code>bidirectional</code></b>; the loader expands it into the directed graph.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Column</th><th>Type</th><th>Req</th><th>Constraint / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>edge_id</code></td><td>text</td><td>Y</td><td><b>PK.</b> <code>E{n:04}</code>, e.g. <code>E0137</code></td></tr>
+    <tr><td><code>from_node</code></td><td>text</td><td>Y</td><td>FK → <code>map_nodes.node_id</code></td></tr>
+    <tr><td><code>to_node</code></td><td>text</td><td>Y</td><td>FK → <code>map_nodes.node_id</code>, ≠ <code>from_node</code></td></tr>
+    <tr><td><code>kind</code></td><td>enum</td><td>Y</td><td><code>aisle</code> · <code>corridor</code> · <code>lift</code> · <code>escalator</code> · <code>stairs</code>. The demo store uses no <code>escalator</code> — FR-14 commits to stairs and lifts — but the format accepts one, because FR-25 means another store may have them</td></tr>
+    <tr><td><code>weight_m</code></td><td>float</td><td>Y</td><td><b>&gt; 0.</b> Walking distance in metres</td></tr>
+    <tr><td><code>penalty_m</code></td><td>float</td><td>Y</td><td>≥ 0. Wait cost as its walking equivalent</td></tr>
+    <tr><td><code>bidirectional</code></td><td>bool</td><td>Y</td><td>Two-state. <code>false</code> = <code>from_node</code> → <code>to_node</code> only</td></tr>
+    <tr><td><code>step_free</code></td><td>bool</td><td>Y</td><td>Two-state. <code>false</code> for <code>escalator</code> and <code>stairs</code> (V-62)</td></tr>
+    <tr><td><code>trolley</code></td><td>bool</td><td>Y</td><td>Two-state. <code>false</code> for <code>stairs</code> (V-62)</td></tr>
+    <tr><td><code>is_open</code></td><td>bool</td><td>Y</td><td>Two-state. <code>false</code> removes the edge (EC-30)</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>Effective weight is <code>weight_m + penalty_m</code>,</b> and that is the only arithmetic the loader does to an edge.</p>
+  <p><b>Why the lift penalty is in metres.</b> A lift ride is about 6 m of travel plus perhaps 30 seconds of waiting. Rather than mixing units, the wait is converted to its walking equivalent, so the matrix stays in one unit and Dijkstra needs no special case for vertical edges. It is also the single tuning knob for "stop bouncing between floors": raise the penalty and the router clusters harder by floor. If "optimal" is later redefined as time (A-05), convert every weight to seconds and nothing else changes.</p>
+  <p><b>Why <code>edge_id</code> exists when <code>placement</code> has no surrogate key.</b> Two nodes can be joined by more than one path — the rear core carries both a lift and stairs between the same pair of core nodes — so <code>(from_node, to_node)</code> is not unique and the table is a multigraph. An out-of-service connector also has to be nameable: LLD §4's <code>invalidate(disabled)</code> needs a handle, and "the rear lift between floors 1 and 2" is <code>E0137</code>.</p>
+  <p><b>The loader must collapse parallel edges to the minimum effective weight.</b> A sparse adjacency matrix holds one value per cell, so three rows joining the same pair become one entry — the cheapest. For the step-free matrix, filter to <code>step_free=true</code> <b>first and then</b> take the minimum, or the stairs' lower weight hides the lift that the step-free route depends on. Doing it in the wrong order produces a step-free matrix that is quietly the same as the full one, which AC-07 would catch and a reviewer might not.</p>
+  <p><b>Vertical edges</b> join two <code>core</code> nodes at the same core position (<code>FRONT</code> or <code>REAR</code>) on different levels (V-63). Non-adjacent levels are permitted — an express lift is a real thing — but the pair must still be the same core, because a lift that arrives in a different part of the building is two connectors. <code>bidirectional=false</code> exists for escalators, which are genuinely one-way, and is why the graph is built directed. The demo store has none, so every row in it is bidirectional — but the matrix build must not assume that, or the first store with an escalator routes shoppers the wrong way up one.</p>
+</div>
+<h2><span class="sec">5</span> &nbsp;Worked example — one SKU across all six files</h2>
+<div class="prose">
+  <p>Coca-Cola Classic 500ml, on its home rack in the drinks aisle on floor 1 and on a promotional end cap at the same aisle's north end.</p>
+</div>
+<pre><code># store.csv
+key,value
+store_id,SBY-DEMO-001
+store_name,Sainsbury's Demo Superstore
+data_provenance,synthetic
+planogram_version,2026-10-01
+stock_as_of,2026-10-09T08:40:00Z
+
+# products.csv
+sku,name,brand,size,barcode,department,aisle_category,synonyms,diet_gluten_free,diet_vegan,diet_vegetarian,diet_halal,allergens_contains,age_restricted,price_gbp,own_brand,popularity
+7123456,Coca-Cola Classic,Coca-Cola,500ml,5449000000996,Drinks,Soft Drinks,coke|cola,true,true,true,,none,false,1.65,false,0.82
+
+# stock.csv
+sku,ranged,shelf_qty
+7123456,true,14
+
+# planogram.csv
+sku,node_id,location_type,shelf_no,facing_from,facing_count,seasonal
+7123456,F1-A07-R03,HOME,2,1,3,false
+7123456,F1-A07-N,PROMO_ENDCAP,,,,false
+
+# map_nodes.csv
+node_id,node_type,level,floor_name,aisle,rack,shelf_count,zone,x_m,y_m,is_open
+F1-A07-R03,rack,1,Ambient Grocery,7,3,5,Drinks,42.0,18.0,true
+F1-A07-N,aisle_end,1,Ambient Grocery,7,,,Drinks,42.0,2.0,true
+
+# map_edges.csv
+edge_id,from_node,to_node,kind,weight_m,penalty_m,bidirectional,step_free,trolley,is_open
+E0412,F1-A07-R03,F1-A07-R02,aisle,3.2,0.0,true,true,true,true
+E0413,F1-A07-R03,F1-A07-R04,aisle,3.2,0.0,true,true,true,true
+E0137,F0-CORE-REAR,F1-CORE-REAR,lift,6.0,25.0,true,true,true,true
+E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true</code></pre>
+<div class="prose">
+  <p>Four things to read off it. <code>diet_halal</code> is <b>empty</b> — unknown, not false, and a halal requirement will not be satisfied by this product (NFR-03). <code>allergens_contains</code> is <code>none</code> — checked, and the declaration is empty, which is a stronger claim than the empty cell above it. The end-cap placement has three empty shelf columns, because an end cap has no shelf (V-46). And <code>E0137</code>, <code>E0138</code> and <code>E0139</code> are three parallel rows on one pair of nodes, which is why <code>edge_id</code> exists and why the loader takes a minimum.</p>
+</div>
+<h2><span class="sec">6</span> &nbsp;Referential integrity</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>#</th><th>Relationship</th><th>Cardinality</th><th>Total?</th><th>Violation</th></tr></thead>
+  <tbody>
+    <tr><td class="m">R-1</td><td><code>stock.sku</code> → <code>products.sku</code></td><td>1:1</td><td><b>Yes, both ways</b></td><td>Refuse (V-30, V-32)</td></tr>
+    <tr><td class="m">R-2</td><td><code>planogram.sku</code> → <code>products.sku</code></td><td>N:1</td><td>No</td><td>Refuse on orphan (V-40)</td></tr>
+    <tr><td class="m">R-3</td><td><code>planogram.node_id</code> → <code>map_nodes.node_id</code></td><td>N:1</td><td>No</td><td>Refuse on orphan (V-41)</td></tr>
+    <tr><td class="m">R-4</td><td><code>map_edges.from_node</code> → <code>map_nodes.node_id</code></td><td>N:1</td><td>No</td><td>Refuse (V-60)</td></tr>
+    <tr><td class="m">R-5</td><td><code>map_edges.to_node</code> → <code>map_nodes.node_id</code></td><td>N:1</td><td>No</td><td>Refuse (V-60)</td></tr>
+    <tr><td class="m">R-6</td><td><code>store.store_id</code> → folder name</td><td>1:1</td><td>Yes</td><td>Refuse (V-11)</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>R-1 is total in <b>both</b> directions and it is the only one that is: every product has exactly one stock row and every stock row has a product. A SKU in the stock file but not the catalogue is a stale extract; a SKU in the catalogue with no stock row has no answer to FR-07.</p>
+  <p>R-2 and R-3 are deliberately partial, and the gap carries meaning — <code>products</code> ⟶ no placement is EC-19 or EC-04, and a <code>map_nodes</code> row with no placement is most of the map.</p>
+</div>
+<h2><span class="sec">7</span> &nbsp;Validation</h2>
+<div class="prose">
+  <p>Run once when the store folder is loaded, before the first query is served. <b>Invalid data stops the load</b> — NFR-07, and AC-14 requires each refusal to name the fault. A data error is not a request-time edge case; a half-loaded store is never served.</p>
+  <p>IDs are stable and gaps between blocks are intentional, so a new rule does not renumber the ones a test references.</p>
+</div>
+<h3>7.1 &nbsp;Refusals — format</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-01</td><td>Header matches the schema exactly: no missing, no unknown, no duplicate column</td><td>A typo'd header silently dropping a column</td></tr>
+    <tr><td class="m">V-02</td><td>UTF-8 decodes, no BOM</td><td>A store folder round-tripped through Excel</td></tr>
+    <tr><td class="m">V-03</td><td>No duplicate primary key, in any file</td><td><b>New with CSV.</b> A JSON object could not hold one key twice; two rows can. Named in requirements §7</td></tr>
+    <tr><td class="m">V-04</td><td>Every boolean cell is <code>true</code>, <code>false</code>, or — for <code>diet_*</code> and <code>allergens_contains</code> only — empty</td><td><code>TRUE</code>, <code>1</code>, <code>yes</code>, <code>N/A</code> being coerced to a guess</td></tr>
+    <tr><td class="m">V-05</td><td>Pipe-delimited cells have no empty segments and no leading or trailing `\</td><td>`</td><td>`coke\</td><td>\</td><td>cola`, a trailing delimiter</td></tr>
+    <tr><td class="m">V-06</td><td>Every required cell is non-empty; every forbidden cell is empty</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.2 &nbsp;Refusals — <code>store.csv</code></h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-10</td><td>Exactly the five keys of §4.1, no more, no fewer</td><td>A typo'd key being read as a missing one</td></tr>
+    <tr><td class="m">V-11</td><td><code>store_id</code> equals the folder name</td><td>A folder copied and half-renamed</td></tr>
+    <tr><td class="m">V-12</td><td><code>data_provenance</code> is <code>synthetic</code>; <code>planogram_version</code> and <code>stock_as_of</code> parse as ISO 8601</td><td>C-04 being lost in onboarding</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.3 &nbsp;Refusals — <code>products.csv</code></h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-20</td><td><code>sku</code> is 7 digits and does not begin with <code>0</code></td><td>§2.4's unrecoverable coercion</td></tr>
+    <tr><td class="m">V-21</td><td><code>barcode</code>, when present, is exactly 13 digits and unique across the file</td><td>Scientific-notation damage; EC-10</td></tr>
+    <tr><td class="m">V-22</td><td><code>allergens_contains</code> does not combine <code>none</code> with a named allergen</td><td>A contradictory declaration reaching NFR-03</td></tr>
+    <tr><td class="m">V-23</td><td><code>price_gbp</code> ≥ 0 with at most 2 dp; <code>popularity</code> in 0.0–1.0</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.4 &nbsp;Refusals — <code>stock.csv</code></h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-30</td><td>Every <code>sku</code> exists in <code>products.csv</code></td><td>A stale stock extract (LLD §13 check 8)</td></tr>
+    <tr><td class="m">V-31</td><td>Not (<code>ranged=false</code> and <code>shelf_qty&gt;0</code>)</td><td>§4.3's unmodelled run-out state</td></tr>
+    <tr><td class="m">V-32</td><td>Every <code>products.sku</code> has a stock row; row counts are equal</td><td>A missing row being read as "not carried"</td></tr>
+    <tr><td class="m">V-33</td><td><code>shelf_qty</code> ≥ 0</td><td>—</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.5 &nbsp;Refusals — <code>planogram.csv</code></h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-40</td><td>Every <code>sku</code> exists in <code>products.csv</code></td><td>EC-43 (LLD §13 check 7)</td></tr>
+    <tr><td class="m">V-41</td><td>Every <code>node_id</code> exists in <code>map_nodes.csv</code></td><td>EC-21 (LLD §13 check 6)</td></tr>
+    <tr><td class="m">V-42</td><td><code>location_type</code> is one of the seven values</td><td>—</td></tr>
+    <tr><td class="m">V-43</td><td><code>shelf_no</code> ≤ the target node's <code>shelf_count</code></td><td>A shelf that is not on the rack</td></tr>
+    <tr><td class="m">V-44</td><td><code>facing_from</code> ≥ 1 and <code>facing_count</code> ≥ 1</td><td>—</td></tr>
+    <tr><td class="m">V-45</td><td>No two placements on the same <code>(node_id, shelf_no)</code> overlap in facings</td><td>Two products claiming the same frontage</td></tr>
+    <tr><td class="m">V-46</td><td><code>location_type</code> and the target <code>node_type</code>, and the shelf columns, satisfy §4.4's matrix</td><td>A counter with a shelf number (supersedes LLD §13 check 11)</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.6 &nbsp;Refusals — <code>map_nodes.csv</code></h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-50</td><td><code>node_id</code> matches the §3 format for its <code>node_type</code>, and its embedded level, aisle and rack agree with the columns</td><td><code>F1-A07-R03</code> on a row that says level 2</td></tr>
+    <tr><td class="m">V-51</td><td>All nodes on one <code>level</code> carry the same <code>floor_name</code></td><td>§4.5's denormalisation drifting</td></tr>
+    <tr><td class="m">V-52</td><td><code>level</code> values are contiguous from 0</td><td>A store missing a floor plate</td></tr>
+    <tr><td class="m">V-53</td><td>Exactly one <code>entrance</code> node, and it is on level 0</td><td>An ambiguous or absent default start point (FR-15)</td></tr>
+    <tr><td class="m">V-54</td><td>At least one <code>till</code> node, on level 0</td><td>FR-18 with no terminus (LLD §13 check 9)</td></tr>
+    <tr><td class="m">V-55</td><td><code>shelf_count</code> ≥ 1 on every <code>rack</code>, empty on every other type</td><td>An unbounded <code>shelf_no</code></td></tr>
+    <tr><td class="m">V-56</td><td>No two nodes share <code>(level, x_m, y_m)</code></td><td>Two points drawn on top of each other</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.7 &nbsp;Refusals — <code>map_edges.csv</code></h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-60</td><td>Both endpoints exist in <code>map_nodes.csv</code></td><td>A typo in a hand-authored map (LLD §13 check 1)</td></tr>
+    <tr><td class="m">V-61</td><td><code>weight_m</code> &gt; 0 and <code>penalty_m</code> ≥ 0</td><td>EC-45 — a non-positive weight breaks Dijkstra's guarantee outright (LLD §13 check 2)</td></tr>
+    <tr><td class="m">V-62</td><td><code>step_free=false</code> for <code>escalator</code> and <code>stairs</code>; <code>trolley=false</code> for <code>stairs</code></td><td>A step-free route sending a wheelchair up an escalator</td></tr>
+    <tr><td class="m">V-63</td><td>A <code>lift</code>, <code>escalator</code> or <code>stairs</code> edge joins two <code>core</code> nodes at the same core position on different levels; an <code>aisle</code> or <code>corridor</code> edge joins two nodes on the same level</td><td>A connector that arrives in the wrong half of the building; a corridor through a ceiling</td></tr>
+    <tr><td class="m">V-64</td><td><code>from_node</code> ≠ <code>to_node</code></td><td>A self-loop</td></tr>
+    <tr><td class="m">V-65</td><td>No two rows share <code>(from_node, to_node, kind)</code></td><td>Two indistinguishable connectors, where EC-30 could not say which to disable</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>7.8 &nbsp;Refusals — the assembled graph</h3>
+<div class="prose">
+  <p>Run after the open nodes and edges are expanded into the directed graph.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
+  <tbody>
+    <tr><td class="m">V-70</td><td>Strongly connected over all levels</td><td>EC-44, EC-29 — a store you cannot walk across (LLD §13 check 3)</td></tr>
+    <tr><td class="m">V-71</td><td>Every level reachable from the <code>entrance</code> node</td><td>A floor with no working core (LLD §13 check 4)</td></tr>
+    <tr><td class="m">V-72</td><td>The <code>step_free=true</code> subgraph is also strongly connected</td><td>EC-31 — step-free routing that silently has no answer (LLD §13 check 5)</td></tr>
+    <tr><td class="m">V-73</td><td>Every node with a placement is reachable from the <code>entrance</code></td><td>A product on an orphaned rack</td></tr>
+    <tr><td class="m">V-74</td><td>Every <code>till</code> node reachable from every level</td><td>FR-18 unsatisfiable from upstairs</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>V-70 and V-72 are run on the graph <b>after</b> <code>is_open=false</code> rows are removed, because that is the graph the matrices are built from. Closing a node or a connector can disconnect a store, and the right moment to find out is at load.</p>
+</div>
+<h3>7.9 &nbsp;Warnings</h3>
+<div class="prose">
+  <p>These load the store and log. Each describes data that is suspicious but has a defined meaning, and refusing would block a legitimate case.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Warning</th><th>Why not a refusal</th></tr></thead>
+  <tbody>
+    <tr><td class="m">W-01</td><td>An <code>aisle_category</code> whose products sit on racks in more than one aisle</td><td>Legitimate for a category split across an aisle boundary, but usually a typo in one row</td></tr>
+    <tr><td class="m">W-02</td><td>A SKU with <code>ranged=true</code> and <code>shelf_qty&gt;0</code> but no placement</td><td>EC-19 explicitly handles it — availability is shown and the location reads as unknown</td></tr>
+    <tr><td class="m">W-03</td><td>An <code>aisle</code> or <code>corridor</code> edge whose <code>weight_m</code> differs from the straight-line distance between its endpoints' coordinates by more than 50%</td><td>Legitimate for a dogleg; a large disagreement is usually a mistyped weight (§2.5)</td></tr>
+    <tr><td class="m">W-04</td><td>A node of type <code>rack</code> with no placements on it</td><td>An empty rack is real; a floor of them means the planogram was not finished</td></tr>
+    <tr><td class="m">W-05</td><td>A <code>diet_*</code> column empty for more than half the catalogue</td><td>Honest unknown, but it makes dietary filtering useless, and silently so</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>W-02 and V-32 are the same shape of problem with different answers</b>, and the difference is the point. A missing <i>stock</i> row has no meaning, so it is refused. A missing <i>placement</i> has a defined meaning that the system already handles, so it warns. A validation tier that refuses everything suspicious cannot be lived with, and one that warns about everything is not validation.</p>
+</div>
+<h2><span class="sec">8</span> &nbsp;Sizing</h2>
+<div class="prose">
+  <p>Row counts for the two stores. <b>The catalogue and the stock position do not grow with floor count</b> — the same ~180 products sit somewhere, so only the map changes shape. That is what makes a three-floor demo nearly free.</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>File</th><th>Demo — 3 floors</th><th>Portability — 2 floors</th></tr></thead>
+  <tbody>
+    <tr><td><code>store.csv</code></td><td>5</td><td>5</td></tr>
+    <tr><td><code>products.csv</code></td><td>180</td><td>180</td></tr>
+    <tr><td><code>stock.csv</code></td><td>180</td><td>180</td></tr>
+    <tr><td><code>planogram.csv</code></td><td>~250</td><td>~250</td></tr>
+    <tr><td><code>map_nodes.csv</code></td><td><b>314</b></td><td><b>143</b></td></tr>
+    <tr><td><code>map_edges.csv</code></td><td><b>352 rows → 704 arcs</b></td><td><b>160 rows → 320 arcs</b></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>Node arithmetic for the demo store, with the authoring choices named:</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Term</th><th>Count</th><th>From</th></tr></thead>
+  <tbody>
+    <tr><td>Racks</td><td>216</td><td>36 aisles × 6 racks — F0 12, F1 14, F2 10</td></tr>
+    <tr><td>Aisle ends</td><td>72</td><td>36 aisles × 2 (N, S)</td></tr>
+    <tr><td>Corridor junctions</td><td>6</td><td>2 per floor, where a corridor meets a core</td></tr>
+    <tr><td>Cores</td><td>6</td><td>2 cores × 3 levels</td></tr>
+    <tr><td>Tills</td><td>6</td><td>authoring choice</td></tr>
+    <tr><td>Counters</td><td>3</td><td>deli, fish, bakery — all F0</td></tr>
+    <tr><td>Cabinets</td><td>2</td><td>spirits F1, baby formula F2</td></tr>
+    <tr><td>Dump bins</td><td>2</td><td>F0 and F1 front-of-store</td></tr>
+    <tr><td>Entrance</td><td>1</td><td>—</td></tr>
+    <tr><td><b>Total</b></td><td><b>314</b></td><td></td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>Edge rows: 180 rack-to-rack (5 per aisle × 36) + 72 rack-to-aisle-end + 66 corridor segments between adjacent aisle ends + 12 junction links + 8 vertical (2 lifts × 2 spans, 2 stairs × 2 spans — no escalators, FR-14) + 1 entrance + 6 till + 7 counter, cabinet and bin links = <b>352 rows</b>. Every row in the demo store is bidirectional, so expanding each into two arcs gives <b>704 directed arcs</b>.</p>
+  <p><b>This corrects the "~900 edges" figure</b> carried in <code>lld.md</code> §4, <code>architecture.md</code> §4 and the HLD's review answers. Those numbers predate the rack-level layout being pinned down and were never derived; ~700 is what the arithmetic above gives. The node figure of ~300 stands — 314 against an estimated 300. Neither changes any conclusion: Dijkstra from every node is ~1M operations either way, and the matrices are about 2 MB for both pairs.</p>
+  <p>The aisle, rack and till counts are <b>authoring choices</b>, not derived facts. Changing them changes only <code>map_nodes.csv</code>, <code>map_edges.csv</code> and the <code>node_id</code> values in <code>planogram.csv</code> — which is precisely what FR-25 and AC-09 test.</p>
+</div>
+<h2><span class="sec">9</span> &nbsp;What the schema deliberately does not carry</h2>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Not here</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><b>Shelf and facing nodes</b></td><td>A shelf is not somewhere you walk. Columns on a placement, not rows in the map (§3)</td></tr>
+    <tr><td><b><code>min_level</code> / <code>max_level</code></b></td><td>Derived from <code>map_nodes.level</code>. A stored copy is a stored chance to disagree</td></tr>
+    <tr><td><b>A zone table</b></td><td><code>zone</code> is a label; closures are per-node via <code>is_open</code> (§4.5)</td></tr>
+    <tr><td><b>A surrogate placement key</b></td><td>Nothing references a placement (§4.4)</td></tr>
+    <tr><td><b>Product images, descriptions, nutrition panels</b></td><td>Nothing in the requirements reads them, and supplier-supplied text is an untrusted input (EC-11)</td></tr>
+    <tr><td><b>Price history, promotions, loyalty prices</b></td><td>Out of scope. <code>price_gbp</code> is display only</td></tr>
+    <tr><td><b>Any real retailer identifier, EAN range or store code</b></td><td>The data is synthetic (C-04) and the repository is public</td></tr>
+    <tr><td><b>Any shopper or colleague data</b></td><td>No PII reaches a file in a public repository. Baskets and threads are runtime state</td></tr>
+    <tr><td><b>Timestamps per stock position</b></td><td>A-01 does not model staleness. One <code>stock_as_of</code> for the extract (§4.1)</td></tr>
+    <tr><td><b>A "quantity unknown" encoding</b></td><td>EC-18 is a runtime condition, not a data state (§4.3)</td></tr>
+  </tbody>
+</table>
+</div>
+<h2><span class="sec">10</span> &nbsp;Consequences for the other documents</h2>
+<div class="prose">
+  <p>This document took ownership of territory previously held elsewhere. Recorded so the duplication is closed deliberately rather than left to drift, and kept after the fact so the trail survives.</p>
+  <p><b>Closed, as of 12 October 2026:</b></p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Document</th><th>What changed</th></tr></thead>
+  <tbody>
+    <tr><td><code>lld.md</code> §2</td><td>Now a numbered stub pointing at §3 here. Kept as a stub, not cut, so cross-references to §4–§15 still resolve</td></tr>
+    <tr><td><code>lld.md</code> §3</td><td>Now a numbered stub pointing at §4 here, with a table of what moved where</td></tr>
+    <tr><td><code>lld.md</code> §1</td><td><code>data/</code> lists the six CSVs. The <code>api/</code> package and the separate frontend went with it — there is no HTTP layer</td></tr>
+    <tr><td><code>lld.md</code> §4</td><td><code>~900 edges</code> → <code>~700</code></td></tr>
+    <tr><td><code>lld.md</code> §13</td><td>Stopped listing rules. §7 here owns them; §13 owns when they run, in five ordered phases</td></tr>
+    <tr><td><code>lld.md</code> §11</td><td>Replaced by the Streamlit interface</td></tr>
+    <tr><td><code>hld.md</code></td><td>Edge count corrected; the review answers renumbered with the document</td></tr>
+    <tr><td><code>architecture.md</code> §4</td><td>Edge count corrected; the DATA layer says six CSVs rather than JSON in memory</td></tr>
+    <tr><td><code>requirements.md</code> FR-25</td><td><code>the four data files</code> → <code>its data files</code>, and the same in the users table and the HLD. The map is two files, so a fixed count was never right</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>Still open:</b></p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Document</th><th>What it needs</th></tr></thead>
+  <tbody>
+    <tr><td><code>solution-sketch.md</code></td><td>Its data model predates the four-document split — <code>bay</code> for <code>rack</code>, <code>total_qty</code>, <code>band</code>, <code>as_of</code> per position, <code>store_id</code> per row. Stale throughout, and superseded rather than corrected</td></tr>
+    <tr><td><code>README.md</code></td><td>Add the Schema row to the four-document table and the reading order</td></tr>
+    <tr><td>This document</td><td>No rendered page yet. The other three have artifacts; the rack-elevation figure from the old LLD §2 belongs on it, since the identifier scheme it illustrates now lives here</td></tr>
+  </tbody>
+</table>
+</div>
+
+<footer>
+  Data schema · proof of concept · companion documents: Requirements, HLD, LLD
+</footer>
+
+</div>
