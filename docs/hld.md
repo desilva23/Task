@@ -113,10 +113,11 @@ PAGE            Streamlit, one page: search form · position picker · basket
                 3 floor plates with route overlay · directions list
    │ in-process: graph.invoke(state, {"configurable": {"thread_id": …}})
    │ no HTTP, no serialisation, no API surface
-ORCHESTRATION   LangGraph — 10 nodes, 3 of which call a model
+ORCHESTRATION   LangGraph — 11 nodes, 3 of which call a model
                 classify_query · understand_query · resolve_items · clarify
                 check_availability · suggest_substitutes · resolve_locations
-                route_single · route_multi · describe_route
+                route_single · route_multi · describe_route · verify
+   │ nothing reaches the page until verify has passed it ↑
    │ resolve_items calls ↓
 SEARCH          exact match → BM25 lexical → fuzzy fallback
                 → structured filter → retail ranking
@@ -133,8 +134,8 @@ regex over delimiters and word count, with no model call.
 
 ### 2.1 Agent decomposition
 
-Ten nodes on **explicit edges**, grouped by the job they do. Read as agents,
-they are five:
+Eleven nodes on **explicit edges**, grouped by the job they do. Read as agents,
+they are six:
 
 | Role | Nodes | Model |
 |---|---|---|
@@ -143,8 +144,9 @@ they are five:
 | Location | `resolve_locations` | None |
 | Routing | `route_single` · `route_multi` | None |
 | Narration | `describe_route` | Phrasing only, over facts it is handed |
+| Verification | `verify` | None — it is the check on everything above it |
 
-Three nodes call a model; seven are plain functions. Every node that decides
+Three nodes call a model; eight are plain functions. Every node that decides
 *where a shopper walks* — location and both routing nodes — sits in the
 model-free half, which is NFR-01 expressed as a graph rather than as a
 promise. Each model node has a named deterministic
@@ -161,6 +163,101 @@ What makes this agentic is the rest of the machinery: shared typed state, a
 checkpointer, the `clarify` cycle with its own termination counter, and a real
 `interrupt()` that suspends a journey mid-flight and resumes it with the already
 resolved terms intact. Those are the parts a plain script cannot do.
+
+#### `verify` — the last gate
+
+The final node before the page. It takes the composed answer and re-checks
+every factual claim in it against the service results that produced them:
+each SKU, floor, aisle, rack and shelf, each availability statement, the route
+distance, and the floor transitions named in the directions.
+
+A claim that does not match is **not corrected and shown — it is never shown**.
+The node discards the composed text and re-renders from the deterministic
+template, exactly as it would if the model had been unavailable, and records
+the discrepancy in `degraded`.
+
+Two reasons it is a node and not a helper function. It must be impossible to
+reach the page without passing through it, which an edge guarantees and a
+convention does not. And it is the component that makes NFR-02 a thing the
+system *does* rather than a property it is claimed to have — AC-10 feeds in a
+deliberately corrupted claim and asserts it never reaches the shopper.
+
+Grounding is enforced twice over, and the two are not redundant: the types stop
+the model naming a product or a location at all (LLD §9), and `verify` catches
+everything downstream of that — a stale cached figure, a mis-joined placement,
+a template that formatted the wrong leg. One prevents invention, the other
+catches error.
+
+### 2.2 How one request flows
+
+A shopper standing in the Bakery on Floor 1 types
+`milk, bread, crayons, batteries`. The layer stack says what exists; this says
+what happens.
+
+```
+SHOPPER    PAGE        GRAPH                    SERVICES        CSV
+   │ types  │            │                         │             │
+   1───────▶│            │                         │             │
+   │        2───────────▶│  invoke(thread_id)      │             │
+   │        │            3  classify_query         │             │
+   │        │            │  → batch, 4 terms       │             │
+   │        │            4  resolve_items ────────▶5 catalogue──▶6
+   │        │            │  ◀── ranked candidates per term       │
+   │        │            7  one term ambiguous → interrupt()     │
+   │   ◀────8  "bread: sourdough / white / wholemeal?"           │
+   9───────▶│  taps one  │                         │             │
+   │        10──────────▶│  resume(thread_id) — the other three  │
+   │        │            │  terms are still resolved             │
+   │        │            11 check_availability ───▶12 stock ────▶│
+   │        │            │  → 3 in stock · crayons out of stock  │
+   │        │            13 suggest_substitutes ──▶ candidates   │
+   │        │            14 resolve_locations ────▶15 planogram─▶│
+   │   ◀────16 results grouped: 3 available, 1 out + alternatives│
+   17──────▶│  "add 3 available to basket" → "plan route"        │
+   │        18──────────▶│  second run, basket is the input      │
+   │        │            19 route_multi ──────────▶20 routing    │
+   │        │            │  floors clustered, 2-opt per floor    │
+   │        │            21 describe_route (model phrases it)    │
+   │        │            22 verify — every claim re-checked      │
+   │   ◀────23 directions + route drawn on each floor plate      │
+```
+
+Three things in that sequence are the design, not decoration. The interrupt at
+step 7 keeps the other three terms resolved, so a clarification costs one tap
+and not a retyped search. The basket gate at step 17 is why no route is ever
+planned to the empty crayon shelf. And step 22 stands between every answer and
+the shopper.
+
+Nothing below the graph row ever talks to a model, and nothing above the
+services row ever reads a CSV.
+
+#### What the shopper gets
+
+```
+Semi-skimmed milk 2 L        Available      F1 · Aisle 3 · Rack 2 · shelf 2
+Sourdough loaf 800 g         Available      F1 · Aisle 1 · Rack 4 · shelf 3
+AA batteries 8 pack          Available      F2 · Aisle 14 · Rack 1 · shelf 1
+Crayola crayons 24 pack      Out of stock   F2 · Aisle 11 · Rack 1
+                             → in stock instead: Crayola 12 pack,
+                               Staedtler 24 pack
+
+Route from Bakery, Floor 1 — 112 m, 3 stops, one trip upstairs
+  1. Take the north stairs or the lift up to Floor 2
+  2. Aisle 14, rack 1, bottom shelf — AA batteries
+  3. Back down to Floor 1, head for Aisle 1
+  4. Rack 4 on your right, shelf 3 — sourdough
+  5. Continue to Aisle 3, rack 2 at eye level — milk
+  6. Checkouts are ahead of you
+
+Crayons are out of stock and left out of the route.
+```
+
+Read the route order against FR-17 and FR-18: the upper floor is cleared first
+and the trip finishes at the tills, so the shopper never climbs twice and the
+chilled milk is picked last. A distance-only optimiser would have sent them up
+and down.
+
+Distances are illustrative — the demo store is synthetic (C-04).
 
 ---
 
@@ -305,9 +402,36 @@ are design-level rather than implementation detail:
 
 ---
 
-## 5. Edge cases
+## 5. Quality goals
 
-### 5.1 Search
+The non-functional requirements and the design that meets each. Every row names
+the acceptance criterion that tests it, so none of this rests on assertion.
+
+| Goal | How the design meets it | Tested by |
+|---|---|---|
+| **Correct answers** (NFR-01) | Locations, stock and distances come only from the services. The model's output schema has no field for a product name or a location, so it cannot supply one | AC-10 |
+| **Verified before display** (NFR-02) | `verify` is the last node; a claim that does not match the service result is discarded and the deterministic template is rendered instead | AC-10 |
+| **Dietary safety** (NFR-03) | Substitute candidates are filtered on recorded attributes *before* the model sees them. A `null` attribute reads as unknown and excludes the candidate | AC-17 |
+| **Reliability** (NFR-04) | Each of the three model nodes has a named deterministic fallback; `degraded` records which fired. No model sits on the path that returns a location or a distance | AC-11 |
+| **Speed** (NFR-05) | All-pairs shortest paths are precomputed at startup, so routing is a matrix lookup. BM25 index and distance matrices are cached across page runs | AC-12 |
+| **Input safety** (NFR-06) | Shopper text is passed as data, never concatenated into instructions. Tool arguments are typed and validated. Catalogue text is treated as untrusted — it is editable outside the retailer | AC-13 |
+| **Data integrity** (NFR-07) | The store folder is validated at load: orphan SKUs, placements pointing at missing map points, disconnected components and non-positive edge weights all refuse startup | AC-14 |
+| **Portability** (NFR-08) | Nothing store-specific exists above the data layer. A second store with a different floor count is four replaced files | AC-09 |
+| **Explainability** (NFR-09) | Ranking is a lexicographic tuple sort, so the order can be stated as a reason rather than a score. A route can be read back as the node path it came from | — |
+| **Accessibility** (NFR-10) | Step-free routing runs over a second distance matrix built on the lift-only subgraph. The directions list is the accessible route, not a caption on the map | AC-07 |
+| **Mobile** (NFR-11) | Single column at 390 px, floor plate scaled to width, no horizontal scroll | AC-15 |
+
+Two caveats, stated rather than hidden. AC-17 and AC-07 are written against
+FR-09 and FR-19; they cover NFR-03 and NFR-10 in substance but are not formally
+mapped to them. NFR-09 has no criterion at all — one of ten requirements in the
+specification that currently lack one. That is a gap in the register, not in
+this design.
+
+---
+
+## 6. Edge cases
+
+### 6.1 Search
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -324,7 +448,7 @@ are design-level rather than implementation detail:
 | EC-11 | Prompt injection in the query or in supplier-supplied product text | Query text passed as data, never concatenated into instructions. Catalogue descriptions treated as untrusted — editable outside the retailer |
 | EC-12 | Medical or dosage question | Out of scope by design. Locate the pharmacy aisle; give no medical advice |
 
-### 5.2 Availability
+### 6.2 Availability
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -336,7 +460,7 @@ are design-level rather than implementation detail:
 | EC-17 | Product delisted mid-session | Basket entries revalidated on every journey call, never trusted from session state |
 | EC-18 | Stock service unreachable *(real build)* | Degrade to location-only with availability marked unknown. Never render a guess as a fact |
 
-### 5.3 Location and planogram
+### 6.3 Location and planogram
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -347,7 +471,7 @@ are design-level rather than implementation detail:
 | EC-23 | Behind a counter — deli, pharmacy, fish | Location type `COUNTER`: route to the counter, no rack or shelf |
 | EC-24 | Seasonal bay currently empty | Flagged seasonal; suppressed at zero stock so shoppers aren't sent to bare shelving |
 
-### 5.4 Routing
+### 6.4 Routing
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -361,7 +485,7 @@ are design-level rather than implementation detail:
 | EC-32 | Route would pass through a closed zone | Zones carry an open flag; closed-zone edges filtered before the matrix is built |
 | EC-33 | Chilled and frozen in a multi-item route | Deferred to the final floor pass — a natural consequence of ending at the tills |
 
-### 5.5 Orchestration
+### 6.5 Orchestration
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -372,9 +496,10 @@ are design-level rather than implementation detail:
 | EC-38 | Model returns malformed structured output | Validate against the schema; fall back to keyword search. Known interaction with thinking enabled |
 | EC-39 | Model declines the request | Check the stop reason before reading content; fall through to the deterministic path |
 | EC-40 | Node raises mid-graph, partial state | The checkpoint holds the last good state; resume from the failed node rather than restarting |
+| EC-47 | `verify` finds a claim that does not match the service result | The composed answer is discarded, never corrected in place. The deterministic template is rendered from the service results instead and the discrepancy is recorded in `degraded`. A mismatch is a bug to surface, not a difference to split |
 | EC-41 | Page re-runs or is refreshed mid-journey | State lives in the checkpoint under `thread_id`; the page rebuilds from graph state rather than from Streamlit session state |
 
-### 5.6 Data and startup
+### 6.6 Data and startup
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -385,7 +510,7 @@ are design-level rather than implementation detail:
 
 ---
 
-## 6. Likely review questions
+## 7. Likely review questions
 
 **What search mechanism is it?** BM25 lexical ranking over a normalised product
 text field, with an exact name lookup in front and fuzzy matching behind it for
@@ -430,6 +555,12 @@ giving a distance matrix and a predecessor matrix, so every single-product query
 is an O(1) lookup. A* is the wrong tool: it optimises one query at a time, and
 across floors straight-line distance is not admissible because a route cannot
 pass through a ceiling.
+
+**How do you know the answer shown is right?** Every claim is re-checked
+against the service results by the `verify` node before the page sees it
+(§2.1). A claim that does not match is discarded rather than corrected, and the
+deterministic rendering is shown instead. That is NFR-02, and AC-10 proves it
+by feeding in a deliberately corrupted claim.
 
 **What if the model is wrong or unavailable?** Every model node has a
 deterministic fallback, and no model sits on the path returning a location, a
@@ -482,7 +613,31 @@ shelf photos and a compliance-detection goal. Neither is this project.
 
 ---
 
-## 7. Where this design is weakest
+## 8. Onboarding a new store
+
+FR-25 says a different store is four replaced files and no code changes. This
+is what that costs in practice, and it is the honest answer to "could we run
+this in a real branch?"
+
+| What a store supplies | What has to happen to it |
+|---|---|
+| Planogram as a spreadsheet | Rename and normalise columns, fix bay and shelf numbering, join product details, and attach every placement to a map point. Scripted, roughly a day for a first store |
+| Planogram as a PDF or images | Table extraction, then a person checks every row. Not attempted here, and the reason this is a data problem rather than a software one |
+| Floor plan as an image or CAD | Someone marks the walkable points and the paths between them, once per floor, and sets the scale. CAD gives exact coordinates; an image needs tracing |
+| Stock | Synthetic here. A live feed replaces one service, because nothing above the service layer knows where stock comes from |
+
+**The link people forget:** every rack in the planogram must name a point on
+the map. Without it the system can tell a shopper the aisle but cannot route
+them to it — the planogram and the map are two separate things, and the join
+between them is what makes a location walkable.
+
+The running system never reads a PDF or an image. Conversion happens once,
+before the store folder exists, and the validator refuses the folder if the
+result is inconsistent (NFR-07).
+
+---
+
+## 9. Where this design is weakest
 
 Say these before someone finds them.
 
