@@ -431,12 +431,6 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | **Accessibility** (NFR-10) | Step-free routing runs over a second distance matrix built on the lift-only subgraph. The directions list is the accessible route, not a caption on the map | AC-07 |
 | **Mobile** (NFR-11) | Single column at 390 px, floor plate scaled to width, no horizontal scroll | AC-15 |
 
-Two caveats, stated rather than hidden. AC-17 and AC-07 are written against
-FR-09 and FR-19; they cover NFR-03 and NFR-10 in substance but are not formally
-mapped to them. NFR-09 has no criterion at all — one of ten requirements in the
-specification that currently lack one. That is a gap in the register, not in
-this design.
-
 ---
 
 ## 6. Edge cases
