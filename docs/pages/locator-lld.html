@@ -65,428 +65,267 @@
 <header class="prose">
   <div class="eyebrow">Low-level design · proof of concept</div>
   <h1>Product Locator LLD</h1>
-  <p class="standfirst">Module layout, identifier scheme, file schemas, graph state, node contracts, search internals, routing internals, API contracts and the validation that runs before the service accepts a request.</p>
+  <p class="standfirst">Module layout, graph state, node contracts, algorithms and thresholds for the in-store product finder. Read after the HLD; the data formats live in the Schema document.</p>
   <div class="meta">
-    <span><b>Level</b> one below the HLD</span>
-    <span><b>Covers</b> schemas · signatures · algorithms · thresholds</span>
-    <span><b>Excludes</b> implementation</span>
+    <span><b>Stack</b> Python · LangGraph · Streamlit, in-process</span>
+    <span><b>Nodes</b> 11, of which 3 call a model</span>
+    <span><b>No HTTP layer</b> the page calls the graph directly</span>
   </div>
 </header>
 
 <h2><span class="sec">1</span> &nbsp;Module layout</h2>
-<pre><code>backend/
-  main.py                 app factory, lifespan: load → validate → build matrices
-  config.py               every threshold and cap, one place (§13)
-  api/
-    journey.py            POST /journey, POST /journey/resume, GET /journey/{id}
-    route.py              POST /route
-    store.py              GET /store/{id}/aisles, GET /store/{id}/graph
-    sse.py                node-event stream
-  graph/
-    build.py              StateGraph assembly, checkpointer, compile
-    state.py              JourneyState TypedDict + reducers
-    routers.py            conditional-edge functions
-    nodes/
-      classify.py  understand.py  resolve_items.py  clarify.py
-      availability.py  substitutes.py  locations.py
-      route_single.py  route_multi.py  describe.py
-  services/
-    catalogue.py          Catalogue — in-memory product store + BM25 index
-    planogram.py          Planogram — sku → [Placement]
-    stock.py              Stock — batched position lookup
-    routing.py            RouteEngine — matrices, path reconstruction, TSP
-    storegraph.py         StoreGraph — nodes, edges, adjacency, validation
-  models/
-    domain.py             Product, Placement, StockPosition, Location, Route
-    llm.py                ParsedQuery, SubstituteChoice (structured outputs)
-    api.py                request/response models
-  errors.py               error taxonomy (§12)
-  validation.py           startup checks (§11)
+<pre><code>app.py                    Streamlit entry point — the only executable
+config.py                 every threshold and cap, one place (§14)
+ui/
+  search.py               the st.form search box and the position picker
+  results.py              grouped results and the basket gate action
+  floorplate.py           one SVG plate per floor, route overlay, markers
+  directions.py           the ordered directions list — the accessible route
+  resources.py            @st.cache_resource builders: store, index, matrices
+graph/
+  build.py                StateGraph assembly, checkpointer, compile
+  state.py                JourneyState TypedDict + reducers
+  routers.py              conditional-edge functions
+  nodes/                  classify · understand · resolve_items · clarify
+                          availability · substitutes · locations
+                          route_single · route_multi · describe · verify
+services/
+  catalogue.py            Catalogue — product store + BM25 index
+  planogram.py            Planogram — sku → [Placement]
+  stock.py                Stock — batched position lookup
+  routing.py              RouteEngine — matrices, path reconstruction, TSP
+  storegraph.py           StoreGraph — nodes, edges, adjacency
+models/
+  domain.py               Product, Placement, StockPosition, Location, Route
+  llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
+errors.py                 error taxonomy (§12)
+validation.py             startup checks (§13)
 data/
-  products.json  planogram.json  stock.json  store_graph.json
-frontend/
-  index.html  app.js  store-map.svg
+  SBY-DEMO-001/           store.csv  products.csv  stock.csv
+                          planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
 tests/
   unit/  integration/  fixtures/</code></pre>
-
-<div class="callout">
-  <h4>One rule the layout enforces</h4>
-  <p><code>graph/nodes/*</code> may import from <code>services/*</code>, never the other way round, and <code>services/*</code> never imports anything from <code>langchain</code> or <code>langgraph</code>. That keeps the deterministic core testable without a graph runtime and without a model, which is what makes the fallbacks in §7 honest rather than aspirational.</p>
+<div class="prose">
+  <p><b>Two rules the layout enforces.</b> <code>graph/nodes/<i></code> may import from <code>services/</i></code>, never the reverse, and <code>services/*</code> never imports <code>langchain</code> or <code>langgraph</code> — which keeps the deterministic core testable without a graph runtime and without a model, and is what makes the fallbacks in §6 honest rather than aspirational. And nothing below <code>ui/</code> imports <code>streamlit</code>: the page is the only module that knows it is a page, so putting a service in front of the same graph later changes nothing underneath it.</p>
+  <p>There is no <code>api/</code> package and no separate frontend. <code>app.py</code> calls the compiled graph in the same process (C-03), so no module in this tree imports a web framework.</p>
 </div>
-
 <h2><span class="sec">2</span> &nbsp;Identifier scheme</h2>
 <div class="prose">
-  <p>Addressing is the thing most likely to be got wrong once and then be everywhere. One scheme, used in the graph, the planogram and the directions.</p>
+  <p><b>Moved to <a href="schema.md"><code>schema.md</code></a> §3.</b> An identifier is a data format, so it belongs with the schema.</p>
+  <p>It is unchanged where the two overlap, and extends with three node types this document never gave a format to — <code>counter</code>, <code>cabinet</code> and <code>bin</code>. §3 below required <code>location_type</code> values of <code>COUNTER</code>, <code>ASSISTED</code> and <code>DUMP_BIN</code> that had to route <i>somewhere</i>, and a deli counter is not a rack.</p>
 </div>
-
-<div class="tablewrap">
-<table>
-  <thead><tr><th>Entity</th><th>Format</th><th>Example</th><th>Graph node?</th></tr></thead>
-  <tbody>
-    <tr><td>Rack</td><td class="m">F{level}-A{aisle:02}-R{rack:02}</td><td class="m">F1-A07-R03</td><td><b>yes</b></td></tr>
-    <tr><td>Aisle end</td><td class="m">F{level}-A{aisle:02}-{N|S}</td><td class="m">F1-A07-N</td><td>yes</td></tr>
-    <tr><td>Cross-aisle point</td><td class="m">F{level}-X{n:02}</td><td class="m">F1-X04</td><td>yes</td></tr>
-    <tr><td>Vertical core</td><td class="m">F{level}-CORE-{FRONT|REAR}</td><td class="m">F1-CORE-REAR</td><td>yes</td></tr>
-    <tr><td>Entrance</td><td class="m">F0-ENTRANCE</td><td class="m">F0-ENTRANCE</td><td>yes</td></tr>
-    <tr><td>Checkout</td><td class="m">F0-TILL-{n:02}</td><td class="m">F0-TILL-01</td><td>yes</td></tr>
-    <tr><td>Shelf</td><td class="m">S{n:02}</td><td class="m">S02</td><td><b>no</b> — an attribute</td></tr>
-    <tr><td>Facing</td><td class="m">P{n}</td><td class="m">P1</td><td><b>no</b> — an attribute</td></tr>
-  </tbody>
-</table>
-</div>
-
-<figure>
-  <div class="scroller">
-  <svg viewBox="0 0 720 320" role="img" aria-label="A rack elevation with four shelves sits beside an aisle corridor. A single graph node on the corridor represents the whole rack. The full location address F1 A07 R03 S02 P1 is decomposed beneath, with the first three parts marked as the routable graph node and the last two as attributes describing where on the rack the product sits.">
-    <defs><marker id="l1" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7" markerHeight="6" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
-    <g font-family="IBM Plex Sans Condensed, sans-serif">
-
-      <line x1="40" y1="56" x2="270" y2="56" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-      <text x="40" y="44" font-size="11" fill="currentColor" opacity="0.6">aisle 7 corridor</text>
-      <circle cx="152" cy="56" r="7" fill="var(--fn)"/>
-      <text x="166" y="52" font-size="11" font-family="IBM Plex Mono, monospace" fill="var(--fn)" font-weight="600">F1-A07-R03</text>
-      <text x="166" y="65" font-size="10" fill="currentColor" opacity="0.6">one graph node per rack</text>
-      <line x1="152" y1="66" x2="152" y2="92" stroke="currentColor" stroke-width="1.3" marker-end="url(#l1)"/>
-
-      <rect x="62" y="96" width="180" height="176" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-      <g stroke="currentColor" stroke-width="1" opacity="0.4">
-        <line x1="62" y1="140" x2="242" y2="140"/><line x1="62" y1="184" x2="242" y2="184"/><line x1="62" y1="228" x2="242" y2="228"/>
-      </g>
-      <g font-size="10" font-family="IBM Plex Mono, monospace" fill="currentColor" opacity="0.55">
-        <text x="70" y="113">S01</text><text x="70" y="157">S02</text><text x="70" y="201">S03</text><text x="70" y="245">S04</text>
-      </g>
-      <rect x="104" y="144" width="40" height="36" rx="1.5" fill="var(--fn)" opacity="0.3" stroke="var(--fn)" stroke-width="1.5"/>
-      <text x="124" y="166" font-size="10" text-anchor="middle" font-family="IBM Plex Mono, monospace" fill="currentColor" font-weight="600">P1</text>
-      <text x="152" y="290" font-size="10.5" text-anchor="middle" fill="currentColor" opacity="0.6">rack elevation · 4 shelves</text>
-
-      <g font-family="IBM Plex Mono, monospace">
-        <text x="330" y="118" font-size="20" font-weight="600" fill="var(--fn)">F1 · A07 · R03</text>
-        <text x="562" y="118" font-size="20" font-weight="600" fill="currentColor" opacity="0.6">· S02 · P1</text>
-      </g>
-      <line x1="330" y1="132" x2="548" y2="132" stroke="var(--fn)" stroke-width="2"/>
-      <line x1="562" y1="132" x2="680" y2="132" stroke="currentColor" stroke-width="2" opacity="0.5" stroke-dasharray="4 3"/>
-      <g font-family="IBM Plex Sans Condensed, sans-serif">
-        <text x="330" y="152" font-size="12" font-weight="700" fill="var(--fn)">ROUTABLE</text>
-        <text x="330" y="169" font-size="11.5" fill="currentColor" opacity="0.75">a node in the graph —</text>
-        <text x="330" y="184" font-size="11.5" fill="currentColor" opacity="0.75">Dijkstra routes here</text>
-        <text x="562" y="152" font-size="12" font-weight="700" fill="currentColor" opacity="0.6">ATTRIBUTES</text>
-        <text x="562" y="169" font-size="11.5" fill="currentColor" opacity="0.75">where on the rack —</text>
-        <text x="562" y="184" font-size="11.5" fill="currentColor" opacity="0.75">spoken, not walked</text>
-      </g>
-      <g font-family="IBM Plex Sans Condensed, sans-serif" font-size="10.5" fill="currentColor" opacity="0.6">
-        <text x="330" y="222">floor</text><text x="398" y="222">aisle</text><text x="474" y="222">rack</text>
-        <text x="566" y="222">shelf</text><text x="636" y="222">facing</text>
-      </g>
-      <text x="330" y="262" font-size="11.5" fill="currentColor" opacity="0.75">"Aisle 7, rack 3 — two-thirds down on your right, at eye level."</text>
-      <text x="330" y="282" font-size="11" fill="currentColor" opacity="0.55">The first three parts find it. The last two describe it.</text>
-    </g>
-  </svg>
-  </div>
-  <figcaption><b>The graph stops at rack level.</b> A shelf is not somewhere you walk, so it is an attribute of a placement rather than a node — which keeps the graph at ~300 nodes instead of ~1,200 and still lets directions name a shelf. This is what FR-06's "addressable" buys.</figcaption>
-</figure>
-
 <h2><span class="sec">3</span> &nbsp;Data file schemas</h2>
-
-<h3>3.1 &nbsp;products.json</h3>
-<pre><code>{
-  "sku":            "7123456",          // str, primary key
-  "name":           "Coca-Cola Classic",
-  "brand":          "Coca-Cola",
-  "size":           "500ml",            // str, free text, parsed for variant match
-  "barcode":        "5449000000996",    // str, EAN-13, nullable
-  "department":     "Drinks",           // str, coarse
-  "aisle_category": "Soft Drinks",      // str, fine — drives category queries
-  "synonyms":       ["coke", "cola"],   // list[str], feeds the search index
-  "dietary": {
-    "gluten_free":  true,               // bool | null — null means UNKNOWN, not false
-    "vegan":        true,
-    "vegetarian":   true,
-    "halal":        null,
-    "contains":     ["none"]            // list[str] allergens, authoritative
-  },
-  "age_restricted": false,              // bool — gates ASSISTED handling
-  "price_gbp":      1.65,               // float
-  "own_brand":      false,              // bool, ranking tiebreak
-  "popularity":     0.82                // float 0..1, ranking tiebreak
-}</code></pre>
-<div class="callout warn">
-  <h4><code>null</code> is not <code>false</code></h4>
-  <p>A dietary flag has three states: true, false, and <b>unknown</b>. Open Food Facts leaves fields absent routinely, so collapsing null to false would silently assert "not gluten free" about products nobody has checked. Every read site treats null as unknown and says so. This is the field that makes the allergen guardrail real rather than a sentence in a document.</p>
+<div class="prose">
+  <p><b>Moved to <a href="schema.md"><code>schema.md</code></a> §4.</b> This section described four JSON files. The data is six CSVs, so nothing of it survives but the reasoning, which moved with it:</p>
 </div>
-
-<h3>3.2 &nbsp;planogram.json</h3>
-<pre><code>{
-  "store_id": "SBY-DEMO-001",
-  "version":  "2026-10-01",             // a range change bumps this; cache key
-  "placements": [
-    {
-      "sku":           "7123456",
-      "node_id":       "F1-A07-R03",    // MUST exist in store_graph.nodes
-      "shelf":         2,               // int, 1 = top
-      "facing":        1,               // int, 1 = leftmost
-      "facings":       3,               // int, how many facings wide
-      "location_type": "HOME",
-      "seasonal":      false
-    }
-  ]
-}</code></pre>
 <div class="tablewrap">
 <table>
-  <thead><tr><th><code>location_type</code></th><th>Meaning</th><th>Routable</th><th>Edge case</th></tr></thead>
+  <thead><tr><th>Was here</th><th>Now in <code>schema.md</code></th></tr></thead>
   <tbody>
-    <tr><td class="m">HOME</td><td>Primary planogram position</td><td>yes</td><td>—</td></tr>
-    <tr><td class="m">PROMO_ENDCAP</td><td>Promotional end cap</td><td>yes</td><td>EC-20</td></tr>
-    <tr><td class="m">SEASONAL</td><td>Seasonal gondola</td><td>yes, suppressed at zero stock</td><td>EC-24</td></tr>
-    <tr><td class="m">DUMP_BIN</td><td>Front-of-store bin</td><td>yes</td><td>—</td></tr>
-    <tr><td class="m">CHILLER</td><td>Chilled or frozen unit</td><td>yes, deferred to last floor pass</td><td>EC-33</td></tr>
-    <tr><td class="m">ASSISTED</td><td>Locked cabinet — spirits, formula, blades</td><td>route to cabinet, colleague required</td><td>EC-22</td></tr>
-    <tr><td class="m">COUNTER</td><td>Deli, fish, pharmacy</td><td>route to counter, no shelf or facing</td><td>EC-23</td></tr>
+    <tr><td><code>products.json</code>, and why <code>null</code> is not <code>false</code></td><td>§4.2, and §2.2 — which is the same argument made harder, because CSV has no null and an empty cell reads as <code>NaN</code></td></tr>
+    <tr><td><code>planogram.json</code>, the <code>location_type</code> table</td><td>§4.4, plus a node-compatibility matrix this section had no way to express</td></tr>
+    <tr><td><code>stock.json</code>, and why <code>ranged</code> is load-bearing</td><td>§4.3</td></tr>
+    <tr><td><code>store_graph.json</code>, and why the lift penalty is in metres</td><td>§4.5 and §4.6</td></tr>
   </tbody>
 </table>
 </div>
-
-<h3>3.3 &nbsp;stock.json</h3>
-<pre><code>{
-  "store_id": "SBY-DEMO-001",
-  "as_of":    "2026-10-09T08:40:00Z",
-  "positions": {
-    "7123456": { "shelf_qty": 14, "ranged": true  },
-    "7123999": { "shelf_qty":  0, "ranged": true  },   // out of stock
-    "7124555": { "shelf_qty":  0, "ranged": false }    // NOT STOCKED HERE
-  }
-}</code></pre>
 <div class="prose">
-  <p><code>ranged</code> is load-bearing. <code>ranged: false</code> and <code>shelf_qty: 0</code> are different answers to the shopper — "we don't carry it at this branch" versus "we carry it and it's sold out" — and they take different paths through the graph. Conflating them is EC-04.</p>
+  <p><b>Both sections are kept as numbered stubs rather than cut out.</b> Renumbering §4–§15 would break every cross-reference to them from <code>hld.md</code>, <code>schema.md</code>, <code>CLAUDE.md</code> and §1 of this document — and a moved decision keeps a trail, the same convention the requirements register follows for a resolved question.</p>
 </div>
-
-<h3>3.4 &nbsp;store_graph.json</h3>
-<pre><code>{
-  "store_id":  "SBY-DEMO-001",
-  "min_level": 0,
-  "max_level": 2,
-  "floors": [
-    { "level": 0, "name": "Fresh &amp; Tills", "zones": ["Produce", "Bakery", "Chilled"] }
-  ],
-  "nodes": [
-    { "id": "F1-A07-R03", "type": "rack",  "level": 1, "aisle": 7, "rack": 3,
-      "x": 42.0, "y": 18.0, "zone": "Ambient" },
-    { "id": "F1-CORE-REAR", "type": "core", "level": 1, "x": 78.0, "y": 4.0 }
-  ],
-  "edges": [
-    { "from": "F1-A07-R03", "to": "F1-A07-N",
-      "weight_m": 6.0, "bidirectional": true, "kind": "aisle" },
-
-    { "from": "F0-CORE-REAR", "to": "F1-CORE-REAR",
-      "weight_m": 6.0, "penalty_m": 25.0, "bidirectional": true,
-      "kind": "lift", "step_free": true, "trolley": true },
-
-    { "from": "F0-CORE-REAR", "to": "F1-CORE-REAR",
-      "weight_m": 14.0, "penalty_m": 4.0, "bidirectional": false,
-      "kind": "escalator", "step_free": false, "trolley": false }
-  ]
-}</code></pre>
-
-<div class="callout">
-  <h4>Why the lift penalty is expressed in metres</h4>
-  <p>A lift ride is 6 m of travel plus perhaps 30 seconds of waiting. Rather than mixing units, the wait is converted to its walking equivalent — <code>penalty_m: 25.0</code> — so the whole matrix stays in one unit and Dijkstra needs no special handling for vertical edges. Effective weight is <code>weight_m + penalty_m</code>.</p>
-  <p>This is also the single tuning knob for "stop bouncing between floors": raise the penalty and the router clusters by floor harder. If "optimal" is later redefined as time (OQ in the HLD), convert every weight to seconds and the same code runs unchanged.</p>
-  <p>Note the escalator is <code>bidirectional: false</code> — an up escalator is genuinely one-way, which is why the graph is built directed.</p>
-</div>
-
 <h2><span class="sec">4</span> &nbsp;Graph construction and matrices</h2>
 <pre><code>class StoreGraph:
-    nodes:   dict[str, Node]          # id → Node
-    index:   dict[str, int]           # id → matrix row/col
-    rev:     list[str]                # matrix index → id
+    nodes: dict[str, Node]          # id → Node
+    index: dict[str, int]           # id → matrix row/col
+    rev:   list[str]                # matrix index → id
 
 class RouteEngine:
-    D_full:  np.ndarray               # (V, V) float64 — distances, all edges
-    P_full:  np.ndarray               # (V, V) int32   — predecessors
-    D_step:  np.ndarray               # same, lift-only subgraph
-    P_step:  np.ndarray
+    D_full: np.ndarray              # (V, V) float64 — distances, all edges
+    P_full: np.ndarray              # (V, V) int32   — predecessors
+    D_step: np.ndarray              # same, lift-only subgraph
+    P_step: np.ndarray
 
-    def build(self, g: StoreGraph) -> None:
-        """Called once in lifespan. Two shortest_path runs."""
-
-    def distance(self, u: str, v: str, step_free: bool = False) -> float: ...
-    def path(self, u: str, v: str, step_free: bool = False) -> list[str]: ...
-    def invalidate(self, disabled_edges: list[EdgeRef]) -> None:
-        """Lift out of service (EC-30). Rebuild — sub-second, so on demand is fine."""</code></pre>
-
-<h4>Matrix build</h4>
-<pre><code>csr = build_csr(g)                    # effective weight = weight_m + penalty_m
+    def build(self, g: StoreGraph) -&gt; None: ...
+    def distance(self, u: str, v: str, step_free: bool = False) -&gt; float: ...
+    def path(self, u: str, v: str, step_free: bool = False) -&gt; list[str]: ...
+    def invalidate(self, disabled: list[EdgeRef]) -&gt; None: ...   # EC-30</code></pre>
+<div class="prose">
+  <p>Build:</p>
+</div>
+<pre><code>csr  = build_csr(g)                 # effective weight = weight_m + penalty_m
 D, P = shortest_path(csr, method="D", directed=True, return_predecessors=True)</code></pre>
-
-<h4>Path reconstruction</h4>
+<div class="prose">
+  <p>Path reconstruction:</p>
+</div>
 <pre><code>def path(self, u, v, step_free=False):
     P = self.P_step if step_free else self.P_full
     i, j = self.g.index[u], self.g.index[v]
     if i == j:
-        return [u]                                    # EC-25, zero-length
-    if P[i, j] == NO_PATH:                            # NO_PATH = -9999
-        raise UnreachableNodeError(u, v)              # EC-29
+        return [u]                                  # EC-25, zero-length
+    if P[i, j] == NO_PATH:                          # NO_PATH = -9999
+        raise UnreachableNodeError(u, v)            # EC-29
     out, k = [v], j
     while k != i:
         k = int(P[i, k])
         out.append(self.g.rev[k])
     return list(reversed(out))</code></pre>
-
 <div class="tablewrap">
 <table>
   <thead><tr><th>Quantity</th><th>Value</th></tr></thead>
   <tbody>
     <tr><td>Nodes V</td><td>~300 (216 racks + aisle ends + cross-aisle + 6 cores + entrance + tills)</td></tr>
-    <tr><td>Edges E</td><td>~900, directed</td></tr>
-    <tr><td>Build cost</td><td>~1M operations per run, two runs, well under a second total</td></tr>
+    <tr><td>Edges E</td><td>~700, directed</td></tr>
+    <tr><td>Build cost</td><td>~1M operations per run, two runs, well under a second</td></tr>
     <tr><td>Memory</td><td>D 720 KB + P 360 KB per matrix, ~2 MB for both pairs</td></tr>
     <tr><td>Query cost</td><td><code>distance</code> O(1); <code>path</code> O(len), ~15 hops</td></tr>
   </tbody>
 </table>
 </div>
-
 <h2><span class="sec">5</span> &nbsp;Graph state</h2>
 <pre><code>class JourneyState(TypedDict):
-    # ---- request, written once ----
-    store_id:      str
-    raw_query:     str
-    mode:          Literal["auto", "single", "multi"]
-    start_node:    str                       # F{n}-A{nn}-{N|S} from the picker
-    step_free:     bool
+    # request, written once
+    store_id:   str
+    raw_query:  str
+    mode:       Literal["auto", "single", "multi"]
+    start_node: str
+    step_free:  bool
 
-    # ---- classification ----
-    shape:         Literal["too_short", "barcode", "batch", "nl", "term"]
-    terms:         list[SearchTerm]          # {text, qty}
-    parsed:        ParsedQuery | None        # model output, §9
+    # classification
+    shape:  Literal["too_short", "digits", "batch", "nl", "term"]
+    terms:  list[SearchTerm]                 # {text, qty}
+    parsed: ParsedQuery | None
 
-    # ---- resolution ----
-    candidates:    dict[str, list[Product]]  # term text → ranked candidates
-    resolved:      dict[str, str]            # term text → chosen SKU
-    unresolved:    list[str]                 # terms that matched nothing — EC-08
-    not_ranged:    list[str]                 # SKUs real but not stocked here — EC-04
+    # resolution
+    candidates:  dict[str, list[Product]]    # term → ranked candidates
+    resolved:    dict[str, str]              # term → chosen SKU
+    unresolved:  list[str]                   # matched nothing — EC-08
+    not_ranged:  list[str]                   # real but not stocked here — EC-04
 
-    # ---- availability and location ----
-    availability:  dict[str, StockPosition]
-    locations:     dict[str, list[Placement]]
-    substitutes:   dict[str, list[Product]]
+    # availability and location
+    availability: dict[str, StockPosition]
+    locations:    dict[str, list[Placement]]
+    substitutes:  dict[str, list[Product]]
 
-    # ---- basket, the input to routing ----
-    basket:        Annotated[list[BasketItem], merge_basket]
+    # basket — the input to routing
+    basket: Annotated[list[BasketItem], merge_basket]
 
-    # ---- output ----
-    route:         Route | None
-    directions:    list[str]
+    # output
+    route:      Route | None
+    directions: list[str]
 
-    # ---- control ----
-    clarify_rounds: int                      # capped at 2 — EC-35
-    degraded:      Annotated[list[str], operator.add]   # node names that fell back
-    errors:        Annotated[list[JourneyError], operator.add]</code></pre>
-
-<div class="callout">
-  <h4>Three fields earn their place</h4>
-  <p><code>basket</code> carries a custom reducer rather than <code>operator.add</code>, because two concurrent adds of the same SKU must merge quantities instead of producing a duplicate row (EC-07).</p>
-  <p><code>degraded</code> records every node that used its fallback. The response carries it, so a demo that quietly ran without a model is visible rather than mysterious.</p>
-  <p><code>clarify_rounds</code> is what makes the cycle terminate. Without it, the graph can loop indefinitely between <code>clarify</code> and <code>resolve_items</code>.</p>
+    # control
+    clarify_rounds: int                                 # capped at 2 — EC-35
+    degraded:  Annotated[list[str], operator.add]       # nodes that fell back
+    errors:    Annotated[list[JourneyError], operator.add]
+    verified:  bool                                     # set by verify — EC-47
+    mismatches: Annotated[list[Mismatch], operator.add] # claim, expected, found</code></pre>
+<div class="prose">
+  <p>Three fields earn their place:</p>
 </div>
-
+<div class="prose">
+<ul>
+  <li><b><code>basket</code></b> carries a custom reducer rather than <code>operator.add</code>, because two concurrent adds of the same SKU must merge quantities instead of producing a duplicate row (EC-07).</li>
+  <li><b><code>degraded</code></b> records every node that used its fallback, and the response carries it — so a demo that quietly ran without a model is visible rather than mysterious.</li>
+  <li><b><code>clarify_rounds</code></b> is what makes the cycle terminate.</li>
+  <li><b><code>verified</code></b> is false until <code>verify</code> has passed the composed answer. The page renders nothing while it is false, which is how NFR-02 becomes a property of the state machine rather than a discipline.</li>
+</ul>
+</div>
 <h2><span class="sec">6</span> &nbsp;Node contracts</h2>
 <div class="tablewrap">
 <table>
   <thead><tr><th>Node</th><th>Reads</th><th>Writes</th><th>Fallback on failure</th></tr></thead>
   <tbody>
-    <tr><td class="mw">classify_query</td><td class="mw">raw_query</td><td class="mw">shape, terms</td><td>n/a — pure function, cannot fail</td></tr>
-    <tr><td class="mw">understand_query</td><td class="mw">raw_query</td><td class="mw">parsed, terms</td><td>treat whole query as one term; append to <code>degraded</code></td></tr>
-    <tr><td class="mw">resolve_items</td><td class="mw">terms, parsed</td><td class="mw">candidates, resolved, unresolved, not_ranged</td><td>n/a — deterministic</td></tr>
-    <tr><td class="mw">clarify</td><td class="mw">candidates, clarify_rounds</td><td class="mw">resolved, clarify_rounds</td><td>after 2 rounds, auto-pick rank 1 and note it</td></tr>
-    <tr><td class="mw">check_availability</td><td class="mw">resolved</td><td class="mw">availability</td><td>mark availability unknown, never guess — EC-18</td></tr>
-    <tr><td class="mw">suggest_substitutes</td><td class="mw">availability, locations</td><td class="mw">substitutes</td><td>static same-category in-stock list</td></tr>
-    <tr><td class="mw">resolve_locations</td><td class="mw">resolved</td><td class="mw">locations</td><td>n/a — deterministic</td></tr>
-    <tr><td class="mw">route_single</td><td class="mw">basket, start_node, step_free</td><td class="mw">route</td><td>surface the unreachable error, no partial route</td></tr>
-    <tr><td class="mw">route_multi</td><td class="mw">basket, start_node, step_free</td><td class="mw">route</td><td>fall back to floor-ordered serpentine without 2-opt</td></tr>
-    <tr><td class="mw">describe_route</td><td class="mw">route, locations</td><td class="mw">directions</td><td>template string per hop; append to <code>degraded</code></td></tr>
+    <tr><td><code>classify_query</code></td><td>raw_query</td><td>shape, terms</td><td>n/a — pure function</td></tr>
+    <tr><td><code>understand_query</code></td><td>raw_query</td><td>parsed, terms</td><td>treat whole query as one term; append to <code>degraded</code></td></tr>
+    <tr><td><code>resolve_items</code></td><td>terms, parsed</td><td>candidates, resolved, unresolved, not_ranged</td><td>n/a — deterministic</td></tr>
+    <tr><td><code>clarify</code></td><td>candidates, clarify_rounds</td><td>resolved, clarify_rounds</td><td>after 2 rounds auto-pick rank 1 and note it</td></tr>
+    <tr><td><code>check_availability</code></td><td>resolved</td><td>availability</td><td>mark unknown, never guess — EC-18</td></tr>
+    <tr><td><code>suggest_substitutes</code></td><td>availability, locations</td><td>substitutes</td><td>static same-category in-stock list</td></tr>
+    <tr><td><code>resolve_locations</code></td><td>resolved</td><td>locations</td><td>n/a — deterministic</td></tr>
+    <tr><td><code>route_single</code></td><td>basket, start_node, step_free</td><td>route</td><td>surface the error, no partial route</td></tr>
+    <tr><td><code>route_multi</code></td><td>basket, start_node, step_free</td><td>route</td><td>floor-ordered serpentine without 2-opt</td></tr>
+    <tr><td><code>describe_route</code></td><td>route, locations</td><td>directions</td><td>template per hop; append to <code>degraded</code></td></tr>
+    <tr><td><code>verify</code></td><td>directions, route, locations, availability, resolved</td><td>verified, mismatches</td><td>n/a — deterministic. A mismatch discards the composed text and re-renders the template (EC-47)</td></tr>
   </tbody>
 </table>
 </div>
-
-<h4>Router functions</h4>
-<pre><code>def after_classify(s) -> str:
-    if s["shape"] == "too_short": return END                      # EC-01
+<div class="prose">
+  <p>Routers:</p>
+</div>
+<pre><code>def after_classify(s) -&gt; str:
+    if s["shape"] in ("too_short", "digits"): return END       # EC-01, EC-10
     if s["shape"] == "nl":        return "understand_query"
     return "resolve_items"
 
-def after_resolve(s) -> str:
-    if not s["resolved"] and not s["candidates"]: return END      # EC-03
+def after_resolve(s) -&gt; str:
+    if not s["resolved"] and not s["candidates"]: return END   # EC-03
     if s["clarify_rounds"] &lt; MAX_CLARIFY_ROUNDS and needs_clarification(s):
-        return "clarify"                                          # EC-05
+        return "clarify"                                       # EC-05
     return "check_availability"
 
-def after_availability(s) -> str:
+def after_availability(s) -&gt; str:
     return "suggest_substitutes" if any_out_of_stock(s) else "resolve_locations"
 
-def after_locations(s) -> str:
+def after_locations(s) -&gt; str:
     routable = [i for i in s["basket"] if i.routable]
-    if not routable:                       return END             # EC-15
-    if len(routable) == 1 or s["mode"] == "single": return "route_single"   # EC-28
+    if not routable:                                return END          # EC-15
+    if len(routable) == 1 or s["mode"] == "single":  return "route_single"  # EC-28
     return "route_multi"</code></pre>
-
+<div class="prose">
+  <p><code>describe_route → verify → END</code> is a plain edge, not a conditional one, and <code>verify</code> has no outgoing branch that skips it. That is deliberate: a conditional edge is a decision someone can get wrong, and there must be no path from a composed answer to the page that does not pass the gate.</p>
+</div>
 <h2><span class="sec">7</span> &nbsp;Service interfaces</h2>
 <pre><code>class Catalogue:
-    def by_sku(self, sku: str) -> Product | None: ...
-    def by_barcode(self, code: str) -> Product | None: ...
-    def search(self, term: str, filt: QueryFilter | None, limit: int) -> list[Scored]: ...
-    def by_category(self, category: str) -> list[Product]: ...
+    def by_sku(self, sku: str) -&gt; Product | None: ...
+    def search(self, term: str, filt: QueryFilter | None, limit: int) -&gt; list[Scored]: ...
+    def by_category(self, category: str) -&gt; list[Product]: ...
 
 class Planogram:
     version: str
-    def for_sku(self, sku: str) -> list[Placement]: ...              # may be []  — EC-19
-    def for_skus(self, skus: list[str]) -> dict[str, list[Placement]]: ...   # BATCHED
+    def for_sku(self, sku: str) -&gt; list[Placement]: ...                    # may be [] — EC-19
+    def for_skus(self, skus: list[str]) -&gt; dict[str, list[Placement]]: ... # BATCHED
 
 class Stock:
     as_of: datetime
-    def positions(self, skus: list[str]) -> dict[str, StockPosition]: ...    # BATCHED</code></pre>
+    def positions(self, skus: list[str]) -&gt; dict[str, StockPosition]: ...  # BATCHED</code></pre>
 <div class="prose">
-  <p>Both multi-item lookups are declared as list-in / map-out from the start. At POC scale the body is a comprehension; against a real stock service the signature is the difference between one request and sixty, and changing it later means changing every caller.</p>
+  <p>Both multi-item lookups are list-in / map-out from the start. At POC scale the body is a comprehension; against a real stock service the signature is the difference between one request and sixty, and changing it later means changing every caller.</p>
 </div>
-
 <h2><span class="sec">8</span> &nbsp;Search internals</h2>
-
 <h3>8.1 &nbsp;Index construction</h3>
-<pre><code>def searchable_text(p: Product) -> str:
+<pre><code>def searchable_text(p: Product) -&gt; str:
     return " ".join([p.name, p.brand, p.size, p.aisle_category, *p.synonyms])
 
-def normalise(text: str) -> list[str]:
+def normalise(text: str) -&gt; list[str]:
     t = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     t = t.lower()
-    t = re.sub(r"[^a-z0-9%.]+", " ", t)      # keep digits, % and . for "500ml", "1.5l"
+    t = re.sub(r"[^a-z0-9%.]+", " ", t)   # keep digits, % and . for "500ml", "1.5l"
     return [tok for tok in t.split() if tok not in STOPWORDS]
 
 index = BM25Okapi([normalise(searchable_text(p)) for p in products], k1=1.2, b=0.5)</code></pre>
 <div class="prose">
   <p><code>b=0.5</code> rather than the usual 0.75: <code>b</code> controls how hard a long document is penalised, and product names are all short, so the standard value over-penalises the ones that happen to carry synonyms. Both constants belong on the eval set, not in a reviewer's opinion.</p>
 </div>
-
 <h3>8.2 &nbsp;Query classification</h3>
 <pre><code>SPLIT  = re.compile(r"[,;\n]|\s+and\s+|\s*\+\s*", re.I)
 DIGITS = re.compile(r"^\d{8,13}$")
 QTY    = re.compile(r"^(\d+)\s*(?:x|×)?\s+(.+)$", re.I)
 NL_CUE = re.compile(r"\b(for|with|need|want|make|making|something|what|how|recipe)\b", re.I)
 
-def classify(raw: str) -> tuple[str, list[SearchTerm]]:
+def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
     q = " ".join(raw.split())
-    if len(q) &lt; MIN_QUERY_CHARS:                 return "too_short", []
-    if DIGITS.match(q):                          return "barcode", [SearchTerm(q, 1)]
+    if len(q) &lt; MIN_QUERY_CHARS:  return "too_short", []
+    if DIGITS.match(q):           return "digits", []          # not a product request
     parts = [p.strip() for p in SPLIT.split(q) if p.strip()]
     if len(parts) &gt; 1:
         return "batch", [parse_qty(p) for p in parts[:MAX_BATCH_TERMS]]   # EC-06
     if len(q.split()) &gt; NL_WORD_THRESHOLD and NL_CUE.search(q):
         return "nl", []
     return "term", [parse_qty(q)]</code></pre>
-<div class="callout warn">
-  <h4>Order matters, and one rule is deliberately crude</h4>
-  <p><code>" and "</code> splits before the natural-language test, so <code>"milk and bread"</code> is a batch of two rather than a sentence. The cost is that a product with "and" in its name splits wrongly — "salt and vinegar crisps" becomes two terms. The mitigation is cheap: if a split part fails to resolve, retry the unsplit string once before reporting it unresolved. Worth stating, because a reviewer will find this example.</p>
+<div class="prose">
+  <p><b>Order matters, and one rule is deliberately crude.</b> <code>" and "</code> splits before the natural-language test, so <code>"milk and bread"</code> is a batch of two rather than a sentence. The cost: a product with "and" in its name splits wrongly — "salt and vinegar crisps" becomes two terms. The mitigation is cheap: if a split part fails to resolve, retry the unsplit string once before reporting it unresolved. Worth stating, because a reviewer will find this example.</p>
 </div>
-
 <h3>8.3 &nbsp;Ranking</h3>
-<pre><code>def rank(cands: list[Scored], term: str, stock: dict) -> list[Scored]:
+<pre><code>def rank(cands: list[Scored], term: str, stock: dict) -&gt; list[Scored]:
     return sorted(cands, key=lambda c: (
         not stock[c.sku].ranged,          # ranged first — a hard gate
         stock[c.sku].shelf_qty == 0,      # in stock before out of stock
@@ -498,17 +337,15 @@ def classify(raw: str) -> tuple[str, list[SearchTerm]]:
 <div class="prose">
   <p>A lexicographic tuple sort, not a weighted sum. Weighted sums need tuning and cannot be explained — "why did this rank third" has no short answer. A tuple sort is a precedence list a buyer can read, and it cannot be accidentally mis-tuned into putting an unstocked product first.</p>
 </div>
-
 <h3>8.4 &nbsp;Ambiguity test</h3>
-<pre><code>def needs_clarification(cands: list[Scored]) -> bool:
-    if len(cands) &lt; AMBIGUITY_MIN_HITS:  return False
+<pre><code>def needs_clarification(cands: list[Scored]) -&gt; bool:
+    if len(cands) &lt; AMBIGUITY_MIN_HITS: return False
     top, second = cands[0].bm25, cands[1].bm25
-    if top &lt;= 0:                         return False
-    return (top - second) / top &lt; AMBIGUITY_MARGIN      # 0.15</code></pre>
+    if top &lt;= 0:                        return False
+    return (top - second) / top &lt; AMBIGUITY_MARGIN     # 0.15</code></pre>
 <div class="prose">
   <p>A <i>relative</i> margin, because BM25 scores are unnormalised and vary with query length — an absolute threshold would fire inconsistently between a one-word and a three-word query.</p>
 </div>
-
 <h2><span class="sec">9</span> &nbsp;Structured output models</h2>
 <pre><code>class ParsedQuery(BaseModel):
     """Note what is absent: no sku, no product_name. The model cannot name a
@@ -522,24 +359,38 @@ def classify(raw: str) -> tuple[str, list[SearchTerm]]:
 
 class SubstituteChoice(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    sku:    str      # validated against the candidate set — see below
+    sku:    str      # validated against the candidate set
     reason: str = Field(max_length=140)</code></pre>
 <pre><code>candidates = [p for p in catalogue.by_category(cat)
               if stock[p.sku].shelf_qty &gt; 0
-              and dietary_compatible(p, original)]       # filter BEFORE the model
+              and dietary_compatible(p, original)]      # filter BEFORE the model
 
 choice = model.with_structured_output(SubstituteChoice).invoke(prompt(candidates))
 if choice.sku not in {p.sku for p in candidates}:
-    raise GroundingError(choice.sku)                     # fall back, never surface</code></pre>
-<div class="callout warn">
-  <h4>The guardrail is code, not prose</h4>
-  <p>Two mechanisms, both enforced rather than requested. The schema has no field for a product name, so query understanding cannot invent one. And a substitute SKU that was not in the candidate list the service built is rejected outright — the model picks <i>among</i> safe options, it does not nominate them.</p>
+    raise GroundingError(choice.sku)                    # fall back, never surface</code></pre>
+<div class="prose">
+  <p><b>The guardrail is code, not prose.</b> Two mechanisms, both enforced rather than requested. The schema has no field for a product name, so query understanding cannot invent one. And a substitute SKU that was not in the candidate list the service built is rejected outright — the model picks <i>among</i> safe options, it does not nominate them.</p>
   <p><code>dietary_compatible</code> treats a <code>null</code> flag as incompatible when the original product required it. An unknown value never satisfies a dietary requirement.</p>
 </div>
-
+<h3>The verify pass</h3>
+<div class="prose">
+  <p>The two mechanisms above stop the model <i>inventing</i> a fact. <code>verify</code> catches everything downstream of that — a stale cached figure, a mis-joined placement, a template that formatted the wrong leg. Five checks, all against state the services produced:</p>
+</div>
+<pre><code>def verify(s: JourneyState) -&gt; list[Mismatch]:
+    m = []
+    # 1 every SKU named in the answer was resolved by the search
+    # 2 floor, aisle, rack and shelf equal the Placement for that SKU
+    # 3 availability wording equals the StockPosition; an unavailable
+    #   item has no stop in the route
+    # 4 each leg distance and the total equal the plan within ROUND_TOLERANCE_M,
+    #   and the floor-change count matches the connectors in the node path
+    # 5 every aisle or landmark named in a step appears in the plan's node path
+    return m</code></pre>
+<div class="prose">
+  <p>A non-empty list discards the composed text. The template is rendered from the same service results, <code>verified</code> is set on that, and the mismatch is recorded — never patched in place. Patching would hide the bug that produced it.</p>
+</div>
 <h2><span class="sec">10</span> &nbsp;Routing internals</h2>
-
-<h4>Single</h4>
+<h3>Single</h3>
 <pre><code>def route_single(start, placements, step_free):
     target = min(placements, key=lambda p: engine.distance(start, p.node_id, step_free))
     nodes  = engine.path(start, target.node_id, step_free)
@@ -550,180 +401,168 @@ if choice.sku not in {p.sku for p in candidates}:
 <div class="prose">
   <p>When a SKU has several placements (EC-20) the nearest wins — which is why <code>distance</code> being O(1) matters: evaluating four candidate locations is four array reads.</p>
 </div>
-
-<h4>Multi — floor-clustered, open path per floor, closed at the tills</h4>
+<h3>Multi — floor-clustered, open path per floor, closed at the tills</h3>
 <pre><code>def route_multi(start, items, end_node, step_free):
     chilled, ambient = partition(items, lambda i: i.location_type == "CHILLER")
-    groups = group_by_floor(ambient)                       # {level: [Placement]}
-    order  = sorted(groups, reverse=True)                  # highest floor first
+    groups = group_by_floor(ambient)                   # {level: [Placement]}
+    order  = sorted(groups, reverse=True)              # highest floor first
     legs, cursor = [], start
 
     for level in order:
-        entry = nearest_core(cursor, level, step_free)     # arrive at the cheaper core
+        entry = nearest_core(cursor, level, step_free) # arrive at the cheaper core
         seq   = nn_then_2opt(entry, groups[level], step_free)
         legs += [engine.path(cursor, entry, step_free)] + stitch(seq)
         cursor = seq[-1].node_id if seq else entry
 
-    for p in chilled_last(chilled):                        # EC-33
+    for p in chilled_last(chilled):                    # EC-33
         legs.append(engine.path(cursor, p.node_id, step_free)); cursor = p.node_id
 
-    legs.append(engine.path(cursor, end_node, step_free))  # FR-11, the tills
+    legs.append(engine.path(cursor, end_node, step_free))   # FR-11, the tills
     return Route(nodes=dedupe_joins(legs), ...)</code></pre>
-
-<h4>nn_then_2opt — open path, fixed start</h4>
+<h3>nn_then_2opt — open path, fixed start</h3>
 <pre><code>def nn_then_2opt(entry, stops, step_free):
     seq, pool, cur = [], list(stops), entry
-    while pool:                                            # nearest neighbour
+    while pool:                                        # nearest neighbour
         nxt = min(pool, key=lambda p: engine.distance(cur, p.node_id, step_free))
         seq.append(nxt); pool.remove(nxt); cur = nxt.node_id
 
     improved = True
-    while improved:                                        # 2-opt, OPEN variant
+    while improved:                                    # 2-opt, OPEN variant
         improved = False
         for i in range(len(seq) - 1):
             for j in range(i + 2, len(seq)):
-                if delta(seq, i, j, entry) &lt; -EPSILON:     # no wrap-around term
+                if delta(seq, i, j, entry) &lt; -EPSILON: # no wrap-around term
                     seq[i+1:j+1] = reversed(seq[i+1:j+1])
                     improved = True
     return seq</code></pre>
-<div class="callout">
-  <h4>Open-path 2-opt, not the textbook version</h4>
-  <p>Standard 2-opt optimises a closed tour and its gain calculation includes the edge back to the origin. Each floor leg here is an <i>open</i> path with a fixed start and a free end, so the wrap-around term must be dropped from <code>delta</code>. Using the closed-tour formula produces routes that look subtly wrong — usually a last stop that doubles back — and it is an easy mistake to ship.</p>
-  <p>Complexity is O(n²) per improvement sweep over a handful of stops per floor. Irrelevant at basket size; the matrix lookups are the only real work and they are array reads.</p>
-</div>
-
-<h2><span class="sec">11</span> &nbsp;API contracts</h2>
-<pre><code>POST /journey
-{ "store_id": "SBY-DEMO-001",
-  "query":    "milk, bread, eggs",
-  "mode":     "auto",
-  "start_node": "F0-A01-S",
-  "thread_id":  null,
-  "step_free":  false }
-
-200 →
-{ "thread_id": "th_01J...",
-  "status":    "complete" | "awaiting_input",
-  "shape":     "batch",
-  "results": [
-    { "term": "milk", "status": "available",
-      "product":  { "sku": "...", "name": "...", "size": "...", "price_gbp": 1.45 },
-      "stock":    { "shelf_qty": 14, "as_of": "..." },
-      "locations":[ { "node_id": "F0-A04-R02", "shelf": 1, "facing": 2,
-                      "location_type": "HOME",
-                      "label": "Floor 0 · Aisle 4 · Rack 2 · eye level" } ],
-      "routable": true },
-    { "term": "chicken thighs", "status": "out_of_stock",
-      "substitutes": [ { "sku": "...", "name": "...", "reason": "..." } ],
-      "routable": false }
-  ],
-  "clarification": null,
-  "route":         null,
-  "degraded":      [] }</code></pre>
-<pre><code>POST /journey/resume    { "thread_id": "...", "value": { "term": "bread", "sku": "..." } }
-POST /route             { "thread_id": "...", "skus": [...], "start_node": "...", "step_free": false }
-GET  /journey/{id}      → last completed state      (EC-41, survives an SSE drop)
-GET  /store/{id}/aisles → picker options, grouped by floor
-GET  /store/{id}/graph  → nodes + edges for the map</code></pre>
-
-<h4>SSE events</h4>
-<pre><code>event: node
-data: {"node":"check_availability","status":"done","elapsed_ms":12}
-
-event: result
-data: { ...the 200 body above... }</code></pre>
 <div class="prose">
-  <p><code>/journey</code> returns <b>results only</b> — never a route. Routing is <code>/route</code>, called from the basket, which is what FR-16 requires: nothing is routed until the shopper has moved the available items across.</p>
+  <p><b>Open-path 2-opt, not the textbook version.</b> Standard 2-opt optimises a closed tour and its gain calculation includes the edge back to the origin. Each floor leg here is an <i>open</i> path with a fixed start and a free end, so the wrap-around term must be dropped from <code>delta</code>. Using the closed-tour formula produces routes that look subtly wrong — usually a last stop that doubles back — and it is an easy mistake to ship.</p>
 </div>
+<h2><span class="sec">11</span> &nbsp;The Streamlit interface</h2>
+<div class="prose">
+  <p>There is no HTTP layer (C-03). The page calls the compiled graph in the same process, so what would have been a request contract is a function signature.</p>
+</div>
+<pre><code># app.py — the whole surface between page and graph
+GRAPH = build_graph()                      # @st.cache_resource, built once
 
+def run_query(query: str, start_node: str, step_free: bool) -&gt; JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
+    return GRAPH.invoke(initial_state(query, start_node, step_free), cfg)
+
+def resume(choice: Choice) -&gt; JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
+    return GRAPH.invoke(Command(resume=choice), cfg)
+
+def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
+    return GRAPH.invoke({"basket": basket, "mode": "multi"}, cfg)</code></pre>
+<div class="prose">
+  <p>Three mechanics carry what the API used to:</p>
+</div>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Was</th><th>Is</th></tr></thead>
+  <tbody>
+    <tr><td><code>POST /journey</code></td><td><code>run_query(...)</code> — returns <b>results only</b>, never a route</td></tr>
+    <tr><td><code>POST /journey/resume</code></td><td><code>resume(choice)</code> on the next page run, same <code>thread_id</code></td></tr>
+    <tr><td><code>POST /route</code></td><td><code>plan_route(basket)</code> — a second graph run, from the basket</td></tr>
+    <tr><td><code>GET /journey/{id}</code></td><td><code>GRAPH.get_state(cfg)</code> — the checkpoint is the record (EC-41)</td></tr>
+    <tr><td>SSE progress stream</td><td><code>st.status</code> updated from the node names the graph yields</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p><b>What the page holds and what it does not.</b> <code>st.session_state</code> holds exactly two things: the <code>thread_id</code> and the basket draft. Everything else is read back from the checkpoint, because Streamlit re-executes the script on every interaction and local state would drift from graph state (EC-36, EC-41).</p>
+  <p><b>Caching is load-bearing, not an optimisation.</b> The store, the BM25 index and the distance and predecessor matrices are built in <code>@st.cache_resource</code> builders in <code>ui/resources.py</code>. Without that, every click rebuilds ~314 nodes of all-pairs Dijkstra and NFR-05's five seconds are gone before the search starts.</p>
+  <p><b>The search box lives inside <code>st.form</code></b>, so the graph is invoked on submit rather than on each keystroke.</p>
+  <p><b>Thread lifetime.</b> A <code>thread_id</code> is minted per search and swept after <code>THREAD_TTL_MINUTES</code> (§14). LangGraph does not expire threads, so without the sweep every abandoned clarification leaks a checkpoint (EC-34).</p>
+</div>
 <h2><span class="sec">12</span> &nbsp;Error taxonomy</h2>
 <div class="tablewrap">
 <table>
   <thead><tr><th>Error</th><th>Raised when</th><th>Handling</th></tr></thead>
   <tbody>
-    <tr><td class="mw">StoreDataError</td><td>Startup validation fails</td><td><b>Refuse to start.</b> Never serve a half-loaded store</td></tr>
-    <tr><td class="mw">UnknownStoreError</td><td>store_id not loaded</td><td>404</td></tr>
-    <tr><td class="mw">InvalidNodeError</td><td>start_node absent from the graph</td><td>400, name the valid picker options</td></tr>
-    <tr><td class="mw">UnreachableNodeError</td><td>Predecessor matrix says NO_PATH</td><td>500 + log as a data bug. Should be impossible after §13</td></tr>
-    <tr><td class="mw">ModelUnavailableError</td><td>Timeout, 429, 5xx, refusal stop reason</td><td>Caught in the node; deterministic fallback; append to <code>degraded</code></td></tr>
-    <tr><td class="mw">SchemaValidationError</td><td>Structured output fails the model</td><td>Same as above. Known interaction with thinking enabled</td></tr>
-    <tr><td class="mw">GroundingError</td><td>Model named a SKU outside the candidate set</td><td>Never surfaced. Drop the suggestion, log loudly</td></tr>
+    <tr><td><code>StoreDataError</code></td><td>Startup validation fails</td><td><b>Refuse to start.</b> Never serve a half-loaded store</td></tr>
+    <tr><td><code>UnknownStoreError</code></td><td>store_id not loaded</td><td>Refuse at startup; the page never offers a store that is not loaded</td></tr>
+    <tr><td><code>InvalidNodeError</code></td><td>start_node absent from the graph</td><td>The picker is built from the graph, so this is a bug, not shopper input. Fall back to the entrance and log</td></tr>
+    <tr><td><code>UnreachableNodeError</code></td><td>Predecessor matrix says NO_PATH</td><td>Log as a data bug. Should be impossible after §13</td></tr>
+    <tr><td><code>ModelUnavailableError</code></td><td>Timeout, 429, 5xx, refusal stop reason</td><td>Caught in the node; deterministic fallback; append to <code>degraded</code></td></tr>
+    <tr><td><code>SchemaValidationError</code></td><td>Structured output fails the model</td><td>Same. Known interaction with thinking enabled</td></tr>
+    <tr><td><code>GroundingError</code></td><td>Model named a SKU outside the candidate set</td><td>Never surfaced. Drop the suggestion, log loudly</td></tr>
+    <tr><td><code>VerificationError</code></td><td><code>verify</code> found a claim that does not match the service result</td><td>Never surfaced as written. Discard the composed text, render the template, record the mismatch (EC-47)</td></tr>
   </tbody>
 </table>
 </div>
 <div class="prose">
   <p>The split that matters: a <b>data</b> error stops the service, a <b>model</b> error degrades one node. Nothing in the second class can produce a wrong location or a wrong stock figure, because no model sits on those paths.</p>
 </div>
-
 <h2><span class="sec">13</span> &nbsp;Startup validation</h2>
 <div class="prose">
-  <p>Run in the FastAPI lifespan, before the first request is accepted. Each check maps to an edge case that would otherwise appear as a silently wrong answer.</p>
+  <p><b>The rules live in <code>schema.md</code> §7</b> — forty-seven checks, V-01 to V-47, which supersede the eleven this section used to list. They are schema territory: what makes a store folder well formed is a property of the format, not of this application. What belongs here is <i>when</i> they run, in what order, and what happens when one fails.</p>
+  <p><code>validation.py</code> runs them inside the <code>@st.cache_resource</code> builder that loads the store, which means they run <b>once per process, before the first search</b>, and a failure raises rather than returning a half-loaded store.</p>
 </div>
 <div class="tablewrap">
 <table>
-  <thead><tr><th>#</th><th>Check</th><th>Catches</th></tr></thead>
+  <thead><tr><th>Phase</th><th>Checks</th><th>Why this order</th></tr></thead>
   <tbody>
-    <tr><td>1</td><td>Every edge endpoint exists in <code>nodes</code></td><td>Typo in a hand-authored graph</td></tr>
-    <tr><td>2</td><td>Every <code>weight_m</code> &gt; 0; every <code>penalty_m</code> ≥ 0</td><td>EC-45 — negative weights break Dijkstra's guarantee</td></tr>
-    <tr><td>3</td><td>Graph strongly connected across all floors</td><td>EC-44, EC-29 — a store you cannot walk across</td></tr>
-    <tr><td>4</td><td>Every floor reachable from <code>F0-ENTRANCE</code></td><td>A floor with no working core</td></tr>
-    <tr><td>5</td><td>Lift-only subgraph also connected</td><td>EC-31 — step-free routing that silently has no answer</td></tr>
-    <tr><td>6</td><td>Every placement <code>node_id</code> exists in the graph</td><td>EC-21</td></tr>
-    <tr><td>7</td><td>Every placement <code>sku</code> exists in the catalogue</td><td>EC-43 — orphaned planogram rows</td></tr>
-    <tr><td>8</td><td>Every stock <code>sku</code> exists in the catalogue</td><td>Stale stock extract</td></tr>
-    <tr><td>9</td><td>At least one <code>F0-TILL-*</code> node</td><td>FR-11 has no terminus</td></tr>
-    <tr><td>10</td><td><code>min_level</code>/<code>max_level</code> agree with node levels</td><td>Map and data disagreeing about the building</td></tr>
-    <tr><td>11</td><td>Every <code>ASSISTED</code>/<code>COUNTER</code> placement has no shelf set</td><td>A counter with a shelf number is a modelling error</td></tr>
+    <tr><td>1 · Parse</td><td>Column presence, types, encodings</td><td>Nothing else can run against a file that will not parse</td></tr>
+    <tr><td>2 · Within-file</td><td>Uniqueness, ranges, enum membership</td><td>Cheap, and catches most hand-authoring errors</td></tr>
+    <tr><td>3 · Referential</td><td>Placement → SKU, placement → map node, stock → SKU</td><td>Needs every file loaded, so it cannot come earlier</td></tr>
+    <tr><td>4 · Graph</td><td>Connectivity, positive weights, every floor reachable, lift-only subgraph connected</td><td>Needs the graph built, which needs phase 3 to have passed</td></tr>
+    <tr><td>5 · Store shape</td><td>At least one checkout node, levels agree with the map</td><td>Last, because it is the only phase that encodes a requirement rather than a data rule</td></tr>
   </tbody>
 </table>
 </div>
-
-<h2><span class="sec">14</span> &nbsp;Configuration</h2>
-<pre><code>MIN_QUERY_CHARS       = 2       # EC-01
-MAX_BATCH_TERMS       = 30      # EC-06
-NL_WORD_THRESHOLD     = 4
-BM25_K1, BM25_B       = 1.2, 0.5
-SEARCH_LIMIT          = 10
-FUZZY_THRESHOLD       = 80      # rapidfuzz ratio
-FUZZY_TRIGGER_SCORE   = 2.0     # BM25 below this triggers the fuzzy retry
-AMBIGUITY_MIN_HITS    = 3
-AMBIGUITY_MARGIN      = 0.15    # §8.4
-MAX_CLARIFY_ROUNDS    = 2       # EC-35
-THREAD_TTL_MINUTES    = 30      # EC-34 — abandoned interrupts
-MODEL_TIMEOUT_S       = 6
-NO_PATH               = -9999   # scipy sentinel
-EPSILON               = 1e-9
-
-MODEL_UNDERSTAND      = "claude-haiku-5-5"
-MODEL_SUBSTITUTE      = "claude-opus-5-5"
-MODEL_DESCRIBE        = "claude-haiku-5-5"</code></pre>
 <div class="prose">
-  <p>Every number a reviewer might question lives here, with the edge case it serves in the comment. <code>THREAD_TTL_MINUTES</code> drives the sweep that stops abandoned clarifications accumulating checkpoints forever — LangGraph does not expire threads on its own.</p>
+  <p>Phase 4 is the one worth naming in a review: the lift-only subgraph is checked for connectivity separately, because a store can be perfectly walkable and still have no step-free path between two floors. FR-19 would then be unsatisfiable at runtime, and the shopper would be the one to discover it.</p>
+  <p>A failure names the file, the row and the rule. <code>StoreDataError</code> is the only error in §12 that refuses to start.</p>
 </div>
+<h2><span class="sec">14</span> &nbsp;Configuration</h2>
+<pre><code>MIN_QUERY_CHARS     = 2       # EC-01
+MAX_BATCH_TERMS     = 30      # EC-06
+NL_WORD_THRESHOLD   = 4
+BM25_K1, BM25_B     = 1.2, 0.5
+SEARCH_LIMIT        = 10
+FUZZY_THRESHOLD     = 80      # rapidfuzz ratio
+FUZZY_TRIGGER_SCORE = 2.0     # BM25 below this triggers the fuzzy retry
+AMBIGUITY_MIN_HITS  = 3
+AMBIGUITY_MARGIN    = 0.15    # §8.4
+MAX_CLARIFY_ROUNDS  = 2       # EC-35
+THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
+MODEL_TIMEOUT_S     = 6
+ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
+NO_PATH             = -9999   # scipy sentinel
+EPSILON             = 1e-9
 
+MODEL_UNDERSTAND    = "claude-haiku-5-5"
+MODEL_SUBSTITUTE    = "claude-opus-5-5"
+MODEL_DESCRIBE      = "claude-haiku-5-5"</code></pre>
+<div class="prose">
+  <p>Every number a reviewer might question lives here with the edge case it serves in the comment. <code>THREAD_TTL_MINUTES</code> drives the sweep that stops abandoned clarifications accumulating checkpoints forever — LangGraph does not expire threads on its own.</p>
+</div>
 <h2><span class="sec">15</span> &nbsp;Test plan</h2>
 <div class="tablewrap">
 <table>
   <thead><tr><th>Layer</th><th>Covers</th><th>Representative cases</th></tr></thead>
   <tbody>
-    <tr><td><b>Unit · classify</b></td><td>Every branch of §8.2</td><td>Empty · 1 char · barcode · <code>"milk, bread"</code> · <code>"milk and bread"</code> · <code>"salt and vinegar crisps"</code> (the known-crude case) · <code>"2 x milk"</code> · 200 terms</td></tr>
-    <tr><td><b>Unit · search</b></td><td>Ranking precedence</td><td>Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected</td></tr>
-    <tr><td><b>Unit · routing</b></td><td>Matrix and reconstruction</td><td>Same-node route returns <code>[u]</code> · known-distance pair · NO_PATH raises · step-free matrix differs where it should</td></tr>
-    <tr><td><b>Unit · TSP</b></td><td>Open-path correctness</td><td>Single stop returns it unchanged · 2-opt never lengthens a route · chilled last · ends at a till</td></tr>
-    <tr><td><b>Unit · grounding</b></td><td>The guardrails in §9</td><td>Out-of-set SKU raises GroundingError · <code>null</code> dietary flag never satisfies a requirement</td></tr>
-    <tr><td><b>Integration · graph</b></td><td>Edge routing and cycles</td><td>Ambiguous term interrupts then resumes · clarify caps at 2 · all-out-of-stock reaches END without a route · single item in multi mode takes the single path</td></tr>
-    <tr><td><b>Integration · fallback</b></td><td>§6 fallback column</td><td>Each model node forced to fail; journey still completes and <code>degraded</code> names it</td></tr>
-    <tr><td><b>Validation</b></td><td>§13</td><td>One fixture per check, each expected to refuse startup</td></tr>
+    <tr><td>Unit · classify</td><td>Every branch of §8.2</td><td>Empty · 1 char · digits only · <code>"milk, bread"</code> · <code>"milk and bread"</code> · <code>"salt and vinegar crisps"</code> (the known-crude case) · <code>"2 x milk"</code> · 200 terms</td></tr>
+    <tr><td>Unit · search</td><td>Ranking precedence</td><td>Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected</td></tr>
+    <tr><td>Unit · routing</td><td>Matrix and reconstruction</td><td>Same-node route returns <code>[u]</code> · known-distance pair · NO_PATH raises · step-free matrix differs where it should</td></tr>
+    <tr><td>Unit · TSP</td><td>Open-path correctness</td><td>Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till</td></tr>
+    <tr><td>Unit · grounding</td><td>§9 guardrails</td><td>Out-of-set SKU raises <code>GroundingError</code> · <code>null</code> dietary flag never satisfies a requirement</td></tr>
+    <tr><td>Integration · graph</td><td>Edge routing and cycles</td><td>Ambiguous term interrupts then resumes · clarify caps at 2 · all-out-of-stock reaches END without a route · single item in multi mode takes the single path</td></tr>
+    <tr><td>Integration · fallback</td><td>§6 fallback column</td><td>Each model node forced to fail; journey still completes and <code>degraded</code> names it</td></tr>
+    <tr><td>Integration · verify</td><td>§9 verify pass, EC-47</td><td>A deliberately corrupted aisle, distance and availability each rejected; the template answer is rendered instead; <code>verified</code> is never true on a mismatch (AC-10)</td></tr>
+    <tr><td>Validation</td><td>§13 and <code>schema.md</code> §7</td><td>One malformed fixture per phase, each expected to refuse startup with the file, row and rule named</td></tr>
   </tbody>
 </table>
 </div>
-<div class="callout">
-  <h4>The test that matters most</h4>
-  <p>The fallback suite. It is the only thing that proves the claim the whole design rests on — that a model failure degrades fluency and never correctness. Forcing each of the four model nodes to fail and asserting the journey still returns a correct location and a correct route is what turns that from an assertion into a fact.</p>
+<div class="prose">
+  <p><b>The test that matters most</b> is the fallback suite. It is the only thing that proves the claim the whole design rests on — that a model failure degrades fluency and never correctness. Forcing each of the three model nodes to fail and asserting the journey still returns a correct location and a correct route is what turns that from an assertion into a fact.</p>
 </div>
 
 <footer>
-  Low-level design · proof of concept · companion to the HLD and the architecture note
+  Low-level design · proof of concept · companion documents: Requirements, HLD, Schema
 </footer>
 
 </div>

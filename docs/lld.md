@@ -604,6 +604,7 @@ AMBIGUITY_MARGIN    = 0.15    # §8.4
 MAX_CLARIFY_ROUNDS  = 2       # EC-35
 THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
 MODEL_TIMEOUT_S     = 6
+ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
 
