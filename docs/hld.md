@@ -514,110 +514,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 
 ---
 
-## 7. Likely review questions
-
-**What search mechanism is it?** BM25 lexical ranking over a normalised product
-text field, with an exact name lookup in front and fuzzy matching behind it for
-typos. Natural-language queries go through the model first, which produces a
-typed filter constraining the same BM25 search — the model narrows the search,
-it never names the product.
-
-**Why not vector search?** At this catalogue size the model's structured filter
-handles the semantic cases more cheaply and more explainably, and it cannot
-return a product that does not exist. Hybrid BM25 + embeddings with reciprocal
-rank fusion is right at tens of thousands of SKUs. Scale-up path, not starting
-point.
-
-**If I type several products into the search bar, does it work?** Yes.
-`classify_query` detects the delimiters and splits the input; each term resolves
-independently and concurrently. The basket is for accumulating across separate
-searches — it is not the mechanism for multi-item search.
-
-**Can I see availability for all of them up front?** Yes, in one batched call
-rather than one per item. The route is then offered, not forced.
-
-**What happens when the search is ambiguous?** The graph pauses on a real
-interrupt and asks, keeping the terms already resolved. Capped at two rounds.
-
-**Do we have multiple agents?** Yes — five functional roles across ten nodes
-(§2.1): query understanding, availability, location, routing and narration. They
-are LangGraph nodes on explicit edges rather than five processes negotiating
-with each other, which is a decision about control flow, not a shortfall in
-decomposition.
-
-**Is this really agentic, if the model does not choose the tools?** Yes. The
-agentic parts that earn their place are the shared typed state, the checkpointer
-that survives a page re-run, the `clarify` cycle with its own termination
-counter, and a real `interrupt()` that pauses a journey and resumes it with the
-resolved terms intact. What is deliberately *not* agentic is tool selection: the
-order is known, and letting a model re-decide it per query risks skipping the
-stock check and routing a shopper to an empty shelf. More autonomy over the
-plan, never over the facts.
-
-**What algorithm computes the route?** Dijkstra from every node once at startup,
-giving a distance matrix and a predecessor matrix, so every single-product query
-is an O(1) lookup. A* is the wrong tool: it optimises one query at a time, and
-across floors straight-line distance is not admissible because a route cannot
-pass through a ceiling.
-
-**How do you know the answer shown is right?** Every claim is re-checked
-against the service results by the `verify` node before the page sees it
-(§2.1). A claim that does not match is discarded rather than corrected, and the
-deterministic rendering is shown instead. That is NFR-02, and AC-10 proves it
-by feeding in a deliberately corrupted claim.
-
-**What if the model is wrong or unavailable?** Every model node has a
-deterministic fallback, and no model sits on the path returning a location, a
-distance or a stock figure. The system degrades to keyword search — less fluent,
-never wrong about where something is.
-
-**Is this ready for a real store?** No, and not meant to be. The journey, the
-interface and the data model are proven on synthetic data. What stands between
-this and a real store is data, not software.
-
-**Is this a machine learning problem?** No. It is search and graph routing over
-enumerable data. BM25 is statistical ranking, not learned; Dijkstra and the
-2-opt heuristic are classical algorithms with exact or provable answers. The
-only learned component is a pre-trained model called for language understanding
-— inference, not training. There is no dataset, no labels, no model to fit and
-no training pipeline.
-
-**Shouldn't we train a model on the store data so it learns the map?** No, and
-this is the most common misconception about this kind of system. **The store map
-is not a pattern to learn, it is a fact to look up.** Training is for rules you
-cannot enumerate; this map is 314 nodes and about 700 directed edges in six CSV files. Training a
-model to hold it is like training one to remember a phone number instead of
-writing it down.
-
-| | Trained model | Lookup + Dijkstra |
-|---|---|---|
-| Accuracy | Approximates distances, sometimes wrong | Exact, provably shortest |
-| Shelf moves at a range change | Retrain | Edit one row |
-| 600 stores | 600 models | 600 files |
-| "Why this route?" | No answer available | Trace the path |
-| Cost per query | Inference | An array read |
-
-The failure mode is the real objection: a model that has "learned" the map will
-confidently invent an aisle number for a product it did not memorise — exactly
-what this architecture exists to prevent.
-
-**What the model is for is language, not geography.** It turns "something gluten
-free for the kids' lunchboxes" into a structured query and hands that to BM25,
-which searches the real catalogue. It never knows where anything is, and its
-output schema carries no field for a product name or a location (LLD §9), so it
-cannot.
-
-Google Maps does not train a model to learn the road network — it stores roads
-as a graph and runs a routing algorithm. Its machine learning is for traffic
-prediction and for understanding "coffee near me", not for knowing where streets
-are. The same split applies here.
-
-Training would be the right call with click logs and a learning-to-rank goal, or
-shelf photos and a compliance-detection goal. Neither is this project.
-
----
-
-## 8. Onboarding a new store
+## 7. Onboarding a new store
 
 FR-25 says a different store is four replaced files and no code changes. This
 is what that costs in practice, and it is the honest answer to "could we run
@@ -641,7 +538,7 @@ result is inconsistent (NFR-07).
 
 ---
 
-## 9. Where this design is weakest
+## 8. Where this design is weakest
 
 Say these before someone finds them.
 

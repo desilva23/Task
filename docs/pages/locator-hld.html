@@ -782,81 +782,7 @@ Crayons are out of stock and left out of the route.</pre>
 </table>
 </div>
 
-<h2><span class="sec">7</span> &nbsp;Likely review questions</h2>
-
-<div class="prose">
-  <div class="qa">
-    <div class="q">What search mechanism is it?</div>
-    <div class="a">BM25 lexical ranking over a normalised product text field, with an exact name lookup in front of it and fuzzy matching behind it for typos. Natural-language queries go through the model first, which produces a typed filter that constrains the same BM25 search — so the model narrows the search, it never names the product.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Why not vector search or embeddings?</div>
-    <div class="a">At this catalogue size the model's structured filter handles the semantic cases more cheaply and more explainably, and it cannot return a product that does not exist. Hybrid BM25 plus embeddings fused with reciprocal rank fusion is the right answer at tens of thousands of SKUs, where an LLM call per query is too slow. It is the scale-up path, not the starting point.</div>
-  </div>
-  <div class="qa">
-    <div class="q">If I type several products into the search bar, does it work?</div>
-    <div class="a">Yes. <code>classify_query</code> detects the delimiters and splits the input, then each term resolves independently and concurrently. The basket is for accumulating items across separate searches — it is not the mechanism for multi-item search, and it should not be the answer to this question.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Can I see availability for all of them up front, before committing to a route?</div>
-    <div class="a">Yes, in one batched call rather than one per item. The route is then offered, not forced — the shopper sees what is in stock and where it is before deciding whether to walk it.</div>
-  </div>
-  <div class="qa">
-    <div class="q">What happens when the search is ambiguous?</div>
-    <div class="a">The graph pauses on a real interrupt and asks, keeping the terms already resolved. Capped at two rounds, after which it shows the ranked list rather than asking again.</div>
-  </div>
-  <div class="qa">
-    <div class="q">What algorithm computes the route?</div>
-    <div class="a">Dijkstra, run from every node once at startup, giving a distance matrix and a predecessor matrix. Every single-product query is then an O(1) lookup. A* is the wrong tool here: it optimises one query at a time, and across floors straight-line distance is not an admissible heuristic, because a route cannot pass through a ceiling.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Do we have multiple agents?</div>
-    <div class="a">Yes — five functional roles across eleven nodes, plus the verifier (§2.1): query understanding, availability, location, routing, narration and verification. They are LangGraph nodes on explicit edges rather than five processes negotiating with each other, which is a decision about control flow, not a shortfall in decomposition.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Is this really agentic, if the model does not choose the tools?</div>
-    <div class="a">Yes. The agentic parts that earn their place are the shared typed state, the checkpointer that survives a page re-run, the <code>clarify</code> cycle with its own termination counter, and a real <code>interrupt()</code> that pauses a journey and resumes it with the resolved terms intact. What is deliberately <i>not</i> agentic is tool selection: the order is known, and letting a model re-decide it per query risks skipping the stock check and routing a shopper to an empty shelf. More autonomy over the plan, never over the facts.</div>
-  </div>
-  <div class="qa">
-    <div class="q">How do you know the answer shown is right?</div>
-    <div class="a">Every claim is re-checked against the service results by the <code>verify</code> node before the page sees it. A claim that does not match is discarded rather than corrected, and the deterministic rendering is shown instead. That is NFR-02, and AC-10 proves it by feeding in a deliberately corrupted claim.</div>
-  </div>
-  <div class="qa">
-    <div class="q">What if the model is wrong or unavailable?</div>
-    <div class="a">Every model node has a deterministic fallback, and no model is on the path that returns a location, a distance or a stock figure. The system degrades to plain keyword search — less fluent, never wrong about where something is.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Is this ready for a real store?</div>
-    <div class="a">No, and it is not meant to be. The journey, the interface and the data model are proven on synthetic data. What stands between this and a real store is data, not software: a planogram feed with an owner and a contract, a stock feed with known freshness, and a machine-readable floor plan per store. The first is the long pole and it is a conversation with space planning, not an engineering task.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Is this a machine learning problem?</div>
-    <div class="a">No. It is search and graph routing over enumerable data. BM25 is statistical ranking, not learned; Dijkstra and the 2-opt heuristic are classical algorithms with exact or provable answers. The only learned component is a pre-trained model called for language understanding — inference, not training. There is no dataset, no labels, no model to fit and no training pipeline.</div>
-  </div>
-  <div class="qa">
-    <div class="q">Shouldn't we train a model on the store data so it learns the map?</div>
-    <div class="a">
-      <p>No, and this is the most common misconception about this kind of system. <b>The store map is not a pattern to learn, it is a fact to look up.</b> Training is for rules you cannot enumerate; this map is 314 nodes and about 700 directed edges in six CSV files. Training a model to hold it is like training one to remember a phone number instead of writing it down.</p>
-      <div class="tablewrap">
-      <table>
-        <thead><tr><th></th><th>Trained model</th><th>Lookup + Dijkstra</th></tr></thead>
-        <tbody>
-          <tr><td><b>Accuracy</b></td><td>Approximates distances, sometimes wrong</td><td>Exact, provably shortest</td></tr>
-          <tr><td><b>Shelf moves at a range change</b></td><td>Retrain</td><td>Edit one row</td></tr>
-          <tr><td><b>600 stores</b></td><td>600 models</td><td>600 files</td></tr>
-          <tr><td><b>"Why this route?"</b></td><td>No answer available</td><td>Trace the path</td></tr>
-          <tr><td><b>Cost per query</b></td><td>Inference</td><td>An array read</td></tr>
-        </tbody>
-      </table>
-      </div>
-      <p>The failure mode is the real objection: a model that has "learned" the map will confidently invent an aisle number for a product it did not memorise — exactly what this architecture exists to prevent.</p>
-      <p><b>What the model is for is language, not geography.</b> It turns "something gluten free for the kids' lunchboxes" into a structured query and hands that to BM25, which searches the real catalogue. It never knows where anything is, and its output schema carries no field for a product name or a location, so it cannot.</p>
-      <p>Google Maps does not train a model to learn the road network — it stores roads as a graph and runs a routing algorithm. Its machine learning is for traffic prediction and for understanding "coffee near me", not for knowing where streets are. The same split applies here.</p>
-      <p>Training would be the right call with click logs and a learning-to-rank goal, or shelf photos and a compliance-detection goal. Neither is this project.</p>
-    </div>
-  </div>
-</div>
-<h2><span class="sec">8</span> &nbsp;Onboarding a new store</h2>
+<h2><span class="sec">7</span> &nbsp;Onboarding a new store</h2>
 <div class="prose">
   <p>FR-25 says a different store is four replaced files and no code changes. This is what that costs in practice, and it is the honest answer to "could we run this in a real branch?"</p>
 </div>
@@ -879,7 +805,7 @@ Crayons are out of stock and left out of the route.</pre>
   <p>The running system never reads a PDF or an image. Conversion happens once, before the store folder exists, and the validator refuses the folder if the result is inconsistent (NFR-07).</p>
 </div>
 
-<h2><span class="sec">9</span> &nbsp;Where this design is weakest</h2>
+<h2><span class="sec">8</span> &nbsp;Where this design is weakest</h2>
 <div class="prose">
   <p>Say these before someone finds them.</p>
   <p><b>A planogram says where a product is supposed to be.</b> Shelves drift from plan within days of a range change. Synthetic data hides this completely, so the demo will look more reliable than a real deployment would. The honest mitigations are a shopper "this is wrong" report and, longer term, vision-based shelf compliance.</p>
