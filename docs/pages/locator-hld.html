@@ -489,11 +489,11 @@ Crayons are out of stock and left out of the route.</pre>
 
 <figure>
   <div class="scroller">
-  <svg viewBox="0 0 800 545" role="img" aria-label="Sequence diagram for the query milk comma bread comma eggs. The client posts to the API, which invokes the graph. The graph classifies the query as a three-term list, resolves all three terms concurrently in the search subsystem, finds bread ambiguous and raises an interrupt to the client, resumes with the shopper's choice, then makes one batched availability call and one batched location call before computing a single multi-floor route ending at the checkout.">
+  <svg viewBox="0 0 800 545" role="img" aria-label="Sequence diagram for the query milk comma bread comma eggs. The page invokes the compiled graph in-process. The graph classifies the query as a three-term list, resolves all three terms concurrently in the search subsystem, finds bread ambiguous and raises an interrupt to the client, resumes with the shopper's choice, then makes one batched availability call and one batched location call before computing a single multi-floor route ending at the checkout.">
     <defs><marker id="h3" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7.5" markerHeight="6.5" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
     <g font-family="IBM Plex Mono, monospace" font-size="10.5">
       <g font-family="IBM Plex Sans Condensed, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle" fill="currentColor">
-        <text x="62" y="20">CLIENT</text><text x="206" y="20">API</text><text x="356" y="20">GRAPH</text>
+        <text x="62" y="20">SHOPPER</text><text x="206" y="20">PAGE</text><text x="356" y="20">GRAPH</text>
         <text x="506" y="20">SEARCH</text><text x="634" y="20">STOCK</text><text x="748" y="20">ROUTING</text>
       </g>
       <g stroke="currentColor" stroke-width="1" opacity="0.3" stroke-dasharray="3 4">
@@ -506,7 +506,7 @@ Crayons are out of stock and left out of the route.</pre>
         <text x="66" y="48" font-size="10">"milk, bread, eggs" + floor 0 / aisle 1</text>
 
         <line x1="206" y1="86" x2="348" y2="86" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
-        <text x="210" y="80" font-size="10">invoke(state, thread_id)</text>
+        <text x="210" y="80" font-size="10">graph.invoke(state, thread_id) — in-process</text>
 
         <rect x="360" y="104" width="196" height="30" rx="2" fill="color-mix(in srgb, var(--fn) 12%, transparent)" stroke="var(--fn)" stroke-width="1.3"/>
         <text x="368" y="116" font-size="10">classify_query →</text>
