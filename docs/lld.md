@@ -151,7 +151,7 @@ class JourneyState(TypedDict):
     step_free:  bool
 
     # classification
-    shape:  Literal["too_short", "barcode", "batch", "nl", "term"]
+    shape:  Literal["too_short", "digits", "batch", "nl", "term"]
     terms:  list[SearchTerm]                 # {text, qty}
     parsed: ParsedQuery | None
 
@@ -210,7 +210,7 @@ Routers:
 
 ```python
 def after_classify(s) -> str:
-    if s["shape"] == "too_short": return END                   # EC-01
+    if s["shape"] in ("too_short", "digits"): return END       # EC-01, EC-10
     if s["shape"] == "nl":        return "understand_query"
     return "resolve_items"
 
@@ -237,7 +237,6 @@ def after_locations(s) -> str:
 ```python
 class Catalogue:
     def by_sku(self, sku: str) -> Product | None: ...
-    def by_barcode(self, code: str) -> Product | None: ...
     def search(self, term: str, filt: QueryFilter | None, limit: int) -> list[Scored]: ...
     def by_category(self, category: str) -> list[Product]: ...
 
@@ -291,7 +290,7 @@ NL_CUE = re.compile(r"\b(for|with|need|want|make|making|something|what|how|recip
 def classify(raw: str) -> tuple[str, list[SearchTerm]]:
     q = " ".join(raw.split())
     if len(q) < MIN_QUERY_CHARS:  return "too_short", []
-    if DIGITS.match(q):           return "barcode", [SearchTerm(q, 1)]
+    if DIGITS.match(q):           return "digits", []          # not a product request
     parts = [p.strip() for p in SPLIT.split(q) if p.strip()]
     if len(parts) > 1:
         return "batch", [parse_qty(p) for p in parts[:MAX_BATCH_TERMS]]   # EC-06
@@ -579,7 +578,7 @@ threads on its own.
 
 | Layer | Covers | Representative cases |
 |---|---|---|
-| Unit · classify | Every branch of §8.2 | Empty · 1 char · barcode · `"milk, bread"` · `"milk and bread"` · `"salt and vinegar crisps"` (the known-crude case) · `"2 x milk"` · 200 terms |
+| Unit · classify | Every branch of §8.2 | Empty · 1 char · digits only · `"milk, bread"` · `"milk and bread"` · `"salt and vinegar crisps"` (the known-crude case) · `"2 x milk"` · 200 terms |
 | Unit · search | Ranking precedence | Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected |
 | Unit · routing | Matrix and reconstruction | Same-node route returns `[u]` · known-distance pair · NO_PATH raises · step-free matrix differs where it should |
 | Unit · TSP | Open-path correctness | Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till |
@@ -590,6 +589,6 @@ threads on its own.
 
 **The test that matters most** is the fallback suite. It is the only thing that
 proves the claim the whole design rests on — that a model failure degrades
-fluency and never correctness. Forcing each of the four model nodes to fail and
+fluency and never correctness. Forcing each of the three model nodes to fail and
 asserting the journey still returns a correct location and a correct route is
 what turns that from an assertion into a fact.

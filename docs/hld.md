@@ -7,62 +7,25 @@ Both are private — share from each page's Share menu before sending them on.
 
 ---
 
-## 1. Consolidated requirements
+## 1. What this document owns
 
-Every requirement is confirmed, assumed with the assumption recorded, or open.
-Nothing is implied.
+The requirements live in `requirements.md` — 24 functional, 11 non-functional
+and 17 acceptance criteria, every one confirmed. They are not repeated here.
+This document owns the component architecture, the search design, the interface
+and the edge cases, and it is written to be read after the specification.
 
-### Functional
+Three constraints shape everything below: **LangGraph** orchestrates the
+pipeline (C-01), the implementation is **Python** (C-02), and the interface is a
+single **Streamlit** page calling the compiled graph **in-process** (C-03).
+There is no HTTP layer anywhere in this design.
 
-| ID | Requirement | Status |
-|---|---|---|
-| FR-01 | Search for a product within a given store | confirmed |
-| FR-02 | Show availability for the matched product | confirmed |
-| FR-03 | Show location — floor, aisle, rack, shelf | confirmed |
-| FR-04 | Show the optimal route from the user to the product | confirmed |
-| FR-05 | Store spans multiple floors | confirmed |
-| FR-06 | Aisles contain multiple racks; rack is addressable | confirmed |
-| FR-07 | User position set by manually selecting floor + aisle | confirmed |
-| FR-08 | Single product → shortest path | confirmed |
-| FR-09 | Multiple products → optimal shopping route | confirmed |
-| FR-10 | Fixed floor order, one picking pass per floor | confirmed |
-| FR-11 | Multi-product route terminates at a checkout | confirmed |
-| FR-12 | **Search bar accepts several products at once**, returning availability for all in one pass, without first building a basket | confirmed |
-| FR-16 | **Batch results are grouped by availability, in-stock first**, with a single action that moves only the available items into the basket. An out-of-stock item may be added individually but is flagged not routable | confirmed |
-| FR-13 | Basket accumulates items across separate searches, and is the input to routing | confirmed |
-| FR-14 | Ambiguous search asks the user to narrow rather than guessing | assumed |
-| FR-15 | Out-of-stock items offer in-stock alternatives | assumed |
+### 1.1 What the harder requirements mean for the design
 
-### Technical and non-functional
+#### Multiple floors — FR-10, FR-14 and A-03
 
-| ID | Requirement | Status |
-|---|---|---|
-| TR-01 | Agentic framework is LangGraph | confirmed |
-| TR-02 | Store map authored in-house — no public multi-floor rack-level planogram exists | confirmed |
-| TR-03 | Availability data treated as live and correct | confirmed |
-| TR-04 | Python · FastAPI · static HTML/SVG frontend · JSON in memory | assumed |
-| TR-05 | Search returns in well under a second; no runtime graph search | assumed |
-| TR-06 | Model failure degrades to keyword search rather than erroring | assumed |
-| TR-07 | No location, stock figure or dietary claim is ever model-generated | confirmed |
-
-### Open — would cause rework
-
-| ID | Question | Impact if answered differently |
-|---|---|---|
-| OQ-01 | Is the user a shopper or a store colleague? | A colleague picking a 60-item order needs crush-order and temperature constraints and a handheld UI — a different optimisation problem |
-| OQ-02 | Source and granularity of real planogram data | Decides whether rack-level addressing exists at all. The long pole |
-| OQ-03 | Source of real floor plans, and for how many stores | Per-store digitisation can dwarf the software effort |
-| OQ-04 | Approved Gen AI platform, data residency, customer-facing generated text | May force the colleague-facing version first |
-| OQ-05 | Accessibility — is step-free routing required? | Second distance matrix over the lift-only subgraph. Cheap if known now |
-| OQ-06 | Age-restricted and locked-cabinet products | Needs an "ask a colleague" location type rather than a route |
-| OQ-07 | Success metric | Without one the project has no finish line |
-| OQ-08 | Multi-store coverage | Store layout becomes a versioned, owned data asset |
-
-### 1.1 What the less obvious requirements actually mean
-
-#### FR-05 · Store spans multiple floors
-
-Not a UI feature. It changes four things:
+No single requirement says "the store has floors": A-03 fixes the demo store at
+three, FR-10 makes floor part of every location, and FR-14 lets a route cross
+them. Together they change four things:
 
 - **The address.** Floor is part of a location, not metadata about it. "Aisle 7"
   is meaningless alone — there is an Aisle 7 on every floor.
@@ -79,7 +42,7 @@ Not a UI feature. It changes four things:
 
 For the POC: three floors, one zone per floor, two vertical cores.
 
-#### FR-06 · Racks are addressable
+#### FR-10 · Racks are addressable
 
 "Addressable" means the rack has its own identifier that the system can store,
 look up and route to. It is a real entity in the data model with its own node in
@@ -100,19 +63,20 @@ the graph — not a rectangle on a drawing.
 - **Shelf position becomes sayable** — eye level, bottom shelf — which is what
   spoken directions need.
 
-#### FR-12, FR-16 and FR-13 · three different things
+#### FR-02, FR-21 and FR-23 · three different things
 
 Routinely confused, and the distinction is where a review will probe:
 
-- **FR-12** — *one* search returns *many* products.
-- **FR-16** — one action moves the available ones into the basket.
-- **FR-13** — *many* searches contribute to *one* basket, and the basket is what
+- **FR-02** — *one* search returns *many* products.
+- **FR-21 and FR-22** — results are grouped by availability, and one action
+  moves only the available ones into the basket.
+- **FR-23** — *many* searches contribute to *one* basket, and the basket is what
   gets routed.
 
-FR-12 and FR-13 are orthogonal; both feed the same basket. The basket is not the
+FR-02 and FR-23 are orthogonal; both feed the same basket. The basket is not the
 mechanism for multi-item search, and saying it is will not survive a follow-up.
 
-#### FR-14 · Ambiguous search asks rather than guessing
+#### FR-05 · Ambiguous search asks rather than guessing
 
 "bread" matches forty products with similar scores. Rather than picking one, the
 graph pauses on a real `interrupt()` and asks, showing the top options. State is
@@ -120,11 +84,11 @@ preserved, so in a batch query only the ambiguous term asks — the others stay
 resolved. Capped at two rounds, after which it shows the ranked list and stops
 asking.
 
-**Marked assumed for a real reason.** For a shopper, tapping a ranked list may be
-better than answering a question; the interrupt earns its place in a
-conversational or voice interface. Worth confirming which is wanted.
+**Confirmed, and AC-03 tests the part that matters**: the chosen option must
+resolve without the shopper re-entering the other terms. A clarification that
+loses the rest of the search is worse than a ranked list.
 
-#### FR-15 · Out-of-stock items offer alternatives
+#### FR-09 · Out-of-stock items offer alternatives
 
 Eggs are out, so instead of a dead end the shopper sees two or three in-stock
 alternatives from the same category. The mechanic that matters: candidates are
@@ -133,21 +97,23 @@ chooses among already-safe options rather than judging safety. Nothing generated
 asserts that a product is gluten free, vegan or nut free — that claim comes from
 a catalogue attribute, passed through verbatim.
 
-**Marked assumed because nobody asked for it.** It is the commercial
-nice-to-have — a dead end becomes a sale — and the first thing to cut if the week
-runs short.
+**Confirmed, and AC-17 is deliberately strict**: every candidate offered must
+itself be in stock and compatible with the original's recorded dietary
+attributes, and where no compatible alternative exists the system says so rather
+than offering an incompatible one. A substitute is the one place a shopper could
+be handed something their diet excludes, which is why the filter runs before the
+model rather than after it.
 
 ---
 
 ## 2. System layers
 
 ```
-CLIENT          search bar (single · list · natural language) · position picker
-                basket · 3 floor plates with route overlay
-   │ POST /journey · SSE progress ↩
-API             FastAPI, thin: validate · own thread_id · stream · no logic
-   │
-ORCHESTRATION   LangGraph — 10 nodes, 4 of which call a model
+PAGE            Streamlit, one page: search form · position picker · basket
+                3 floor plates with route overlay · directions list
+   │ in-process: graph.invoke(state, {"configurable": {"thread_id": …}})
+   │ no HTTP, no serialisation, no API surface
+ORCHESTRATION   LangGraph — 10 nodes, 3 of which call a model
                 classify_query · understand_query · resolve_items · clarify
                 check_availability · suggest_substitutes · resolve_locations
                 route_single · route_multi · describe_route
@@ -157,12 +123,44 @@ SEARCH          exact match → BM25 lexical → fuzzy fallback
    │
 SERVICES        catalogue · planogram · stock · routing (Dijkstra matrix + TSP)
    │
-DATA            products · planogram · stock · store_graph (3 floors, 2 cores)
+DATA            products · planogram · stock · map_nodes · map_edges
+                CSV, cached once (3 floors, 2 vertical cores)
 ```
 
-`classify_query` is new since the first architecture draft. It decides the
-query's *shape* before anything searches, which is what makes several products
-in one search bar work.
+`classify_query` decides the query's *shape* before anything searches, which is
+what makes several products in one search bar work. It is a pure function: a
+regex over delimiters and word count, with no model call.
+
+### 2.1 Agent decomposition
+
+Ten nodes on **explicit edges**, grouped by the job they do. Read as agents,
+they are five:
+
+| Role | Nodes | Model |
+|---|---|---|
+| Query understanding | `classify_query` · `understand_query` · `resolve_items` · `clarify` | `understand_query` only — it produces a typed filter, never a product name |
+| Availability | `check_availability` · `suggest_substitutes` | `suggest_substitutes` only, over a candidate set already filtered for stock and diet |
+| Location | `resolve_locations` | None |
+| Routing | `route_single` · `route_multi` | None |
+| Narration | `describe_route` | Phrasing only, over facts it is handed |
+
+Three nodes call a model; seven are plain functions. Every node that decides
+*where a shopper walks* — location and both routing nodes — sits in the
+model-free half, which is NFR-01 expressed as a graph rather than as a
+promise. Each model node has a named deterministic
+fallback — keyword search, a static substitution table, a directions template
+(EC-37) — so NFR-04 holds and AC-11 can prove it.
+
+**Why explicit edges rather than a tool-calling agent.** The sequence is known:
+availability is always checked before a route is planned, because a route to an
+empty shelf is worse than no route at all. An agent that re-decides the order on
+every query can get that wrong, and buys nothing in exchange. The fixed order is
+a safety property, not a missing feature.
+
+What makes this agentic is the rest of the machinery: shared typed state, a
+checkpointer, the `clarify` cycle with its own termination counter, and a real
+`interrupt()` that suspends a journey mid-flight and resumes it with the already
+resolved terms intact. Those are the parts a plain script cannot do.
 
 ---
 
@@ -178,7 +176,7 @@ that produces confident results.
 
 | Stage | Mechanism | Handles | Implementation |
 |---|---|---|---|
-| 1 · Exact | Dictionary lookup on barcode or SKU | Scanned EAN-13, internal codes | Python dict, O(1) |
+| 1 · Exact | Dictionary lookup on the normalised name and known synonyms | "semi skimmed milk", "kitchen roll" typed as the catalogue spells them | Python dict, O(1) |
 | 2 · Lexical | **BM25** over name + brand + size + category + synonyms | "coke 500ml", "hovis wholemeal" — the overwhelming majority of real queries | `rank_bm25` in memory; OpenSearch BM25 at real scale |
 | 3 · Fuzzy | Trigram / Levenshtein, only when BM25 scores come back weak | "paracetomol", "yoghurt" vs "yogurt" | `rapidfuzz`, threshold-gated |
 | 4 · Structured filter | Model maps natural language to typed filters that constrain stage 2 | "something gluten free for lunchboxes" | One structured-output call; the model names no product |
@@ -218,11 +216,11 @@ That is a batch query, handled by `classify_query` before any searching happens.
 | `milk, bread, eggs` | delimited list | Three rows, each with its own availability and location, plus one combined route offered |
 | `milk and 6 eggs and some bread` | delimited list | Same. `" and "` is a delimiter; quantities are parsed off the term |
 | `what do I need for a fry up` | natural language | Model expands to an item list, then the batch path. Items shown for confirmation before routing, because the model chose them |
-| `5010029000061` | barcode | Exact lookup, single product |
 
-Classification order: empty/too-short → reject · all-digits → barcode ·
-contains `,` `;` newline or `" and "` → split · >4 words with verbs → model ·
-otherwise → BM25. A batch query runs the whole tree once per term,
+Classification order: empty/too-short → reject · digits only → not a product
+request · contains `,` `;` newline or `" and "` → split · >4 words with verbs →
+model · otherwise → BM25. There is no barcode entry: FR-03 was withdrawn during
+review, and a shopper holding the product has already found it. A batch query runs the whole tree once per term,
 concurrently.
 
 ### 3.3 Checking availability for all of them at once
@@ -264,14 +262,52 @@ An out-of-stock item **can** be added individually, for a shopper who intends to
 ask a colleague, but it is flagged not routable and excluded from the path, with
 the exclusion stated rather than silent.
 
-Consequence for the sequence: the first journey call returns **results only**.
-Routing is a second call, made from the basket.
+Consequence for the sequence: the first graph run returns **results only**.
+Routing is a second run, invoked from the basket on a later page interaction —
+not a second request, because there are no requests.
 
 ---
 
-## 4. Edge cases
+## 4. Interface and presentation
 
-### 4.1 Search
+One Streamlit page, used by a shopper standing in the store on their own phone
+(A-06). The page is not a thin shell over the graph — four requirements land
+here and nowhere else.
+
+| Requirement | What the page does |
+|---|---|
+| FR-15 · start point | Two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
+| FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor, with transition markers where it changes floor |
+| NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
+| NFR-11 · phone width | Single column at 390 px, the floor plate scaled to width with no pinch-zoom, controls within thumb reach, no horizontal page scroll |
+
+**Explainability is a presentation requirement too** (NFR-09). Ranking is a
+lexicographic tuple sort, so the page can state why a result ranked where it
+did — ranged here, then in stock, then relevance — and a route can be read back
+as the ordered node path it came from. Neither explanation involves a model,
+which is the point: an explanation a model composes is not evidence.
+
+### 4.1 Streamlit mechanics the design depends on
+
+Streamlit re-executes the whole script on every interaction. Three consequences
+are design-level rather than implementation detail:
+
+1. **The expensive objects are built once.** Store graph, BM25 index and the
+   distance and predecessor matrices live in `@st.cache_resource`. Without that
+   every click rebuilds them and NFR-05's five seconds are spent before the
+   search starts.
+2. **The search box commits on submit**, inside `st.form`, so the agent runs
+   once per search rather than once per keystroke.
+3. **The clarification pause is served by the next page run.** FR-05's
+   `interrupt()` suspends the graph; the shopper's answer resumes the same
+   `thread_id` on the following run. No second request exists, because the page
+   calls the graph in-process.
+
+---
+
+## 5. Edge cases
+
+### 5.1 Search
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -284,11 +320,11 @@ Routing is a second call, made from the basket.
 | EC-07 | Duplicate terms — "milk, milk, bread" | Deduplicate *after* resolution — "milk" and "whole milk" may resolve to the same SKU |
 | EC-08 | One term in a batch resolves to nothing | Partial success. Return what resolved, name what didn't. Never fail the whole query |
 | EC-09 | Query is a category, not a product — "dairy" | Show the aisle and offer to browse rather than returning an arbitrary SKU |
-| EC-10 | Unknown barcode scanned | Distinguish "not a valid EAN" from "valid but not in our catalogue" |
+| EC-10 | Query is digits only | Treated as not a product request rather than searched. There is no barcode entry — FR-03 was withdrawn |
 | EC-11 | Prompt injection in the query or in supplier-supplied product text | Query text passed as data, never concatenated into instructions. Catalogue descriptions treated as untrusted — editable outside the retailer |
 | EC-12 | Medical or dosage question | Out of scope by design. Locate the pharmacy aisle; give no medical advice |
 
-### 4.2 Availability
+### 5.2 Availability
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -300,18 +336,18 @@ Routing is a second call, made from the basket.
 | EC-17 | Product delisted mid-session | Basket entries revalidated on every journey call, never trusted from session state |
 | EC-18 | Stock service unreachable *(real build)* | Degrade to location-only with availability marked unknown. Never render a guess as a fact |
 
-### 4.3 Location and planogram
+### 5.3 Location and planogram
 
 | ID | Scenario | Behaviour |
 |---|---|---|
 | EC-19 | SKU has no planogram entry | Show availability, state the location is unknown rather than inventing one |
 | EC-20 | SKU has several locations | Show all; route to the nearest. The normal case, not an exception |
 | EC-21 | Planogram references an aisle absent from the store graph | Data integrity failure, caught by startup validation, not at request time |
-| EC-22 | Locked cabinet — spirits, formula, razor blades | Location type `ASSISTED`: route to the cabinet, state a colleague must unlock it (OQ-06) |
+| EC-22 | Locked cabinet — spirits, formula, razor blades | Location type `ASSISTED`: route to the cabinet, state a colleague must unlock it. FR-12 and AC-16 |
 | EC-23 | Behind a counter — deli, pharmacy, fish | Location type `COUNTER`: route to the counter, no rack or shelf |
 | EC-24 | Seasonal bay currently empty | Flagged seasonal; suppressed at zero stock so shoppers aren't sent to bare shelving |
 
-### 4.4 Routing
+### 5.4 Routing
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -325,7 +361,7 @@ Routing is a second call, made from the basket.
 | EC-32 | Route would pass through a closed zone | Zones carry an open flag; closed-zone edges filtered before the matrix is built |
 | EC-33 | Chilled and frozen in a multi-item route | Deferred to the final floor pass — a natural consequence of ending at the tills |
 
-### 4.5 Orchestration
+### 5.5 Orchestration
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -336,9 +372,9 @@ Routing is a second call, made from the basket.
 | EC-38 | Model returns malformed structured output | Validate against the schema; fall back to keyword search. Known interaction with thinking enabled |
 | EC-39 | Model declines the request | Check the stop reason before reading content; fall through to the deterministic path |
 | EC-40 | Node raises mid-graph, partial state | The checkpoint holds the last good state; resume from the failed node rather than restarting |
-| EC-41 | SSE stream drops mid-journey | Result retrievable by `thread_id` — progress streaming is a convenience, not the delivery mechanism |
+| EC-41 | Page re-runs or is refreshed mid-journey | State lives in the checkpoint under `thread_id`; the page rebuilds from graph state rather than from Streamlit session state |
 
-### 4.6 Data and startup
+### 5.6 Data and startup
 
 | ID | Scenario | Behaviour |
 |---|---|---|
@@ -349,10 +385,10 @@ Routing is a second call, made from the basket.
 
 ---
 
-## 5. Likely review questions
+## 6. Likely review questions
 
 **What search mechanism is it?** BM25 lexical ranking over a normalised product
-text field, with exact barcode lookup in front and fuzzy matching behind it for
+text field, with an exact name lookup in front and fuzzy matching behind it for
 typos. Natural-language queries go through the model first, which produces a
 typed filter constraining the same BM25 search — the model narrows the search,
 it never names the product.
@@ -373,6 +409,21 @@ rather than one per item. The route is then offered, not forced.
 
 **What happens when the search is ambiguous?** The graph pauses on a real
 interrupt and asks, keeping the terms already resolved. Capped at two rounds.
+
+**Do we have multiple agents?** Yes — five functional roles across ten nodes
+(§2.1): query understanding, availability, location, routing and narration. They
+are LangGraph nodes on explicit edges rather than five processes negotiating
+with each other, which is a decision about control flow, not a shortfall in
+decomposition.
+
+**Is this really agentic, if the model does not choose the tools?** Yes. The
+agentic parts that earn their place are the shared typed state, the checkpointer
+that survives a page re-run, the `clarify` cycle with its own termination
+counter, and a real `interrupt()` that pauses a journey and resumes it with the
+resolved terms intact. What is deliberately *not* agentic is tool selection: the
+order is known, and letting a model re-decide it per query risks skipping the
+stock check and routing a shopper to an empty shelf. More autonomy over the
+plan, never over the facts.
 
 **What algorithm computes the route?** Dijkstra from every node once at startup,
 giving a distance matrix and a predecessor matrix, so every single-product query
@@ -399,7 +450,7 @@ no training pipeline.
 **Shouldn't we train a model on the store data so it learns the map?** No, and
 this is the most common misconception about this kind of system. **The store map
 is not a pattern to learn, it is a fact to look up.** Training is for rules you
-cannot enumerate; this map is 300 nodes and 900 edges in a file. Training a
+cannot enumerate; this map is 314 nodes and about 354 edge rows in a file. Training a
 model to hold it is like training one to remember a phone number instead of
 writing it down.
 
@@ -431,7 +482,7 @@ shelf photos and a compliance-detection goal. Neither is this project.
 
 ---
 
-## 6. Where this design is weakest
+## 7. Where this design is weakest
 
 Say these before someone finds them.
 
@@ -441,6 +492,16 @@ demo will look more reliable than a real deployment would. Honest mitigations
 are a user "this is wrong" report and, longer term, vision-based shelf
 compliance.
 
-**The open questions in section 1 are genuinely open.** If the user turns out to
-be a colleague picking online orders rather than a shopper, the optimisation
-problem changes shape.
+**The start point is self-reported.** FR-15 has the shopper pick a floor and an
+aisle, because live positioning is out of scope. A shopper who picks the wrong
+aisle gets a correct route from the wrong place, and nothing in the system can
+detect it.
+
+**Substitutes are limited by what the catalogue records.** FR-09 filters
+candidates on dietary attributes before the model sees them, so an unrecorded
+attribute reads as unknown and the candidate is excluded. That is the safe
+direction to fail, but it means thin catalogue data produces thin substitutes.
+
+**One store, one shopper.** No concurrency, no live stock feed, no second store
+running at the same time. The portability test (AC-09) swaps the data files; it
+does not run two stores at once.
