@@ -378,11 +378,21 @@ here and nowhere else.
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
 | NFR-11 · phone width | Single column at 390 px, the floor plate scaled to width with no pinch-zoom, controls within thumb reach, no horizontal page scroll |
 
-**Explainability is a presentation requirement too** (NFR-09). Ranking is a
-lexicographic tuple sort, so the page can state why a result ranked where it
-did — ranged here, then in stock, then relevance — and a route can be read back
-as the ordered node path it came from. Neither explanation involves a model,
-which is the point: an explanation a model composes is not evidence.
+**Explainability is a presentation requirement too** (NFR-09). The page can
+always answer two questions, and both answers come from the mechanism itself.
+
+*Why is this product third?* Because it is out of stock, and in-stock items
+rank above out-of-stock ones. Ranking is a list of rules in priority order, so
+the reason is whichever rule pushed it down.
+
+*Why did the route go this way?* Entrance → Aisle 1 → Aisle 3 → checkout. The
+route **is** an ordered list of points, so printing that list is the
+explanation.
+
+A model could be asked either question and would answer fluently. But it never
+saw the ranking rules or the path — it would be inventing a reason that sounds
+right, not reporting the real one. An explanation nobody can check is worse
+than none, because it gets believed.
 
 ### 4.1 Streamlit mechanics the design depends on
 

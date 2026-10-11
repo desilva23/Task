@@ -636,7 +636,10 @@ Crayons are out of stock and left out of the route.</pre>
 </table>
 </div>
 <div class="prose">
-  <p><b>Explainability is a presentation requirement too</b> (NFR-09). Ranking is a lexicographic tuple sort, so the page can state why a result ranked where it did — ranged here, then in stock, then relevance — and a route can be read back as the ordered node path it came from. Neither explanation involves a model, which is the point: an explanation a model composes is not evidence.</p>
+  <p><b>Explainability is a presentation requirement too</b> (NFR-09). The page can always answer two questions, and both answers come from the mechanism itself.</p>
+  <p><i>Why is this product third?</i> Because it is out of stock, and in-stock items rank above out-of-stock ones. Ranking is a list of rules in priority order, so the reason is whichever rule pushed it down.</p>
+  <p><i>Why did the route go this way?</i> Entrance → Aisle 1 → Aisle 3 → checkout. The route <b>is</b> an ordered list of points, so printing that list is the explanation.</p>
+  <p>A model could be asked either question and would answer fluently. But it never saw the ranking rules or the path — it would be inventing a reason that sounds right, not reporting the real one. An explanation nobody can check is worse than none, because it gets believed.</p>
 </div>
 
 <h3>4.1 &nbsp;Streamlit mechanics the design depends on</h3>
