@@ -137,10 +137,9 @@ conversation, pass its URL to the Artifact tool rather than publishing fresh.
    answer is §13 becomes a pointer plus the lifespan ordering, but it is a
    judgement call, not a sweep. Nothing else in `schema.md` §10 is outstanding
    for the LLD except §11 and the edge count, which are items 3 and 4.
-3. **Re-render `docs/pages/locator-hld.html`.** The markdown was repaired in
-   commit `d9c7021` — §1 register stripped, §2.1 agent decomposition added, §4
-   interface section added, sections renumbered — and the HTML is behind it.
-   Until it is re-rendered the published HLD artifact shows the old document.
+3. **Bring the LLD up to the HLD.** The HLD now has an eleventh node,
+   `verify`, which the LLD does not: it needs a node contract in §6, a state
+   field, and a place in the routers. The LLD is also the next document due.
 4. **Remove the API contracts from `docs/lld.md` §11** and the `api/` directory
    from §1, replacing them with the Streamlit mechanics. No HTTP layer exists.
    `models/api.py` in §1 goes too.
