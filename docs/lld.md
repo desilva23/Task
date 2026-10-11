@@ -10,46 +10,50 @@ All three are private — share from each page's Share menu.
 ## 1. Module layout
 
 ```
-backend/
-  main.py                 app factory, lifespan: load → validate → build matrices
-  config.py               every threshold and cap, one place (§13)
-  api/
-    journey.py            POST /journey, POST /journey/resume, GET /journey/{id}
-    route.py              POST /route
-    store.py              GET /store/{id}/aisles, GET /store/{id}/graph
-    sse.py                node-event stream
-  graph/
-    build.py              StateGraph assembly, checkpointer, compile
-    state.py              JourneyState TypedDict + reducers
-    routers.py            conditional-edge functions
-    nodes/                classify · understand · resolve_items · clarify
+app.py                    Streamlit entry point — the only executable
+config.py                 every threshold and cap, one place (§14)
+ui/
+  search.py               the st.form search box and the position picker
+  results.py              grouped results and the basket gate action
+  floorplate.py           one SVG plate per floor, route overlay, markers
+  directions.py           the ordered directions list — the accessible route
+  resources.py            @st.cache_resource builders: store, index, matrices
+graph/
+  build.py                StateGraph assembly, checkpointer, compile
+  state.py                JourneyState TypedDict + reducers
+  routers.py              conditional-edge functions
+  nodes/                  classify · understand · resolve_items · clarify
                           availability · substitutes · locations
-                          route_single · route_multi · describe
-  services/
-    catalogue.py          Catalogue — product store + BM25 index
-    planogram.py          Planogram — sku → [Placement]
-    stock.py              Stock — batched position lookup
-    routing.py            RouteEngine — matrices, path reconstruction, TSP
-    storegraph.py         StoreGraph — nodes, edges, adjacency
-  models/
-    domain.py             Product, Placement, StockPosition, Location, Route
-    llm.py                ParsedQuery, SubstituteChoice (structured outputs)
-    api.py                request/response models
-  errors.py               error taxonomy (§12)
-  validation.py           startup checks (§13)
+                          route_single · route_multi · describe · verify
+services/
+  catalogue.py            Catalogue — product store + BM25 index
+  planogram.py            Planogram — sku → [Placement]
+  stock.py                Stock — batched position lookup
+  routing.py              RouteEngine — matrices, path reconstruction, TSP
+  storegraph.py           StoreGraph — nodes, edges, adjacency
+models/
+  domain.py               Product, Placement, StockPosition, Location, Route
+  llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
+errors.py                 error taxonomy (§12)
+validation.py             startup checks (§13)
 data/
   SBY-DEMO-001/           store.csv  products.csv  stock.csv
                           planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
-frontend/
-  index.html  app.js  store-map.svg
 tests/
   unit/  integration/  fixtures/
 ```
 
-**One rule the layout enforces:** `graph/nodes/*` may import from `services/*`,
-never the reverse, and `services/*` never imports `langchain` or `langgraph`.
-That keeps the deterministic core testable without a graph runtime and without a
-model — which is what makes the fallbacks in §6 honest rather than aspirational.
+**Two rules the layout enforces.** `graph/nodes/*` may import from `services/*`,
+never the reverse, and `services/*` never imports `langchain` or `langgraph` —
+which keeps the deterministic core testable without a graph runtime and without
+a model, and is what makes the fallbacks in §6 honest rather than aspirational.
+And nothing below `ui/` imports `streamlit`: the page is the only module that
+knows it is a page, so putting a service in front of the same graph later
+changes nothing underneath it.
+
+There is no `api/` package and no separate frontend. `app.py` calls the compiled
+graph in the same process (C-03), so no module in this tree imports a web
+framework.
 
 ---
 
@@ -177,6 +181,8 @@ class JourneyState(TypedDict):
     clarify_rounds: int                                 # capped at 2 — EC-35
     degraded:  Annotated[list[str], operator.add]       # nodes that fell back
     errors:    Annotated[list[JourneyError], operator.add]
+    verified:  bool                                     # set by verify — EC-47
+    mismatches: Annotated[list[Mismatch], operator.add] # claim, expected, found
 ```
 
 Three fields earn their place:
@@ -188,6 +194,9 @@ Three fields earn their place:
   carries it — so a demo that quietly ran without a model is visible rather
   than mysterious.
 - **`clarify_rounds`** is what makes the cycle terminate.
+- **`verified`** is false until `verify` has passed the composed answer. The
+  page renders nothing while it is false, which is how NFR-02 becomes a
+  property of the state machine rather than a discipline.
 
 ---
 
@@ -205,6 +214,7 @@ Three fields earn their place:
 | `route_single` | basket, start_node, step_free | route | surface the error, no partial route |
 | `route_multi` | basket, start_node, step_free | route | floor-ordered serpentine without 2-opt |
 | `describe_route` | route, locations | directions | template per hop; append to `degraded` |
+| `verify` | directions, route, locations, availability, resolved | verified, mismatches | n/a — deterministic. A mismatch discards the composed text and re-renders the template (EC-47) |
 
 Routers:
 
@@ -229,6 +239,11 @@ def after_locations(s) -> str:
     if len(routable) == 1 or s["mode"] == "single":  return "route_single"  # EC-28
     return "route_multi"
 ```
+
+`describe_route → verify → END` is a plain edge, not a conditional one, and
+`verify` has no outgoing branch that skips it. That is deliberate: a
+conditional edge is a decision someone can get wrong, and there must be no path
+from a composed answer to the page that does not pass the gate.
 
 ---
 
@@ -379,6 +394,30 @@ does not nominate them.
 `dietary_compatible` treats a `null` flag as incompatible when the original
 product required it. An unknown value never satisfies a dietary requirement.
 
+### The verify pass
+
+The two mechanisms above stop the model *inventing* a fact. `verify` catches
+everything downstream of that — a stale cached figure, a mis-joined placement,
+a template that formatted the wrong leg. Five checks, all against state the
+services produced:
+
+```python
+def verify(s: JourneyState) -> list[Mismatch]:
+    m = []
+    # 1 every SKU named in the answer was resolved by the search
+    # 2 floor, aisle, rack and shelf equal the Placement for that SKU
+    # 3 availability wording equals the StockPosition; an unavailable
+    #   item has no stop in the route
+    # 4 each leg distance and the total equal the plan within ROUND_TOLERANCE_M,
+    #   and the floor-change count matches the connectors in the node path
+    # 5 every aisle or landmark named in a step appears in the plan's node path
+    return m
+```
+
+A non-empty list discards the composed text. The template is rendered from the
+same service results, `verified` is set on that, and the mismatch is recorded —
+never patched in place. Patching would hide the bug that produced it.
+
 ---
 
 ## 10. Routing internals
@@ -450,59 +489,54 @@ easy mistake to ship.
 
 ---
 
-## 11. API contracts
+## 11. The Streamlit interface
 
-```jsonc
-POST /journey
-{ "store_id": "SBY-DEMO-001",
-  "query":      "milk, bread, eggs",
-  "mode":       "auto",
-  "start_node": "F0-A01-S",
-  "thread_id":  null,
-  "step_free":  false }
+There is no HTTP layer (C-03). The page calls the compiled graph in the same
+process, so what would have been a request contract is a function signature.
 
-200 →
-{ "thread_id": "th_01J...",
-  "status":    "complete" | "awaiting_input",
-  "shape":     "batch",
-  "results": [
-    { "term": "milk", "status": "available",
-      "product":   { "sku": "...", "name": "...", "size": "...", "price_gbp": 1.45 },
-      "stock":     { "shelf_qty": 14, "as_of": "..." },
-      "locations": [{ "node_id": "F0-A04-R02", "shelf": 1, "facing": 2,
-                      "location_type": "HOME",
-                      "label": "Floor 0 · Aisle 4 · Rack 2 · eye level" }],
-      "routable":  true },
-    { "term": "chicken thighs", "status": "out_of_stock",
-      "substitutes": [{ "sku": "...", "name": "...", "reason": "..." }],
-      "routable": false }
-  ],
-  "clarification": null,
-  "route":         null,
-  "degraded":      [] }
+```python
+# app.py — the whole surface between page and graph
+GRAPH = build_graph()                      # @st.cache_resource, built once
+
+def run_query(query: str, start_node: str, step_free: bool) -> JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
+    return GRAPH.invoke(initial_state(query, start_node, step_free), cfg)
+
+def resume(choice: Choice) -> JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
+    return GRAPH.invoke(Command(resume=choice), cfg)
+
+def plan_route(basket: list[BasketItem]) -> JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
+    return GRAPH.invoke({"basket": basket, "mode": "multi"}, cfg)
 ```
 
-```
-POST /journey/resume    { "thread_id": "...", "value": { "term": "bread", "sku": "..." } }
-POST /route             { "thread_id": "...", "skus": [...], "start_node": "...", "step_free": false }
-GET  /journey/{id}      → last completed state      (EC-41, survives an SSE drop)
-GET  /store/{id}/aisles → picker options, grouped by floor
-GET  /store/{id}/graph  → nodes + edges for the map
-```
+Three mechanics carry what the API used to:
 
-SSE:
+| Was | Is |
+|---|---|
+| `POST /journey` | `run_query(...)` — returns **results only**, never a route |
+| `POST /journey/resume` | `resume(choice)` on the next page run, same `thread_id` |
+| `POST /route` | `plan_route(basket)` — a second graph run, from the basket |
+| `GET /journey/{id}` | `GRAPH.get_state(cfg)` — the checkpoint is the record (EC-41) |
+| SSE progress stream | `st.status` updated from the node names the graph yields |
 
-```
-event: node
-data: {"node":"check_availability","status":"done","elapsed_ms":12}
+**What the page holds and what it does not.** `st.session_state` holds exactly
+two things: the `thread_id` and the basket draft. Everything else is read back
+from the checkpoint, because Streamlit re-executes the script on every
+interaction and local state would drift from graph state (EC-36, EC-41).
 
-event: result
-data: { ...the 200 body above... }
-```
+**Caching is load-bearing, not an optimisation.** The store, the BM25 index and
+the distance and predecessor matrices are built in `@st.cache_resource`
+builders in `ui/resources.py`. Without that, every click rebuilds ~314 nodes of
+all-pairs Dijkstra and NFR-05's five seconds are gone before the search starts.
 
-`/journey` returns **results only** — never a route. Routing is `/route`, called
-from the basket, which is what FR-16 requires: nothing is routed until the
-shopper has moved the available items across.
+**The search box lives inside `st.form`**, so the graph is invoked on submit
+rather than on each keystroke.
+
+**Thread lifetime.** A `thread_id` is minted per search and swept after
+`THREAD_TTL_MINUTES` (§14). LangGraph does not expire threads, so without the
+sweep every abandoned clarification leaks a checkpoint (EC-34).
 
 ---
 
@@ -511,12 +545,13 @@ shopper has moved the available items across.
 | Error | Raised when | Handling |
 |---|---|---|
 | `StoreDataError` | Startup validation fails | **Refuse to start.** Never serve a half-loaded store |
-| `UnknownStoreError` | store_id not loaded | 404 |
-| `InvalidNodeError` | start_node absent from the graph | 400, name the valid picker options |
-| `UnreachableNodeError` | Predecessor matrix says NO_PATH | 500 + log as a data bug. Should be impossible after §13 |
+| `UnknownStoreError` | store_id not loaded | Refuse at startup; the page never offers a store that is not loaded |
+| `InvalidNodeError` | start_node absent from the graph | The picker is built from the graph, so this is a bug, not shopper input. Fall back to the entrance and log |
+| `UnreachableNodeError` | Predecessor matrix says NO_PATH | Log as a data bug. Should be impossible after §13 |
 | `ModelUnavailableError` | Timeout, 429, 5xx, refusal stop reason | Caught in the node; deterministic fallback; append to `degraded` |
 | `SchemaValidationError` | Structured output fails the model | Same. Known interaction with thinking enabled |
 | `GroundingError` | Model named a SKU outside the candidate set | Never surfaced. Drop the suggestion, log loudly |
+| `VerificationError` | `verify` found a claim that does not match the service result | Never surfaced as written. Discard the composed text, render the template, record the mismatch (EC-47) |
 
 The split that matters: a **data** error stops the service, a **model** error
 degrades one node. Nothing in the second class can produce a wrong location or a
@@ -526,21 +561,31 @@ wrong stock figure, because no model sits on those paths.
 
 ## 13. Startup validation
 
-Run in the FastAPI lifespan, before the first request is accepted.
+**The rules live in `schema.md` §7** — forty-seven checks, V-01 to V-47, which
+supersede the eleven this section used to list. They are schema territory: what
+makes a store folder well formed is a property of the format, not of this
+application. What belongs here is *when* they run, in what order, and what
+happens when one fails.
 
-| # | Check | Catches |
+`validation.py` runs them inside the `@st.cache_resource` builder that loads the
+store, which means they run **once per process, before the first search**, and a
+failure raises rather than returning a half-loaded store.
+
+| Phase | Checks | Why this order |
 |---|---|---|
-| 1 | Every edge endpoint exists in `nodes` | Typo in a hand-authored graph |
-| 2 | Every `weight_m` > 0; every `penalty_m` ≥ 0 | EC-45 — negative weights break Dijkstra's guarantee |
-| 3 | Graph strongly connected across all floors | EC-44, EC-29 |
-| 4 | Every floor reachable from `F0-ENTRANCE` | A floor with no working core |
-| 5 | Lift-only subgraph also connected | EC-31 — step-free routing that silently has no answer |
-| 6 | Every placement `node_id` exists in the graph | EC-21 |
-| 7 | Every placement `sku` exists in the catalogue | EC-43 |
-| 8 | Every stock `sku` exists in the catalogue | Stale stock extract |
-| 9 | At least one `F0-TILL-*` node | FR-11 has no terminus |
-| 10 | `min_level`/`max_level` agree with node levels | Map and data disagreeing about the building |
-| 11 | Every `ASSISTED`/`COUNTER` placement has no shelf set | A counter with a shelf number is a modelling error |
+| 1 · Parse | Column presence, types, encodings | Nothing else can run against a file that will not parse |
+| 2 · Within-file | Uniqueness, ranges, enum membership | Cheap, and catches most hand-authoring errors |
+| 3 · Referential | Placement → SKU, placement → map node, stock → SKU | Needs every file loaded, so it cannot come earlier |
+| 4 · Graph | Connectivity, positive weights, every floor reachable, lift-only subgraph connected | Needs the graph built, which needs phase 3 to have passed |
+| 5 · Store shape | At least one checkout node, levels agree with the map | Last, because it is the only phase that encodes a requirement rather than a data rule |
+
+Phase 4 is the one worth naming in a review: the lift-only subgraph is checked
+for connectivity separately, because a store can be perfectly walkable and
+still have no step-free path between two floors. FR-19 would then be
+unsatisfiable at runtime, and the shopper would be the one to discover it.
+
+A failure names the file, the row and the rule. `StoreDataError` is the only
+error in §12 that refuses to start.
 
 ---
 
@@ -585,7 +630,8 @@ threads on its own.
 | Unit · grounding | §9 guardrails | Out-of-set SKU raises `GroundingError` · `null` dietary flag never satisfies a requirement |
 | Integration · graph | Edge routing and cycles | Ambiguous term interrupts then resumes · clarify caps at 2 · all-out-of-stock reaches END without a route · single item in multi mode takes the single path |
 | Integration · fallback | §6 fallback column | Each model node forced to fail; journey still completes and `degraded` names it |
-| Validation | §13 | One fixture per check, each expected to refuse startup |
+| Integration · verify | §9 verify pass, EC-47 | A deliberately corrupted aisle, distance and availability each rejected; the template answer is rendered instead; `verified` is never true on a mismatch (AC-10) |
+| Validation | §13 and `schema.md` §7 | One malformed fixture per phase, each expected to refuse startup with the file, row and rule named |
 
 **The test that matters most** is the fallback suite. It is the only thing that
 proves the claim the whole design rests on — that a model failure degrades
