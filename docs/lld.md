@@ -719,7 +719,7 @@ Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
    │        │           │   distance(start, node) + path(start, node)
    │        │           │◄──────────────────────────────────────────────┤
    │        │           │   45.0 m · 12 hops · O(1) matrix read, no search
-   │        │           │ ▓ describe_route [model · Haiku]
+   │        │           │ ▓ describe_route [model · gpt-oss-20b]
    │        │           │ ▒ verify — 5 checks against service state → verified
    │        │◄──────────┤ JourneyState, verified=True
    │◄───────┤ result card + floor plate + directions
@@ -758,7 +758,7 @@ Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
    │ ┌ opt [any out of stock] ────────────────────────────────────────────────┐
    │ │      │           ├────────────────►│ by_category + dietary filter
    │ │      │           │◄────────────────┤ safe candidates only
-   │ │      │           │ ▓ suggest_substitutes [model · Opus]
+   │ │      │           │ ▓ suggest_substitutes [model · gpt-oss-120b]
    │ │      │           │   reject any SKU outside the candidate set
    │ └────────────────────────────────────────────────────────────────────────┘
    │        │           ├═════════════════════════════════════►│ for_skus([4])
@@ -783,7 +783,7 @@ Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
    │        │           │   path(cursor, F0-TILL-01)
    │        │           │◄──────────────────────────────────────────────┤
    │        │           │   ordered node path · 2 floors · 68 m · ends at tills
-   │        │           │ ▓ describe_route [model · Haiku]
+   │        │           │ ▓ describe_route [model · gpt-oss-20b]
    │        │           │ ▒ verify — 5 checks → verified
    │        │◄──────────┤ route + directions
    │◄───────┤ route drawn across the floor plates, tabs F0 / F1
