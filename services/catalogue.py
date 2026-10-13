@@ -29,3 +29,20 @@ class Catalogue:
             (p for p in self._products.values() if p.aisle_category == category),
             key=lambda p: p.sku,
         )
+
+
+DIET_FIELDS = ("diet_gluten_free", "diet_vegan", "diet_vegetarian", "diet_halal")
+
+
+def dietary_compatible(candidate: Product, original: Product) -> bool:
+    """A substitute must keep every dietary property the original is recorded to have, and add
+    no allergen. Unknown never satisfies a requirement (lld.md §9, NFR-03)."""
+    for field in DIET_FIELDS:
+        if getattr(original, field) is True and getattr(candidate, field) is not True:
+            return False
+    if original.allergens_contains is not None:
+        if candidate.allergens_contains is None:
+            return False
+        if not set(candidate.allergens_contains) <= set(original.allergens_contains):
+            return False
+    return True

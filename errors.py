@@ -40,3 +40,12 @@ class UnreachableNodeError(Exception):
     def __init__(self, source: str, target: str):
         self.source, self.target = source, target
         super().__init__(f"no path from {source} to {target}")
+
+
+class ModelUnavailableError(Exception):
+    """A model call timed out, was refused, errored, or the session's call budget is spent.
+    Caught in the node, which falls back and records it in ``degraded``."""
+
+
+class GroundingError(Exception):
+    """The model chose a SKU outside the candidate set the service built. Never surfaced."""

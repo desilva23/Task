@@ -92,6 +92,7 @@ def route_multi(
     items: list[BasketItem],
     start: str,
     step_free: bool = False,
+    improve: bool = True,
 ) -> MultiRoute | NoRoute:
     graph = engine.graph
     engine.distance(start, start)  # an unknown start is a bug — raises InvalidNodeError
@@ -116,8 +117,10 @@ def route_multi(
         here = [s for s in stops if s.level == level]
         ambient = [s for s in here if s.placement.location_type != "CHILLER"]
         chilled = [s for s in here if s.placement.location_type == "CHILLER"]
-        floor = nn_then_2opt(engine, entry, ambient, step_free)
-        floor += nn_then_2opt(engine, floor[-1].node_id if floor else entry, chilled, step_free)
+        floor = nn_then_2opt(engine, entry, ambient, step_free, improve)
+        floor += nn_then_2opt(
+            engine, floor[-1].node_id if floor else entry, chilled, step_free, improve
+        )
         ordered += floor
         cursor = ordered[-1].node_id
 

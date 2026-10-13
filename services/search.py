@@ -289,8 +289,9 @@ def needs_clarification(ranked: list[Scored]) -> bool:
 class TermResult:
     term: SearchTerm
     status: str  # resolved · ambiguous · category · unresolved
-    candidates: tuple[Scored, ...] = ()
+    candidates: tuple[Scored, ...] = ()  # ranked by the precedence rules
     reasons: tuple[str | None, ...] = ()
+    chosen: str | None = None  # the product the shopper named, when the text makes it clear
     category: str | None = None
     corrected: str | None = None
     suggestions: tuple[str, ...] = ()
@@ -317,20 +318,56 @@ def resolve(
         field_name, value = category
         ranked = rank(index.in_category(field_name, value), term, stock)
         return TermResult(
-            term, "category", tuple(ranked), tuple(explain(ranked, term, stock)), value
+            term, "category", tuple(ranked), tuple(explain(ranked, term, stock)), category=value
         )
     found, corrected = index.search(term.text, filt)
     if not found:
         return TermResult(term, "unresolved", suggestions=tuple(index.suggestions(term.text)))
     ranked = rank(found, term, stock)
-    ambiguous = sentence or needs_clarification(ranked)  # a keyword guess is never confident
+    # Which product was asked for is a question of text alone: a sold-out or unranged product
+    # the shopper named is still the answer, reported as such (EC-04, EC-13). The precedence
+    # ranking orders the options and the alternatives.
+    by_text = sorted(found, key=lambda c: (-c.text_score, c.sku))
+    ambiguous = sentence or needs_clarification(by_text)  # a keyword guess is never confident
     return TermResult(
         term,
         "ambiguous" if ambiguous else "resolved",
         tuple(ranked),
         tuple(explain(ranked, term, stock)),
+        chosen=None if ambiguous else by_text[0].sku,
         corrected=corrected,
     )
+
+
+@dataclass(frozen=True)
+class Prepared:
+    shape: str
+    terms: tuple[SearchTerm, ...]
+    overflow: tuple[str, ...] = ()
+    message: str | None = None
+
+
+def prepare(raw: str, index: SearchIndex) -> Prepared:
+    """Classify, apply the "and" guard, cap the batch — everything before resolution."""
+    shape, terms = classify(raw)
+    q = _tidy(raw)
+    if shape == "too_short":
+        return Prepared(shape, (), message="Type at least two letters of a product name.")
+    if shape == "digits":
+        return Prepared(
+            shape, (), message="That looks like a number — type the product name instead."
+        )
+    if shape == "batch" and not HARD_SPLIT.search(q) and index.one_product_phrase(q):
+        shape, terms = "term", [parse_qty(q)]  # "salt and vinegar crisps" stays whole
+    if shape == "nl":
+        terms = [SearchTerm(q)]  # keyword fallback; the model reads sentences (Phase 6)
+    overflow = tuple(_parts(q)[MAX_BATCH_TERMS:]) if shape == "batch" else ()
+    message = (
+        f"Only the first {MAX_BATCH_TERMS} items were searched; {len(overflow)} were not."
+        if overflow
+        else None
+    )
+    return Prepared(shape, tuple(terms), overflow, message)
 
 
 def search_query(
@@ -339,34 +376,15 @@ def search_query(
     stock: Mapping[str, StockPosition],
     filt: QueryFilter | None = None,
 ) -> QueryResult:
-    shape, terms = classify(raw)
-    q = _tidy(raw)
-    if shape == "too_short":
-        return QueryResult(shape, message="Type at least two letters of a product name.")
-    if shape == "digits":
-        return QueryResult(
-            shape, message="That looks like a number — type the product name instead."
-        )
-    if shape == "batch" and not HARD_SPLIT.search(q) and index.one_product_phrase(q):
-        shape, terms = "term", [parse_qty(q)]  # "salt and vinegar crisps" stays whole
-    sentence = shape == "nl"
-    if sentence:
-        terms = [SearchTerm(q)]  # keyword fallback; the model reads sentences in Phase 6
-    overflow = tuple(_parts(q)[MAX_BATCH_TERMS:]) if shape == "batch" else ()
-
+    p = prepare(raw, index)
     results: list[TermResult] = []
     seen: dict[str, int] = {}
-    for term in terms:
-        r = resolve(term, index, stock, filt, sentence)
+    for term in p.terms:
+        r = resolve(term, index, stock, filt, sentence=p.shape == "nl")
         if r.status == "resolved":  # EC-07: merge after resolution
-            sku = r.candidates[0].sku
+            sku = r.chosen
             if sku in seen:
                 r = TermResult(**{**r.__dict__, "duplicate_of": seen[sku]})
             seen.setdefault(sku, len(results))
         results.append(r)
-    message = (
-        f"Only the first {MAX_BATCH_TERMS} items were searched; {len(overflow)} were not."
-        if overflow
-        else None
-    )
-    return QueryResult(shape, tuple(results), overflow, message)
+    return QueryResult(p.shape, tuple(results), p.overflow, p.message)

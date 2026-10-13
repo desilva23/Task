@@ -33,3 +33,4 @@ description: "Task list for Phase 4 — search"
   false correction; the "and" guard runs before the split (the LLD's retry could not catch
   "salt and vinegar crisps"); newlines survive classification (an LLD pseudocode bug); a keyword
   fallback for a sentence is never marked resolved.
+- **Gate approved by the owner, 2026-10-13.**

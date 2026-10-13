@@ -238,10 +238,29 @@ def after_availability(s) -> str:
 
 def after_locations(s) -> str:
     routable = [i for i in s["basket"] if i.routable]
-    if not routable:                                return END          # EC-15
+    if not routable:                                return "verify"     # EC-15 — results only
     if len(routable) == 1 or s["mode"] == "single":  return "route_single"  # EC-28
     return "route_multi"
 ```
+
+**Every run that makes a claim ends through `verify`** — a search that returns
+results without a route included. Its availability and location statements
+are claims too, and NFR-02 covers every claim, not only directions.
+
+**A route-planning run enters at `resolve_locations`.** `plan_route` starts the
+graph there with the basket, so routability is re-checked from current stock on
+every run (EC-17) and the basket is *replaced*, not merged — an item the
+shopper removed on the page cannot reappear.
+
+**State holds identifiers and plain values only** — SKUs, node IDs, numbers and
+text, never product or placement objects. Nodes read facts from the services
+each time, so a checkpoint is safe to serialise and cannot carry a stale fact.
+
+**One adapter stands between the nodes and any model.** `ModelClient.complete`
+returns the model's raw output and the node validates it against the schema
+itself (`extra="forbid"`), so a response carrying a product name or a SKU is
+rejected by our code whatever the provider does (AC-18). A fake client drives
+every test; GroqCloud implements the same adapter in Phase 6.
 
 `describe_route → verify → END` is a plain edge, not a conditional one, and
 `verify` has no outgoing branch that skips it. That is deliberate: a
@@ -419,6 +438,14 @@ def needs_clarification(cands: list[Scored]) -> bool:
 A *relative* margin, because BM25 scores are unnormalised and vary with query
 length — an absolute threshold would fire inconsistently between a one-word and
 a three-word query.
+
+**The test runs on text-match order, not the precedence ranking.** Which product
+the shopper *named* is a question of text alone. Ranked by precedence, a search
+for "Diet Coke" — sold out — would put Coca-Cola Zero first and silently answer
+with it, hiding both the sold-out state and where Diet Coke usually is (EC-13);
+"Pepsi Max" would quietly become a Coke (EC-04). So the clear text winner is the
+answer even when sold out or not carried, reported as such with alternatives,
+and the precedence ranking orders the options and alternatives (FR-06, AC-19).
 
 ---
 

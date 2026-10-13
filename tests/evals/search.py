@@ -23,7 +23,11 @@ def evaluate(path: Path, index: SearchIndex, stock) -> list[EvalRow]:
         group, query, expect = row["group"], row["query"], row["expect"]
         result = search_query(query, index, stock)
         first = result.terms[0] if result.terms else None
-        top = first.candidates[0].product if first and first.candidates else None
+        top = None
+        if first and first.chosen:
+            top = services_product(index, first.chosen)
+        elif first and first.candidates:
+            top = first.candidates[0].product
         if group == "category":
             got = f"{first.status}:{first.category}" if first else result.shape
             hit = bool(first) and first.status == "category" and first.category == expect
@@ -44,3 +48,7 @@ def evaluate(path: Path, index: SearchIndex, stock) -> list[EvalRow]:
             got = top.name if top else (first.status if first else result.shape)
             rows.append(EvalRow(group, query, expect, got, got == expect))
     return rows
+
+
+def services_product(index: SearchIndex, sku: str):
+    return next(p for p in index.products if p.sku == sku)
