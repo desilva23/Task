@@ -27,3 +27,16 @@ class StoreDataError(Exception):
     @property
     def rules(self) -> set[str]:
         return {f.rule for f in self.faults}
+
+
+class InvalidNodeError(KeyError):
+    """A node ID that is not in the open graph. The start picker is built from the graph, so
+    this is a bug, not shopper input (lld.md §12)."""
+
+
+class UnreachableNodeError(Exception):
+    """No path between two open nodes. Impossible after V-70 — a data bug if seen (EC-29)."""
+
+    def __init__(self, source: str, target: str):
+        self.source, self.target = source, target
+        super().__init__(f"no path from {source} to {target}")

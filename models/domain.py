@@ -7,6 +7,7 @@ field is ``True``, ``False`` or ``None``, and ``allergens_contains`` is ``None``
 
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from enum import StrEnum
 
 from errors import Fault
 
@@ -99,3 +100,45 @@ class Store:
     nodes: dict[str, MapNode]
     edges: tuple[MapEdge, ...]
     warnings: tuple[Fault, ...] = field(default=())
+
+
+class Availability(StrEnum):
+    """FR-07, FR-08. Not sold here and sold out are different answers to a shopper."""
+
+    IN_STOCK = "in_stock"
+    SOLD_OUT = "sold_out"  # ranged here, none on the shelf
+    NOT_RANGED = "not_ranged"  # not carried by this store
+    UNKNOWN = "unknown"  # no stock position to read — never guessed (EC-18)
+
+
+@dataclass(frozen=True)
+class Location:
+    """Where one placement is, as a shopper reads it (FR-10, FR-12)."""
+
+    node_id: str
+    level: int
+    floor_name: str | None
+    aisle: int | None
+    rack: int | None
+    shelf_no: int | None
+    location_type: str
+    needs_colleague: bool
+
+
+@dataclass(frozen=True)
+class Route:
+    """A flat node path — there is no Leg or Step type (lld.md §7.1)."""
+
+    nodes: tuple[str, ...]
+    distance_m: float
+    floors: tuple[int, ...]  # levels in the order first visited
+    placement: Placement
+    step_free: bool
+
+
+@dataclass(frozen=True)
+class NoRoute:
+    """A route that cannot be given, and why — said plainly, never replaced by a worse route."""
+
+    reason: str  # no_location · no_open_location · no_step_free_route
+    message: str

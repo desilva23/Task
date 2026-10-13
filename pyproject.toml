@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Multi-floor store product finder and navigation agent — proof of concept on synthetic data"
 readme = "README.md"
 requires-python = "==3.12.*"
-dependencies = []
+dependencies = [
+    "scipy>=1.18.1",
+]
 
 [dependency-groups]
 dev = [

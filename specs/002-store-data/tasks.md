@@ -49,3 +49,4 @@ T001 → T002 → T003 → T004 → T005 → (T006–T010 in parallel) → T011 
 - Decisions for the owner: V-07 added to the schema; C- and A- IDs made citable (constitution
   1.2.0); module docstrings may carry citations; E501 handed to the formatter; anchor tests cite
   C-04, not the ACs they serve, so the matrix never shows an AC as proven before its phase.
+- **Gate approved by the owner, 2026-10-13.**
