@@ -270,6 +270,42 @@ body is a comprehension; against a real stock service the signature is the
 difference between one request and sixty, and changing it later means changing
 every caller.
 
+### 7.1 Class model
+
+Five service classes own collections of value types. Two foreign-key joins carry
+the whole design.
+
+```
+   Catalogue          Planogram          Stock          StoreGraph      RouteEngine
+   by_sku()           for_sku()          positions()    validate()     distance()
+   search()           for_skus()         + as_of        subgraph()     path()
+   by_category()      + version                             ▲          ◄── reads
+       │ 1..*             │ 1..*             │ 1..*          │ 1..*
+       ▼                  ▼                  ▼               ▼       ▼ 1..*
+  ┌─────────┐      ┌───────────┐     ┌──────────────┐    ┌──────┐ ┌──────┐
+  │ Product │◄─sku─│ Placement │─node│ StockPosition│    │ Node │ │ Edge │
+  │  PK sku │ 0..* │  THE JOIN │ _id │              │    │  PK  │ │      │
+  └────┬────┘      └─────┬─────┘  1  └──────┬───────┘    └──▲───┘ └──────┘
+       │ 1                │                 │                │
+       ▼                  └────── node_id ──┼────────────────┘
+  ┌──────────────────────────┐              │
+  │ Dietary                  │     sku, same domain
+  │ gluten_free: bool | None │◄─────────────┘
+  │ None = unchecked         │
+  └──────────────────────────┘
+```
+
+| Join | Cardinality | Why it matters |
+|---|---|---|
+| `Placement.sku` → `Product.sku` | **0..\* placements per product** | A SKU sits on its home rack *and* a promo end cap. Also permits zero — catalogued but not placed (EC-19) |
+| `Placement.node_id` → `Node.node_id` | exactly 1 | Every placement is somewhere walkable. Checked at load |
+
+The one-to-many on the first is the structural reason `Placement` is a separate
+type rather than fields on `Product`. Collapsing them breaks FR-11.
+
+`Dietary`'s `bool | None` fields are the type-level expression of *empty is not
+FALSE*: `None` means unchecked and never satisfies a filter.
+
 ---
 
 ## 8. Search internals
@@ -639,3 +675,128 @@ proves the claim the whole design rests on — that a model failure degrades
 fluency and never correctness. Forcing each of the three model nodes to fail and
 asserting the journey still returns a correct location and a correct route is
 what turns that from an assertion into a fact.
+
+---
+
+## 16. Sequences
+
+Lifelines throughout: Shopper · Page · Graph · Catalogue · Stock · Planogram ·
+RouteEngine. Model calls and the verify gate are shown as activations on Graph,
+because the node owns them.
+
+### 16.1 Single product
+
+```
+Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
+   │ "coke 500ml" · F0/A01 · submit (st.form)
+   ├───────►│  run_query(q, start_node, step_free)
+   │        ├──────────►│
+   │        │           │ classify_query → shape="term"
+   │        │           ├────────────────►│  search(term, filter, 10)
+   │        │           │                 │ BM25 → candidates
+   │        │           │                 ├────────►│ positions([candidates])
+   │        │           │                 │◄────────┤ ranged + shelf_qty
+   │        │           │                 │ rank: ranged → in stock →
+   │        │           │                 │       variant → bm25 → popularity
+   │        │           │◄────────────────┤  ranked candidates
+   │        │           │ needs_clarification? (top−2nd)/top ≥ 0.15 → no
+   │ ┌ opt [margin < 0.15] ──────────────────────────────────────────────────┐
+   │ │      │◄──────────┤ interrupt({options})
+   │ │◄─────┤ st.radio options
+   │ ├─────►│ picks one      ═══ NEW PAGE RUN ═══
+   │ │      ├──────────►│ resume(choice)
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├──────────────────────────►│ check_availability([sku])
+   │        │           │◄──────────────────────────┤ shelf_qty 14 · ranged TRUE
+   │        │           ├─────────────────────────────────────►│ for_skus([sku])
+   │        │           │◄─────────────────────────────────────┤ F1-A07-R03·S02·HOME
+   │        │           │ route_single — nearest of the placements
+   │        │           ├──────────────────────────────────────────────►│
+   │        │           │   distance(start, node) + path(start, node)
+   │        │           │◄──────────────────────────────────────────────┤
+   │        │           │   45.0 m · 12 hops · O(1) matrix read, no search
+   │        │           │ ▓ describe_route [model · Haiku]
+   │        │           │ ▒ verify — 5 checks against service state → verified
+   │        │◄──────────┤ JourneyState, verified=True
+   │◄───────┤ result card + floor plate + directions
+```
+
+Three things this exists to show. Ranking calls **Stock before availability is
+checked**, because `ranged` and `in stock` are ranking signals (FR-06), not just
+output. The clarification is a **new page run**, not a continuation — Streamlit
+holds no request open. And `verify` sits between the composed answer and the
+page, so nothing unverified can render (NFR-02).
+
+### 16.2 Multiple products
+
+```
+Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
+   │ "milk, bread, eggs, chicken thighs" · F0/A01 · submit
+   ├───────►│  run_query(...)
+   │        ├──────────►│
+   │        │           │ classify_query → shape="batch", 4 terms
+   │ ┌ loop [per term, concurrent] ───────────────────────────────────────────┐
+   │ │      │           ├────────────────►│ search(term, filter, 10)
+   │ │      │           │                 ├────────►│ positions(…)
+   │ │      │           │                 │◄────────┤
+   │ │      │           │◄────────────────┤ ranked candidates
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           │ milk ✓ · eggs ✓ · chicken ✓ · bread → 12 near-equal
+   │ ┌ opt [bread ambiguous] ─────────────────────────────────────────────────┐
+   │ │      │◄──────────┤ interrupt({bread options})
+   │ │◄─────┤           │
+   │ ├─────►│ picks "Hovis Wholemeal 800g"   ═══ NEW PAGE RUN ═══
+   │ │      ├──────────►│ resume(choice) — other three stay resolved
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├══════════════════════════►│ check_availability([4 SKUs])
+   │        │           │◄══════════════════════════┤   ◄── ONE call, not four
+   │        │           │ milk 14 · bread 6 · eggs 21 · chicken 0
+   │ ┌ opt [any out of stock] ────────────────────────────────────────────────┐
+   │ │      │           ├────────────────►│ by_category + dietary filter
+   │ │      │           │◄────────────────┤ safe candidates only
+   │ │      │           │ ▓ suggest_substitutes [model · Opus]
+   │ │      │           │   reject any SKU outside the candidate set
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├═════════════════════════════════════►│ for_skus([4])
+   │        │           │◄═════════════════════════════════════┤  ◄── ONE call
+   │        │           │ after_locations — basket still empty → END
+   │        │◄──────────┤ results ONLY. 3 available, 1 out of stock. NO ROUTE.
+   │◄───────┤ grouped list, in-stock first + "Add 3 available to basket"
+   │
+   │ ╔═══ BASKET GATE — FR-21 to FR-24 ═══════════════════════════════════════╗
+   │ ║ shopper adds the 3 available items, then asks to plan a route          ║
+   │ ╚════════════════════════════════════════════════════════════════════════╝
+   ├───────►│  ═══ NEW PAGE RUN ═══
+   │        ├──────────►│ plan_route(basket)
+   │        │           │ route_multi — group by floor, order F1 then F0,
+   │        │           │               chilled deferred to the last pass
+   │ ┌ loop [per floor, highest first] ───────────────────────────────────────┐
+   │ │      │           ├──────────────────────────────────────────────►│
+   │ │      │           │   nearest_core → nn_then_2opt over the matrix
+   │ │      │           │◄──────────────────────────────────────────────┤
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├──────────────────────────────────────────────►│
+   │        │           │   path(cursor, F0-TILL-01)
+   │        │           │◄──────────────────────────────────────────────┤
+   │        │           │   ordered node path · 2 floors · 68 m · ends at tills
+   │        │           │ ▓ describe_route [model · Haiku]
+   │        │           │ ▒ verify — 5 checks → verified
+   │        │◄──────────┤ route + directions
+   │◄───────┤ route drawn across the floor plates, tabs F0 / F1
+```
+
+Legend: `▓` a model call, `▒` the verify gate, `═══►` a batched call.
+
+Four things this exists to show:
+
+1. **Two batched calls, not eight.** `check_availability` and `for_skus` each
+   take a list. Against a real stock service that is one request instead of
+   sixty, and designing the signature that way from the start avoids an N+1
+   rewrite.
+2. **The clarification keeps the resolved terms.** Only `bread` asks; milk, eggs
+   and chicken stay resolved across the interrupt.
+3. **The first run returns no route.** `after_locations` finds the basket empty
+   and ends, so the basket gate is structural rather than a UI convention — a
+   route is never planned to an empty shelf.
+4. **Three page runs** for one journey — search, resume, route. Each is a fresh
+   top-to-bottom execution reading state from the checkpoint.
