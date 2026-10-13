@@ -88,8 +88,8 @@ and MUST be seen failing before the implementation task starts.
 
 ## Phase 8: Polish
 
-- [ ] T020 Run `scripts/check.sh` from a fresh clone of the commit in a temp directory (P0-SC1), timing setup plus check
-- [ ] T021 Walk quickstart.md §3 plant-by-plant (P0-SC2) and record the results for the gate
+- [X] T020 Run `scripts/check.sh` from a fresh clone of the commit in a temp directory (P0-SC1), timing setup plus check
+- [X] T021 Walk quickstart.md §3 plant-by-plant (P0-SC2) and record the results for the gate
 - [X] T022 Update `CLAUDE.md` current state (Phase 0 complete, awaiting review) and `README.md` with the two commands
 
 ---
@@ -112,3 +112,11 @@ and MUST be seen failing before the implementation task starts.
 
 Bottom-up, test-first, one story at a time, stopping at the Phase 0 gate for the owner's review
 once T022 is done. Nothing is pushed without the owner's go-ahead.
+
+## Gate record (2026-10-13)
+
+- Fresh clone → `uv sync --locked` + `scripts/check.sh`: **5 s**, 45 passed, Python 3.12.13 (P0-SC1).
+- Planted violations (P0-SC2): streamlit in `services/`, graph in `services/`, streamlit in
+  `config.py`, tracked `.env`, untraced test, `FR-03` cited, stale matrix — **7 of 7 fail the
+  check**; the clean tree passes again.
+- CI (P0-SC5): not yet run — the branch has not been pushed.

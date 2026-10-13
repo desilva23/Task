@@ -30,6 +30,10 @@ later phases fill them), and the `CONST` section showing `CONST-IV` and `CONST-S
 
 Undo each plant before the next.
 
+The three import plants are unused imports, so `ruff` stops the check before pytest runs. To
+see the boundary rule itself, run `uv run pytest tests/unit/test_import_rules.py` — it names the
+file, line and rule (verified 2026-10-13: all three caught).
+
 ## 4. CI
 
 After the owner pushes the branch, the **check** workflow runs on GitHub and should be green.
