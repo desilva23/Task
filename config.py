@@ -3,7 +3,7 @@
 # search — lld.md §8
 MIN_QUERY_CHARS = 2  # EC-01
 MAX_BATCH_TERMS = 30  # EC-06
-NL_WORD_THRESHOLD = 4
+NL_WORD_THRESHOLD = 3  # measured live: 'something for a headache' (4 words) must reach the model
 BM25_K1, BM25_B = 1.2, 0.5
 SEARCH_LIMIT = 10
 FUZZY_THRESHOLD = 75  # rapidfuzz ratio — 75 measured on the query set: every typo, no new noise

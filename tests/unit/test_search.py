@@ -51,6 +51,8 @@ class TestClassify:
             ("milk + bread", "batch", ["milk", "bread"]),
             ("whole milk", "term", ["whole milk"]),
             ("something I need for making a curry tonight", "nl", []),
+            ("something for a headache", "nl", []),  # 4 words reach the model (Phase 6, live)
+            ("tuna chunks in spring water", "term", ["tuna chunks in spring water"]),
         ],
     )
     def test_shapes(self, raw, shape, texts):

@@ -27,6 +27,18 @@ def make_resolve_items(services, model):
                 filt,
                 sentence=bool(s.get("sentence")),
             )
+            if r.status == "unresolved" and filt and (filt.aisle_category or filt.department):
+                # the phrase found nothing, but the model named a real category: offer it
+                in_category = sorted(
+                    (p for p in services.index.products if filt.admits(p)),
+                    key=lambda p: (-p.popularity, p.sku),
+                )
+                if in_category:
+                    status.append("ambiguous")
+                    candidates.append([p.sku for p in in_category[:TOP_OPTIONS]])
+                    category.append(None)
+                    suggestions.append([])
+                    continue
             status.append(r.status)
             candidates.append([c.sku for c in r.candidates[:TOP_OPTIONS]])
             category.append(r.category)

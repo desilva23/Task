@@ -694,7 +694,7 @@ error in §12 that refuses to start.
 ```python
 MIN_QUERY_CHARS     = 2       # EC-01
 MAX_BATCH_TERMS     = 30      # EC-06
-NL_WORD_THRESHOLD   = 4
+NL_WORD_THRESHOLD   = 3       # set live in Phase 6 — four-word requests reach the model
 BM25_K1, BM25_B     = 1.2, 0.5
 SEARCH_LIMIT        = 10
 FUZZY_THRESHOLD     = 75      # rapidfuzz ratio — set on the query set, Phase 4

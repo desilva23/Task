@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 
 from models.domain import Store
+from models.llm import ParsedQuery, parsed_query_for
 from services.catalogue import Catalogue
 from services.planogram import Planogram
 from services.routing import RouteEngine
@@ -19,6 +20,7 @@ class Services:
     planogram: Planogram
     engine: RouteEngine
     index: SearchIndex
+    query_model: type[ParsedQuery]  # the understand schema, narrowed to this store's names
 
     @classmethod
     def from_store(cls, store: Store) -> "Services":
@@ -29,4 +31,5 @@ class Services:
             planogram=Planogram(store),
             engine=RouteEngine(StoreGraph(store)),
             index=SearchIndex(store),
+            query_model=parsed_query_for(store),
         )
