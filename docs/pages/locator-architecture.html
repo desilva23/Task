@@ -225,7 +225,7 @@
         <!-- understand_query -->
         <rect x="280" y="64" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="2"/>
         <text x="365" y="84" text-anchor="middle" fill="currentColor">understand_query</text>
-        <text x="365" y="100" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">Haiku · structured out</text>
+        <text x="365" y="100" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">gpt-oss-20b · structured out</text>
         <line x1="365" y1="108" x2="365" y2="146" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
 
         <!-- search_catalogue -->
@@ -251,7 +251,7 @@
         <!-- suggest_substitutes -->
         <rect x="560" y="240" width="170" height="44" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="2"/>
         <text x="645" y="260" text-anchor="middle" fill="currentColor">suggest_subs</text>
-        <text x="645" y="276" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">Opus · dietary-filtered</text>
+        <text x="645" y="276" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.7">gpt-oss-120b · dietary-filtered</text>
         <line x1="450" y1="262" x2="552" y2="262" stroke="currentColor" stroke-width="1.5" marker-end="url(#ar2)"/>
         <text x="501" y="255" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.72">out of stock</text>
 
@@ -451,9 +451,10 @@
   </div>
 
   <div class="warn">
-    <h3>Two traps worth knowing before the first line of code</h3>
-    <p><b>Do not pass <code>temperature=0</code>.</b> Nearly every LangChain example does. Sampling parameters are rejected outright on the current Claude models — construct the chat model without it.</p>
-    <p><b>Structured output and thinking interact badly.</b> Thinking is on by default, and there is a known failure where <code>with_structured_output</code> raises a parse error with it enabled. Test that path on day one and consider the JSON-schema method over the default function-calling one.</p>
+    <h3>Traps worth knowing before the first line of code</h3>
+    <p><b>Strict structured output is model-specific on GroqCloud.</b> Only <code>openai/gpt-oss-20b</code> and <code>openai/gpt-oss-120b</code> enforce a JSON schema strictly; the Llama models offer JSON mode only. Every schema-bound call uses a gpt-oss model, with the model ID held in configuration.</p>
+    <p><b>Structured output cannot stream or call tools</b> on GroqCloud. Neither is needed here, but a tutorial that streams will fail.</p>
+    <p><b>Reasoning counts against <code>max_tokens</code>.</b> The gpt-oss models reason before answering; too low a cap truncates the reply mid-JSON. Keep reasoning effort low and leave headroom.</p>
     <p>Pin versions too: the checkpointer is exported as both <code>MemorySaver</code> and <code>InMemorySaver</code> depending on release, and the pause API moved from <code>interrupt_before</code> to <code>interrupt()</code>.</p>
   </div>
 

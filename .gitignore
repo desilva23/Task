@@ -1,2 +1,6 @@
 # Internal notes — the remote is public, so these stay local
 notes/
+
+# Secrets — the remote is public. GROQ_API_KEY lives only here or in the Streamlit Cloud dashboard
+.streamlit/secrets.toml
+.env

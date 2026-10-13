@@ -487,7 +487,7 @@ def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
     <tr><td><code>InvalidNodeError</code></td><td>start_node absent from the graph</td><td>The picker is built from the graph, so this is a bug, not shopper input. Fall back to the entrance and log</td></tr>
     <tr><td><code>UnreachableNodeError</code></td><td>Predecessor matrix says NO_PATH</td><td>Log as a data bug. Should be impossible after §13</td></tr>
     <tr><td><code>ModelUnavailableError</code></td><td>Timeout, 429, 5xx, refusal stop reason</td><td>Caught in the node; deterministic fallback; append to <code>degraded</code></td></tr>
-    <tr><td><code>SchemaValidationError</code></td><td>Structured output fails the model</td><td>Same. Known interaction with thinking enabled</td></tr>
+    <tr><td><code>SchemaValidationError</code></td><td>Structured output fails the model</td><td>Same. Rare with strict mode, but a truncated reply (<code>max_tokens</code> reached) still fails</td></tr>
     <tr><td><code>GroundingError</code></td><td>Model named a SKU outside the candidate set</td><td>Never surfaced. Drop the suggestion, log loudly</td></tr>
     <tr><td><code>VerificationError</code></td><td><code>verify</code> found a claim that does not match the service result</td><td>Never surfaced as written. Discard the composed text, render the template, record the mismatch (EC-47)</td></tr>
   </tbody>
@@ -534,9 +534,13 @@ ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance clai
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
 
-MODEL_UNDERSTAND    = "claude-haiku-5-5"
-MODEL_SUBSTITUTE    = "claude-opus-5-5"
-MODEL_DESCRIBE      = "claude-haiku-5-5"</code></pre>
+# GroqCloud (C-06). Schema-bound calls need strict structured output, which
+# only the gpt-oss models offer. Re-verify these IDs before Phase 6.
+MODEL_UNDERSTAND    = "openai/gpt-oss-20b"
+MODEL_SUBSTITUTE    = "openai/gpt-oss-120b"
+MODEL_DESCRIBE      = "openai/gpt-oss-20b"
+MODEL_MAX_TOKENS    = 1024    # per call; reasoning tokens count against it
+MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only</code></pre>
 <div class="prose">
   <p>Every number a reviewer might question lives here with the edge case it serves in the comment. <code>THREAD_TTL_MINUTES</code> drives the sweep that stops abandoned clarifications accumulating checkpoints forever — LangGraph does not expire threads on its own.</p>
 </div>

@@ -585,7 +585,7 @@ sweep every abandoned clarification leaks a checkpoint (EC-34).
 | `InvalidNodeError` | start_node absent from the graph | The picker is built from the graph, so this is a bug, not shopper input. Fall back to the entrance and log |
 | `UnreachableNodeError` | Predecessor matrix says NO_PATH | Log as a data bug. Should be impossible after §13 |
 | `ModelUnavailableError` | Timeout, 429, 5xx, refusal stop reason | Caught in the node; deterministic fallback; append to `degraded` |
-| `SchemaValidationError` | Structured output fails the model | Same. Known interaction with thinking enabled |
+| `SchemaValidationError` | Structured output fails the model | Same. Rare with strict mode, but a truncated reply (`max_tokens` reached) still fails |
 | `GroundingError` | Model named a SKU outside the candidate set | Never surfaced. Drop the suggestion, log loudly |
 | `VerificationError` | `verify` found a claim that does not match the service result | Never surfaced as written. Discard the composed text, render the template, record the mismatch (EC-47) |
 
@@ -644,9 +644,13 @@ ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance clai
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
 
-MODEL_UNDERSTAND    = "claude-haiku-5-5"
-MODEL_SUBSTITUTE    = "claude-opus-5-5"
-MODEL_DESCRIBE      = "claude-haiku-5-5"
+# GroqCloud (C-06). Schema-bound calls need strict structured output, which
+# only the gpt-oss models offer. Re-verify these IDs before Phase 6.
+MODEL_UNDERSTAND    = "openai/gpt-oss-20b"
+MODEL_SUBSTITUTE    = "openai/gpt-oss-120b"
+MODEL_DESCRIBE      = "openai/gpt-oss-20b"
+MODEL_MAX_TOKENS    = 1024    # per call; reasoning tokens count against it
+MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only
 ```
 
 Every number a reviewer might question lives here with the edge case it serves

@@ -63,7 +63,7 @@
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
     <span><b>Requirements</b> 24 functional · 11 non-functional</span>
-    <span><b>Constraints</b> 5</span>
+    <span><b>Constraints</b> 7</span>
   </div>
 </header>
 
@@ -128,6 +128,8 @@
     <tr><td class="id">C-03</td><td>User interface is a single <b>Streamlit</b> page</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">C-04</td><td>All store data is <b>synthetic</b> and is stated as such wherever shown</td><td><span class="tag t-ok">confirmed</span></td></tr>
     <tr><td class="id">C-05</td><td>No integration with any live retailer system</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-06</td><td>Language models are served through <b>GroqCloud</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">C-07</td><td>The application is deployed on <b>Streamlit Community Cloud</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
   </tbody>
 </table>
 </div>
@@ -272,6 +274,16 @@
     <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming</td></tr>
     <tr><td class="id">AC-16</td><td>FR-12</td><td>A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required</td></tr>
     <tr><td class="id">AC-17</td><td>FR-09</td><td>An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one</td></tr>
+    <tr><td class="id">AC-18</td><td>FR-04</td><td>A natural-language request returns only SKUs present in <code>products.csv</code>; a model response carrying any field outside its schema — a product name, a SKU — is rejected before it can influence the result</td></tr>
+    <tr><td class="id">AC-19</td><td>FR-06</td><td>For a term matching a ranged and an unranged product, the ranged one ranks first even when the unranged one has the higher text-match score</td></tr>
+    <tr><td class="id">AC-20</td><td>FR-08</td><td>A product with <code>ranged=false</code> and a product with <code>ranged=true, shelf_qty=0</code> return different availability states, and the wording shown for each is different</td></tr>
+    <tr><td class="id">AC-21</td><td>FR-11</td><td>A SKU with two placements returns both locations; from a start point nearer the second placement, the route targets the second</td></tr>
+    <tr><td class="id">AC-22</td><td>FR-20</td><td>Every route is returned both as an ordered directions list and as a drawn floor-plate overlay, and the two describe the same sequence of points</td></tr>
+    <tr><td class="id">AC-23</td><td>FR-23</td><td>Items added from three separate searches all appear in the basket, and the route planned from it visits every routable item regardless of which search added it</td></tr>
+    <tr><td class="id">AC-24</td><td>FR-24</td><td>An out-of-stock item added individually appears in the basket marked not routable, is absent from the route, and its exclusion is stated in the output</td></tr>
+    <tr><td class="id">AC-25</td><td>NFR-03</td><td>Across every response in the test suite, each mention of gluten free, nut free, vegan or halal corresponds to a product whose recorded attribute is <code>true</code>; a product with an empty attribute is shown as unknown and never described as having or lacking the property</td></tr>
+    <tr><td class="id">AC-26</td><td>NFR-09</td><td>With every model call disabled, each ranked result's position is explained by the first ranking rule separating it from its neighbour, and each route's stop order is reproduced from its node path alone</td></tr>
+    <tr><td class="id">AC-27</td><td>NFR-10</td><td>Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07</td></tr>
   </tbody>
 </table>
 </div>
@@ -351,7 +363,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 24 functional · 11 non-functional · 5 constraints · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 24 functional · 11 non-functional · 7 constraints · 27 acceptance criteria · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>

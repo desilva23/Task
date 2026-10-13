@@ -760,7 +760,7 @@ Crayons are out of stock and left out of the route.</pre>
     <tr><td class="id">EC-35</td><td>Clarify loop never converges</td><td>Loop counter in state, capped at two rounds, then forced to return the ranked list</td></tr>
     <tr><td class="id">EC-36</td><td>Same <code>thread_id</code> used from two tabs at once</td><td>Last write wins, and the UI reloads graph state rather than trusting local state</td></tr>
     <tr><td class="id">EC-37</td><td>Model call times out or errors</td><td>Each model node has a deterministic fallback: keyword search for understanding, a static substitution table for substitutes, a template for directions. The journey always completes</td></tr>
-    <tr><td class="id">EC-38</td><td>Model returns malformed structured output</td><td>Validate against the schema; on failure fall back to keyword search. Known interaction with thinking enabled — see the build note</td></tr>
+    <tr><td class="id">EC-38</td><td>Model returns malformed structured output</td><td>Validate against the schema; on failure fall back to keyword search. Strict mode makes this rare, not impossible — a reply cut off at the token cap still fails</td></tr>
     <tr><td class="id">EC-39</td><td>Model declines the request</td><td>Check the stop reason before reading content. Fall through to the deterministic path</td></tr>
     <tr><td class="id">EC-40</td><td>Node raises mid-graph, leaving partial state</td><td>The checkpoint holds the last good state; the journey resumes from the failed node rather than restarting</td></tr>
     <tr><td class="id">EC-41</td><td>Page re-runs or is refreshed mid-journey</td><td>State lives in the checkpoint under <code>thread_id</code>; the page rebuilds from graph state rather than from Streamlit session state</td></tr>

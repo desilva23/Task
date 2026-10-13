@@ -64,6 +64,8 @@ store works with no code changes.
 | C-03 | User interface is a single **Streamlit** page | confirmed |
 | C-04 | All store data is **synthetic** and is stated as such wherever shown | confirmed |
 | C-05 | No integration with any live retailer system | confirmed |
+| C-06 | Language models are served through **GroqCloud** | confirmed |
+| C-07 | The application is deployed on **Streamlit Community Cloud** | confirmed |
 
 | ID | Assumption | Status | If it later proves wrong |
 |---|---|---|---|
@@ -176,6 +178,16 @@ finished being written.
 | AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
 | AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
 | AC-17 | FR-09 | An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one |
+| AC-18 | FR-04 | A natural-language request returns only SKUs present in `products.csv`; a model response carrying any field outside its schema — a product name, a SKU — is rejected before it can influence the result |
+| AC-19 | FR-06 | For a term matching a ranged and an unranged product, the ranged one ranks first even when the unranged one has the higher text-match score |
+| AC-20 | FR-08 | A product with `ranged=false` and a product with `ranged=true, shelf_qty=0` return different availability states, and the wording shown for each is different |
+| AC-21 | FR-11 | A SKU with two placements returns both locations; from a start point nearer the second placement, the route targets the second |
+| AC-22 | FR-20 | Every route is returned both as an ordered directions list and as a drawn floor-plate overlay, and the two describe the same sequence of points |
+| AC-23 | FR-23 | Items added from three separate searches all appear in the basket, and the route planned from it visits every routable item regardless of which search added it |
+| AC-24 | FR-24 | An out-of-stock item added individually appears in the basket marked not routable, is absent from the route, and its exclusion is stated in the output |
+| AC-25 | NFR-03 | Across every response in the test suite, each mention of gluten free, nut free, vegan or halal corresponds to a product whose recorded attribute is `true`; a product with an empty attribute is shown as unknown and never described as having or lacking the property |
+| AC-26 | NFR-09 | With every model call disabled, each ranked result's position is explained by the first ranking rule separating it from its neighbour, and each route's stop order is reproduced from its node path alone |
+| AC-27 | NFR-10 | Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07 |
 
 ---
 

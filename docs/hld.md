@@ -10,7 +10,7 @@ Both are private — share from each page's Share menu before sending them on.
 ## 1. What this document owns
 
 The requirements live in `requirements.md` — 24 functional, 11 non-functional
-and 17 acceptance criteria, every one confirmed. They are not repeated here.
+and 27 acceptance criteria, every one confirmed. They are not repeated here.
 This document owns the component architecture, the search design, the interface
 and the edge cases, and it is written to be read after the specification.
 
@@ -497,7 +497,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-35 | Clarify loop never converges | Loop counter in state, capped at two rounds, then forced to return the ranked list |
 | EC-36 | Same `thread_id` from two tabs at once | Last write wins; the UI reloads graph state rather than trusting local state |
 | EC-37 | Model call times out or errors | Every model node has a deterministic fallback: keyword search, a static substitution table, a directions template. The journey always completes |
-| EC-38 | Model returns malformed structured output | Validate against the schema; fall back to keyword search. Known interaction with thinking enabled |
+| EC-38 | Model returns malformed structured output | Validate against the schema; fall back to keyword search. Strict mode makes this rare, not impossible — a reply cut off at the token cap still fails |
 | EC-39 | Model declines the request | Check the stop reason before reading content; fall through to the deterministic path |
 | EC-40 | Node raises mid-graph, partial state | The checkpoint holds the last good state; resume from the failed node rather than restarting |
 | EC-47 | `verify` finds a claim that does not match the service result | The composed answer is discarded, never corrected in place. The deterministic template is rendered from the service results instead and the discrepancy is recorded in `degraded`. A mismatch is a bug to surface, not a difference to split |

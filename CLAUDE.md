@@ -10,9 +10,11 @@ A shopper types one or more products and gets, for each: whether it is
 available, where it is (floor, aisle, rack, shelf), and the shortest walking
 route to it, across floors. Built as an agentic system on synthetic data.
 
-**Current state: design documents only. No code has been written yet.**
-
-All four documents now exist. `docs/schema.md` is v1 and has no rendered page yet.
+**Current state: design complete; the build has started under GitHub Spec Kit.**
+The four design documents are the specification. The rules for building against
+them are in `.specify/memory/constitution.md` — read it before writing code.
+Work proceeds in phases 0–8 (see **Pending work**), and the owner reviews each
+phase at a gate before the next one starts.
 
 Sainsbury's is the reference retailer, but all data is synthetic and no real
 retailer system is involved. The repository is **public** — keep anything
@@ -60,6 +62,11 @@ and still carry stale content. See **Pending work** below.
 | **Stairs and lifts** between floors, no escalators | A lift is the only step-free way between floors, so without one FR-19 is unsatisfiable. Escalators added a third edge kind for no requirement |
 | **No barcode entry at all** — FR-03 withdrawn | Parked in `notes/`. Typed digits were circular (a shopper holding the product has found it) and the camera scan was descoped. The requirements carry a deliberate gap at FR-03; IDs are stable, so it was not renumbered |
 | **CSV** for the data files, map as two CSVs | Authorable in a spreadsheet, readable without a parser. A graph does not fit one table |
+| **GroqCloud** is the model provider (C-06), via `langchain-groq` | Owner's choice. Schema-bound calls need strict structured output, which only `openai/gpt-oss-20b` and `-120b` offer — 20b for understand/describe, 120b for substitutes. IDs live in config (`lld.md` §14) |
+| **Streamlit Community Cloud** for deployment (C-07) | Owner's choice. It reads `uv.lock` and defaults to Python 3.12, so the project pins 3.12 to match |
+| **GitHub Spec Kit**, test-first, bottom-up, gated phases | Owner's choice. Each phase is one Spec Kit feature under `specs/`; every test names the AC/FR/NFR/EC/V ID it proves |
+| **uv + ruff + pytest**, Python 3.12 | One lock file, one linter/formatter. The machine has 3.14; do not let it leak into the lock |
+| **A seeded generator** produces the synthetic store | Same seed, same store — tests and the demo can rely on exact SKUs and positions |
 
 ## The rule the whole design rests on
 
@@ -92,8 +99,11 @@ gluten free" about products nobody checked.
 
 | Trap | Why |
 |---|---|
-| `temperature=0` on the chat model | Rejected on current Claude models. Nearly every LangChain example passes it |
-| `with_structured_output` + thinking | Known parse failure with thinking enabled, which is the default. Consider `method="json_schema"` |
+| A Llama model for a schema-bound call | On GroqCloud only the gpt-oss models enforce a JSON schema strictly; Llama gives JSON mode, not the schema |
+| Streaming or tools with structured output | Groq does not support either alongside structured output. Neither is needed here |
+| `max_tokens` set too low | gpt-oss reasons before answering and that counts against the cap — the reply truncates mid-JSON |
+| Committing `GROQ_API_KEY` | The repo is public. Key goes in `.streamlit/secrets.toml` (gitignored) or the Cloud dashboard; a test fails if either secrets file is tracked |
+| A public app spending the owner's key | Cap model calls per session and per call, and set a spend limit in the Groq console before sharing the URL |
 | Streamlit re-executes the page per interaction | Graph, BM25 index and distance matrices must be in `@st.cache_resource`, or every click rebuilds them |
 | Search box outside `st.form` | Every keystroke invokes the agent and the 5-second budget goes on unfinished queries |
 | Textbook closed-tour 2-opt | Each floor leg is an **open** path with a fixed start; the wrap-around term must come out of the gain calculation |
@@ -127,6 +137,12 @@ Claude Docs versions, which export to PDF cleanly and carry drawn figures:
 
 - Requirements — https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b
 - HLD — https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77
+- LLD — https://claude.ai/code/artifact/96a1afa2-2ca7-4f5b-a10d-ce432489f37b
+  (runtime-class and full 25-class diagrams, full sequence, verifier and fallback sequences)
+- Schema — https://claude.ai/code/artifact/abf938c6-faf9-4a5d-95f4-b6559cfe24b7
+
+The Docs are hand-built and not in git. When a markdown document changes, its
+Doc needs the same change by hand.
 
 **`locator-lld.html` and `locator-schema.html` are generated from their
 markdown**, not hand-edited — rerun the render script rather than patching the
@@ -135,20 +151,30 @@ the LLD page came to sit two versions behind its markdown.
 
 ## Pending work, in order
 
-All four documents exist, are internally consistent, and are published. What
-is left is tidying and, if asked, building.
+**The build.** One Spec Kit feature per phase:
+`/speckit-specify` → `/speckit-clarify` if needed → `/speckit-plan` →
+`/speckit-tasks` → `/speckit-analyze` → `/speckit-implement`. Stop at the
+gate after each phase for the owner's review.
 
-1. **`solution-sketch.md` is stale throughout.** Pre-split data model — `bay`
-   for `rack`, `total_qty`, `band`, `as_of` per position, `store_id` per row.
-   Superseded by `schema.md` rather than correctable; either mark it
-   historical at the top or delete it.
-2. **`README.md` has no Schema row** in the four-document table or the reading
-   order.
-3. **`architecture.md` predates the four-document split.** The edge count and
-   the DATA layer are fixed, but it still reads as a fifth document with its
-   own view of the design. Decide whether it is historical or current.
-4. **The LLD and Schema have no Claude Docs version.** The Requirements and
-   HLD do, and that is what exports to PDF well. The LLD one would want a
-   class diagram and two sequence diagrams (verifier rejects a draft, model
-   failure falls back) — the two figures the peer LLD has and ours does not.
-5. **Then build**, if asked. Nothing has been implemented.
+| # | Phase | Proven by |
+|---|---|---|
+| 0 | Scaffold — uv, Python 3.12, ruff, pytest; import-rule and secret-leak tests; traceability matrix; CI | CI green |
+| 1 | Seeded synthetic store generator and the store validator | AC-14, every V-rule |
+| 2 | Services — catalogue, stock, planogram, store graph, route engine | AC-01, AC-04, AC-06, AC-07, AC-20, AC-21 |
+| 3 | Multi-stop routing — floor order, open-path 2-opt, checkout | AC-05, AC-23, AC-24 |
+| 4 | Search — classify, BM25, fuzzy, ranking, ambiguity | AC-02, AC-19, AC-26 |
+| 5 | LangGraph — eleven nodes, interrupt, verify, fake model client | AC-03, AC-10, AC-11, AC-18 |
+| 6 | GroqCloud in the three model nodes — re-verify model IDs first | AC-17, AC-25, NFR-04 |
+| 7 | Streamlit page | AC-08, AC-15, AC-22, AC-27 |
+| 8 | Portability store, performance, hostile input, deployment | AC-09, AC-12, AC-13 |
+
+**Tidying, not blocking the build:**
+
+1. **`solution-sketch.md` is stale throughout** — pre-split data model. Mark it
+   historical or delete it.
+2. **`README.md` has no Schema row** in the four-document table or reading order.
+3. **`architecture.md` predates the four-document split** and still says nine
+   nodes (there are eleven). Its model names and traps now match GroqCloud.
+   Decide whether it is historical or current.
+4. **`proposed-scope.md` and `genai-opportunities.md` still name Claude models.**
+   Both are pre-split; the current spec names GroqCloud.

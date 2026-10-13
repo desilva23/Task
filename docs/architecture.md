@@ -74,15 +74,15 @@ for the shopper.** That ratio is the design.
 
 | Node | Kind | Does |
 |---|---|---|
-| `understand_query` | model — Haiku 5.5, structured output | NL query → typed catalogue filter |
+| `understand_query` | model — gpt-oss-20b, structured output | NL query → typed catalogue filter |
 | `search_catalogue` | deterministic | filter → real SKUs |
 | `clarify` | `interrupt()` | ambiguous query → ask, wait, resume |
 | `check_availability` | deterministic | stock lookup |
-| `suggest_substitutes` | model — Opus 5.5 | out of stock → alternatives, dietary-filtered first |
+| `suggest_substitutes` | model — gpt-oss-120b | out of stock → alternatives, dietary-filtered first |
 | `resolve_locations` | deterministic | planogram → floor / aisle / rack / shelf |
 | `route_single` | deterministic | matrix lookup, O(1) |
 | `route_multi` | deterministic | floor-clustered sequencing |
-| `describe_route` | model — Haiku 5.5 | node list → human directions |
+| `describe_route` | model — gpt-oss-20b | node list → human directions |
 
 ### Edges
 
@@ -280,10 +280,10 @@ Three nodes call a model. **None is on the wire that returns a location, a
 distance or a stock figure.** A hallucinated rack number sends a shopper to the
 wrong floor, so the model is architecturally unable to produce one.
 
-- `understand_query` — Haiku 5.5, one structured-output call. High volume, low
+- `understand_query` — gpt-oss-20b on GroqCloud, one structured-output call. High volume, low
   complexity, latency-critical. Keyword search stays wired as the fallback.
-- `suggest_substitutes` — Opus 5.5. Needs real reasoning over constraints.
-- `describe_route` — Haiku 5.5. Pre-generate and cache per node pair where
+- `suggest_substitutes` — gpt-oss-120b. Needs real reasoning over constraints.
+- `describe_route` — gpt-oss-20b. Pre-generate and cache per node pair where
   possible; the phrasing for a given pair does not change between shoppers.
 
 **Allergens are the hard line.** Substitution candidates are filtered on
@@ -307,19 +307,24 @@ credible.
 
 ## 7. Known traps
 
-Both bite the standard tutorial idiom.
+Each bites the standard tutorial idiom.
 
-**Do not pass `temperature=0`.** Nearly every LangChain example does. Sampling
-parameters are rejected on the current Claude models — Opus 5.5 removes them
-outright, Haiku 5.5 rejects non-default values. Construct the chat model
-without it.
+**Strict structured output is model-specific on GroqCloud.** Only
+`openai/gpt-oss-20b` and `openai/gpt-oss-120b` enforce a JSON schema strictly;
+the Llama models offer JSON mode only, which guarantees valid JSON but not the
+schema. Every schema-bound call therefore uses a gpt-oss model, with model IDs
+held in configuration so a deprecation is a one-line change. Use
+`pydantic.BaseModel` (v2) — older examples import `langchain_core.pydantic_v1`,
+which is wrong now.
 
-**Structured output and thinking interact badly.** Thinking is on by default
-(adaptive) on the 5-family models, and there is a known failure where
-`with_structured_output` raises a parse error with it enabled. Test that path on
-day one, and consider `method="json_schema"` over the default
-`"function_calling"`. Use `pydantic.BaseModel` (v2) — older examples import
-`langchain_core.pydantic_v1`, which is wrong now.
+**Structured output cannot stream or call tools.** Groq does not support
+streaming or tool use alongside structured output. Neither is needed — the page
+renders a finished answer and the graph's edges, not the model, choose the next
+step — but a tutorial that streams will fail here.
+
+**The gpt-oss models reason before they answer, and that counts against
+`max_tokens`.** Too low a cap truncates the reply mid-JSON. Keep reasoning
+effort low for these short tasks and leave headroom in the cap.
 
 **Pin versions.** The checkpointer is exported as both `MemorySaver` and
 `InMemorySaver` depending on release, and the pause API moved from
