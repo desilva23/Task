@@ -142,3 +142,48 @@ class NoRoute:
 
     reason: str  # no_location · no_open_location · no_step_free_route
     message: str
+
+
+@dataclass(frozen=True)
+class BasketItem:
+    """A basket entry as assessed now — never trusted from when it was added (EC-17)."""
+
+    sku: str
+    name: str
+    availability: Availability
+    routable: bool
+    reason: str | None = None  # sold_out · not_ranged · unknown · no_location · location_closed
+    message: str | None = None
+
+
+@dataclass(frozen=True)
+class Stop:
+    sku: str
+    placement: Placement
+    level: int
+
+    @property
+    def node_id(self) -> str:
+        return self.placement.node_id
+
+
+@dataclass(frozen=True)
+class Excluded:
+    """An item left out of the route, with the sentence that says so (FR-24)."""
+
+    sku: str
+    reason: str
+    message: str
+
+
+@dataclass(frozen=True)
+class MultiRoute:
+    """One walk for the whole basket: stops in order, then a till (FR-16, FR-17, FR-18)."""
+
+    nodes: tuple[str, ...]
+    distance_m: float
+    stops: tuple[Stop, ...]
+    till: str
+    floors: tuple[int, ...]
+    step_free: bool
+    excluded: tuple[Excluded, ...]

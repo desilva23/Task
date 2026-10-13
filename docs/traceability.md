@@ -5,12 +5,12 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 
 | Kind | Defined | Covered |
 |---|---:|---:|
-| Acceptance criteria (AC) | 27 | 7 |
-| Functional requirements (FR) | 24 | 9 |
+| Acceptance criteria (AC) | 27 | 10 |
+| Functional requirements (FR) | 24 | 14 |
 | Non-functional requirements (NFR) | 11 | 2 |
 | Constraints (C) | 7 | 1 |
 | Assumptions (A) | 6 | 2 |
-| Edge cases (EC) | 47 | 10 |
+| Edge cases (EC) | 47 | 15 |
 | Validation refusals (V) | 43 | 43 |
 | Validation warnings (W) | 5 | 5 |
 | Constitution guard rails (CONST) | 8 | 5 |
@@ -23,7 +23,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | AC-02 | — |
 | AC-03 | — |
 | AC-04 | `tests/unit/test_routing.py::TestShortestRoutes::test_a_path_walks_its_own_distance`<br>`tests/unit/test_routing.py::TestShortestRoutes::test_all_distances_from_50_starts_match`<br>`tests/unit/test_routing.py::TestStepFree::test_a_step_free_route_uses_lifts_and_no_stairs`<br>`tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly`<br>`tests/unit/test_routing.py::TestStepFree::test_the_ordinary_route_may_take_the_stairs`<br>`tests/unit/test_routing.py::test_ac_06_fr_15_two_start_points_give_two_correct_routes`<br>`tests/unit/test_routing.py::test_ac_21_fr_11_ec_20_the_route_goes_to_the_nearer_placement`<br>`tests/unit/test_routing.py::test_ec_25_already_at_the_rack_is_a_zero_length_route`<br>`tests/unit/test_routing.py::test_ec_29_an_unknown_start_point_is_a_bug_not_a_guess`<br>`tests/unit/test_routing.py::test_ec_30_a_closed_lift_is_routed_around_by_the_other_core`<br>`tests/unit/test_routing.py::test_ec_32_a_placement_on_a_closed_node_is_not_routable`<br>`tests/unit/test_routing.py::test_fr_19_step_free_graph_filters_before_collapsing_parallel_edges` |
-| AC-05 | — |
+| AC-05 | `tests/unit/test_multistop.py::test_ac_05_fr_16_fr_17_fr_18_invariants_hold_for_random_baskets`<br>`tests/unit/test_multistop.py::test_ac_05_fr_17_fr_18_ec_27_three_floors_highest_first_ending_at_a_till` |
 | AC-06 | `tests/unit/test_routing.py::test_ac_06_fr_15_two_start_points_give_two_correct_routes` |
 | AC-07 | `tests/unit/test_routing.py::TestStepFree::test_a_step_free_route_uses_lifts_and_no_stairs`<br>`tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly`<br>`tests/unit/test_routing.py::TestStepFree::test_the_ordinary_route_may_take_the_stairs` |
 | AC-08 | — |
@@ -41,8 +41,8 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | AC-20 | `tests/unit/test_services.py::test_ac_20_fr_08_not_sold_here_and_sold_out_differ_in_state_and_wording` |
 | AC-21 | `tests/unit/test_routing.py::test_ac_21_fr_11_ec_20_the_route_goes_to_the_nearer_placement`<br>`tests/unit/test_services.py::test_ac_21_fr_11_a_product_in_two_places_reports_both` |
 | AC-22 | — |
-| AC-23 | — |
-| AC-24 | — |
+| AC-23 | `tests/unit/test_multistop.py::test_ac_23_fr_23_items_from_three_separate_additions_are_all_routed` |
+| AC-24 | `tests/unit/test_multistop.py::test_ac_24_fr_24_ec_46_a_sold_out_item_stays_in_the_basket_but_out_of_the_route` |
 | AC-25 | — |
 | AC-26 | — |
 | AC-27 | — |
@@ -65,15 +65,15 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | FR-13 | `tests/unit/test_routing.py::TestShortestRoutes::test_a_path_walks_its_own_distance`<br>`tests/unit/test_routing.py::TestShortestRoutes::test_all_distances_from_50_starts_match` |
 | FR-14 | — |
 | FR-15 | `tests/unit/test_routing.py::test_ac_06_fr_15_two_start_points_give_two_correct_routes` |
-| FR-16 | — |
-| FR-17 | — |
-| FR-18 | — |
-| FR-19 | `tests/unit/test_routing.py::TestStepFree::test_a_step_free_route_uses_lifts_and_no_stairs`<br>`tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly`<br>`tests/unit/test_routing.py::TestStepFree::test_the_ordinary_route_may_take_the_stairs`<br>`tests/unit/test_routing.py::test_fr_19_step_free_graph_filters_before_collapsing_parallel_edges` |
+| FR-16 | `tests/unit/test_multistop.py::test_ac_05_fr_16_fr_17_fr_18_invariants_hold_for_random_baskets`<br>`tests/unit/test_multistop.py::test_fr_16_the_route_distance_is_the_sum_of_its_hops`<br>`tests/unit/test_multistop.py::test_fr_16_thirty_items_route_quickly` |
+| FR-17 | `tests/unit/test_multistop.py::test_ac_05_fr_16_fr_17_fr_18_invariants_hold_for_random_baskets`<br>`tests/unit/test_multistop.py::test_ac_05_fr_17_fr_18_ec_27_three_floors_highest_first_ending_at_a_till`<br>`tests/unit/test_multistop.py::test_fr_17_open_2opt_never_lengthens_nearest_neighbour` |
+| FR-18 | `tests/unit/test_multistop.py::test_ac_05_fr_16_fr_17_fr_18_invariants_hold_for_random_baskets`<br>`tests/unit/test_multistop.py::test_ac_05_fr_17_fr_18_ec_27_three_floors_highest_first_ending_at_a_till` |
+| FR-19 | `tests/unit/test_multistop.py::test_fr_19_step_free_multi_stop_uses_no_stairs`<br>`tests/unit/test_routing.py::TestStepFree::test_a_step_free_route_uses_lifts_and_no_stairs`<br>`tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly`<br>`tests/unit/test_routing.py::TestStepFree::test_the_ordinary_route_may_take_the_stairs`<br>`tests/unit/test_routing.py::test_fr_19_step_free_graph_filters_before_collapsing_parallel_edges` |
 | FR-20 | — |
 | FR-21 | — |
 | FR-22 | — |
-| FR-23 | — |
-| FR-24 | — |
+| FR-23 | `tests/unit/test_multistop.py::test_ac_23_fr_23_items_from_three_separate_additions_are_all_routed` |
+| FR-24 | `tests/unit/test_multistop.py::test_ac_24_fr_24_ec_46_a_sold_out_item_stays_in_the_basket_but_out_of_the_route` |
 | FR-25 | — |
 
 ## Non-functional requirements — `docs/requirements.md`
@@ -135,23 +135,23 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | EC-14 | — |
 | EC-15 | — |
 | EC-16 | — |
-| EC-17 | — |
+| EC-17 | `tests/unit/test_multistop.py::test_ec_17_routability_is_rechecked_on_every_call` |
 | EC-18 | `tests/unit/test_services.py::test_ec_18_a_sku_with_no_stock_position_is_unknown_not_guessed` |
 | EC-19 | `tests/unit/test_services.py::test_ec_19_a_product_with_no_placement_has_no_location` |
-| EC-20 | `tests/unit/test_routing.py::test_ac_21_fr_11_ec_20_the_route_goes_to_the_nearer_placement` |
+| EC-20 | `tests/unit/test_multistop.py::test_ec_20_a_second_placement_never_adds_a_floor`<br>`tests/unit/test_routing.py::test_ac_21_fr_11_ec_20_the_route_goes_to_the_nearer_placement` |
 | EC-21 | — |
 | EC-22 | `tests/unit/test_services.py::test_fr_12_ec_22_ec_23_counters_and_cabinets_have_no_shelf_and_need_a_colleague` |
 | EC-23 | `tests/unit/test_services.py::test_fr_12_ec_22_ec_23_counters_and_cabinets_have_no_shelf_and_need_a_colleague` |
 | EC-24 | — |
 | EC-25 | `tests/unit/test_routing.py::test_ec_25_already_at_the_rack_is_a_zero_length_route` |
-| EC-26 | — |
-| EC-27 | — |
+| EC-26 | `tests/unit/test_multistop.py::test_ec_26_one_floor_basket_from_that_floor_never_changes_floor` |
+| EC-27 | `tests/unit/test_multistop.py::test_ac_05_fr_17_fr_18_ec_27_three_floors_highest_first_ending_at_a_till` |
 | EC-28 | — |
 | EC-29 | `tests/unit/test_routing.py::test_ec_29_an_unknown_start_point_is_a_bug_not_a_guess` |
 | EC-30 | `tests/unit/test_routing.py::test_ec_30_a_closed_lift_is_routed_around_by_the_other_core` |
-| EC-31 | `tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly` |
+| EC-31 | `tests/unit/test_multistop.py::test_ec_31_a_stop_with_no_step_free_path_is_excluded_and_stated`<br>`tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly` |
 | EC-32 | `tests/unit/test_routing.py::test_ec_32_a_placement_on_a_closed_node_is_not_routable` |
-| EC-33 | — |
+| EC-33 | `tests/unit/test_multistop.py::test_ec_33_chilled_items_are_picked_last_in_their_floor_pass` |
 | EC-34 | — |
 | EC-35 | — |
 | EC-36 | — |
@@ -164,7 +164,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | EC-43 | — |
 | EC-44 | — |
 | EC-45 | — |
-| EC-46 | — |
+| EC-46 | `tests/unit/test_multistop.py::test_ac_24_fr_24_ec_46_a_sold_out_item_stays_in_the_basket_but_out_of_the_route` |
 | EC-47 | — |
 
 ## Validation refusals — `docs/schema.md`

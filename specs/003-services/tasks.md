@@ -25,3 +25,4 @@ description: "Task list for Phase 2 — services and route engine"
 - Decisions for the owner: availability sentences fixed as *In stock* · *Sold out at this store
   right now* · *Not sold at this store* · *Stock level unknown*; a missing route is a `NoRoute`
   with a plain reason, never a worse route; EC-24 (seasonal suppression) moves to Phase 5.
+- **Gate approved by the owner, 2026-10-13.**

@@ -31,6 +31,8 @@ services/
   stock.py                Stock — batched position lookup
   routing.py              RouteEngine — matrices, path reconstruction, TSP
   storegraph.py           StoreGraph — nodes, edges, adjacency
+  basket.py               Basket — SKUs added across searches; routability re-checked per call
+  multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -39,6 +41,7 @@ validation.py             startup checks (§13)
 data/
   SBY-DEMO-001/           store.csv  products.csv  stock.csv
                           planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
+datagen/                  seeded generator for the synthetic demo store (schema.md §8)
 tests/
   unit/  integration/  fixtures/
 ```
@@ -477,24 +480,30 @@ reads.
 ### Multi — floor-clustered, open path per floor, closed at the tills
 
 ```python
-def route_multi(start, items, end_node, step_free):
-    chilled, ambient = partition(items, lambda i: i.location_type == "CHILLER")
-    groups = group_by_floor(ambient)                   # {level: [Placement]}
-    order  = sorted(groups, reverse=True)              # highest floor first
-    legs, cursor = [], start
-
+def route_multi(start, stops, step_free):
+    order  = sorted({s.level for s in stops}, reverse=True)   # highest floor first
+    seq, cursor = [], start
     for level in order:
-        entry = nearest_core(cursor, level, step_free) # arrive at the cheaper core
-        seq   = nn_then_2opt(entry, groups[level], step_free)
-        legs += [engine.path(cursor, entry, step_free)] + stitch(seq)
-        cursor = seq[-1].node_id if seq else entry
-
-    for p in chilled_last(chilled):                    # EC-33
-        legs.append(engine.path(cursor, p.node_id, step_free)); cursor = p.node_id
-
-    legs.append(engine.path(cursor, end_node, step_free))   # FR-11, the tills
-    return Route(nodes=dedupe_joins(legs), ...)
+        entry = nearest_core(cursor, level, step_free)        # arrive at the cheaper core
+        here  = [s for s in stops if s.level == level]
+        ambient, chilled = partition(here, lambda s: s.location_type != "CHILLER")
+        floor = nn_then_2opt(entry, ambient, step_free)
+        floor += nn_then_2opt(last(floor, entry), chilled, step_free)   # EC-33
+        seq += floor
+        cursor = seq[-1].node_id
+    till = nearest_till(cursor, step_free)                    # FR-18
+    nodes = stitch(start, seq, till)                          # shortest path between neighbours
+    return MultiRoute(nodes=nodes, stops=seq, till=till, ...)
 ```
+
+**Chilled stops come last within their own floor's pass**, not after every
+floor. Appending them after all floors would send a shopper back upstairs
+whenever a chiller sat above the ground floor, breaking FR-17's one pass per
+floor. In the demo store every chiller is on floor 0 — the final pass — so
+chilled items are still the last things picked before the tills.
+
+A SKU held in several places takes the placement on a floor the basket already
+visits, nearest the start, so a second placement never adds a floor.
 
 ### nn_then_2opt — open path, fixed start
 
