@@ -24,4 +24,5 @@ MODEL_UNDERSTAND = "openai/gpt-oss-20b"
 MODEL_SUBSTITUTE = "openai/gpt-oss-120b"
 MODEL_DESCRIBE = "openai/gpt-oss-20b"
 MODEL_MAX_TOKENS = 1024  # per call; reasoning tokens count against it
+MODEL_REASONING_EFFORT = "low"  # short tasks; reasoning still counts against the cap
 MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only

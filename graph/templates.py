@@ -9,6 +9,14 @@ from models.domain import Availability
 from services.stock import AVAILABILITY_TEXT
 
 VERTICAL = ("lift", "stairs", "escalator")
+DIET_WORDS = ("gluten free", "nut free", "dairy free", "vegan", "vegetarian", "halal")
+DIET_LABELS = {
+    "gluten_free": ("Gluten free", "diet_gluten_free"),
+    "vegan": ("Vegan", "diet_vegan"),
+    "vegetarian": ("Vegetarian", "diet_vegetarian"),
+    "halal": ("Halal", "diet_halal"),
+}
+RECORDED = {True: "yes", False: "no", None: "not recorded"}
 COULD_NOT_CONFIRM = "We could not confirm this route — please plan it again."
 
 
@@ -42,7 +50,18 @@ def product_label(services, sku: str) -> str:
     return f"{p.name} {p.size}" if p else sku
 
 
-def statement(services, sku: str, substitutes: list[str] | None) -> str:
+def dietary_status(services, sku: str, wanted) -> str:
+    """The recorded status of each property the shopper asked about — never inferred (NFR-03)."""
+    p = services.catalogue.by_sku(sku)
+    parts = []
+    for want in wanted:
+        if want in DIET_LABELS:
+            label, field = DIET_LABELS[want]
+            parts.append(f" {label}: {RECORDED[getattr(p, field)]}.")
+    return "".join(parts)
+
+
+def statement(services, sku: str, substitutes: list[str] | None, wanted=()) -> str:
     availability = services.stock.availability(sku)
     head = f"{product_label(services, sku)} — {AVAILABILITY_TEXT[availability]}."
     where = "; ".join(place_phrase(services, loc) for loc in locations_for(services, sku))
@@ -58,7 +77,7 @@ def statement(services, sku: str, substitutes: list[str] | None) -> str:
             body += f" In stock instead: {alts}."
         else:
             body += " No in-stock alternative matches its recorded dietary needs."
-    return head + body
+    return head + body + dietary_status(services, sku, wanted)
 
 
 def compose_results(services, s: dict, subjects: list[str]) -> list[str]:
@@ -76,7 +95,8 @@ def compose_results(services, s: dict, subjects: list[str]) -> list[str]:
                 + (f" Did you mean: {', '.join(near)}?" if near else "")
             )
     substitutes = s.get("substitutes") or {}
-    lines += [statement(services, sku, substitutes.get(sku)) for sku in subjects]
+    wanted = (s.get("parsed") or {}).get("dietary_required") or ()
+    lines += [statement(services, sku, substitutes.get(sku), wanted) for sku in subjects]
     lines += list(s.get("notes") or [])
     if s.get("message"):
         lines.append(s["message"])
@@ -137,7 +157,10 @@ def _capital(text: str) -> str:
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 
-def claims(line: str) -> tuple[list[str], set[str]]:
-    """The checkable content of a line: its numbers, and which connectors it names."""
-    words = set(re.findall(r"[a-z]+", line.lower()))
-    return sorted(NUMBER.findall(line)), {v for v in VERTICAL if v in words}
+def claims(line: str) -> tuple[list[str], set[str], list[str]]:
+    """The checkable content of a line: its numbers, the connectors it names, and every dietary
+    word in it — so a rewording can neither add nor drop one (AC-25)."""
+    low = line.lower()
+    words = set(re.findall(r"[a-z]+", low))
+    diet = sorted(w for w in DIET_WORDS for _ in re.finditer(rf"\b{w}\b", low))
+    return sorted(NUMBER.findall(line)), {v for v in VERTICAL if v in words}, diet

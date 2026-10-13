@@ -8,7 +8,7 @@ Every fact is derived afresh from the services and compared with what is about t
 4. the route is walkable, its distance equals its hops, its stops are where the products are,
    and a multi-stop route ends at a till;
 5. every line of directions makes exactly the claims of the fact line it rewords — the same
-   numbers, the same lift or stairs.
+   numbers, the same lift or stairs, the same dietary words (AC-25).
 
 A mismatch discards the composed text and shows the template built from the services — never a
 patched version of the wrong text — and is recorded.

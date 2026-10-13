@@ -30,3 +30,4 @@ description: "Task list for Phase 5 — the LangGraph pipeline"
      Zero, hiding EC-13, and "Pepsi Max" become a Coke (EC-04). `lld.md` §8.4 amended; AC-19's
      ordering of options and alternatives is unchanged.
   5. One clarification round asks about every ambiguous term at once.
+- **Gate approved by the owner, 2026-10-13.**
