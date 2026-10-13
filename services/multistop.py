@@ -124,9 +124,11 @@ def route_multi(
     tills = [n for n, node in graph.nodes.items() if node.node_type == "till"]
     till = min(tills, key=lambda t: (d(cursor, t), t))
     waypoints = [start] + [s.placement.node_id for s in ordered] + [till]
-    nodes = [start]
+    nodes, stop_at = [start], []
     for a, b in zip(waypoints, waypoints[1:], strict=False):
         nodes += engine.path(a, b, step_free)[1:]
+        stop_at.append(len(nodes) - 1)
+    stop_at.pop()  # the last waypoint is the till, not a stop
     distance = sum(d(a, b) for a, b in zip(waypoints, waypoints[1:], strict=False))
     floors = tuple(dict.fromkeys(graph.nodes[n].level for n in nodes))
     return MultiRoute(
@@ -137,4 +139,5 @@ def route_multi(
         floors,
         step_free,
         tuple(excluded),
+        tuple(stop_at),
     )

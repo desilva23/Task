@@ -187,3 +187,4 @@ class MultiRoute:
     floors: tuple[int, ...]
     step_free: bool
     excluded: tuple[Excluded, ...]
+    stop_at: tuple[int, ...] = ()  # index in ``nodes`` where each stop is picked (AC-26)

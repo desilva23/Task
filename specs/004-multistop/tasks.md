@@ -20,3 +20,4 @@ description: "Task list for Phase 3 — multi-stop routing and the basket"
 - Decisions for the owner: `lld.md` §10 amended — chilled items last within their own floor's
   pass, not after every floor; a second placement never adds a floor; a stop with no step-free
   path is excluded and stated rather than refusing the whole route.
+- **Gate approved by the owner, 2026-10-13.**

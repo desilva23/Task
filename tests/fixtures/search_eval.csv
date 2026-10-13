@@ -1,0 +1,55 @@
+group,query,expect
+exact,Coca-Cola Classic,Coca-Cola Classic
+exact,Baked Beans,Baked Beans
+exact,Everyday Shampoo,Everyday Shampoo
+exact,Mature Cheddar,Mature Cheddar
+exact,Porridge Oats,Porridge Oats
+exact,Toilet Tissue,Toilet Tissue
+exact,Basmati Rice,Basmati Rice
+exact,London Dry Gin,London Dry Gin
+exact,Salmon Fillet,Salmon Fillet
+exact,Kitchen Foil,Kitchen Foil
+exact,Dry Dog Food,Dry Dog Food
+exact,Prosecco,Prosecco
+typo,paracetomol,Paracetamol 500mg
+typo,brocoli,Broccoli
+typo,sausges,Pork Sausages
+typo,shampo,Everyday Shampoo
+typo,cheder,Mature Cheddar
+typo,bananna,Bananas
+typo,tomatoe ketchup,Tomato Ketchup
+typo,mayonaise,Mayonnaise
+typo,cocacola,Coca-Cola Classic
+typo,prossecco,Prosecco
+typo,toothpast,Fluoride Toothpaste
+typo,nappys,Nappies Size 4
+typo,hallumi,Halloumi
+typo,guacamol,Fresh Guacamole
+synonym,spuds,Baking Potatoes
+synonym,loo roll,Toilet Tissue
+synonym,oj,Smooth Orange Juice
+synonym,bangers,Pork Sausages
+synonym,mac and cheese,Macaroni Cheese
+synonym,band aid,Fabric Plasters
+synonym,diapers,Nappies Size 4
+synonym,deo,Roll On Deodorant
+synonym,kitchen towel,Kitchen Roll
+synonym,bin bags,Swing Bin Liners
+synonym,whiskey,Blended Scotch Whisky
+category,dairy,Dairy
+category,frozen,Frozen
+category,household,Household
+category,bakery,Bakery
+category,deli,Deli
+multi,"milk, bread, eggs",3
+multi,bananas; carrots; crumpets,3
+multi,tea and coffee,2
+multi,salt and vinegar crisps,1
+multi,sweet and sour sauce,1
+multi,"2 x milk, 3 x bread",2
+meaning,something for a headache,Medicines
+meaning,fizzy drink for a party,Soft Drinks|Water & Juice
+meaning,what do I need to make pasta,"Pasta, Rice & Noodles|Cooking Sauces"
+meaning,something to clean the kitchen,Cleaning
+meaning,food for my cat,Pet Food & Care
+meaning,a drink without alcohol,Beer & Cider|Soft Drinks|Water & Juice

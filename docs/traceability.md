@@ -5,12 +5,12 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 
 | Kind | Defined | Covered |
 |---|---:|---:|
-| Acceptance criteria (AC) | 27 | 10 |
-| Functional requirements (FR) | 24 | 14 |
-| Non-functional requirements (NFR) | 11 | 2 |
+| Acceptance criteria (AC) | 27 | 13 |
+| Functional requirements (FR) | 24 | 19 |
+| Non-functional requirements (NFR) | 11 | 3 |
 | Constraints (C) | 7 | 1 |
 | Assumptions (A) | 6 | 2 |
-| Edge cases (EC) | 47 | 15 |
+| Edge cases (EC) | 47 | 25 |
 | Validation refusals (V) | 43 | 43 |
 | Validation warnings (W) | 5 | 5 |
 | Constitution guard rails (CONST) | 8 | 5 |
@@ -20,7 +20,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | ID | Tests |
 |---|---|
 | AC-01 | `tests/unit/test_services.py::test_ac_01_fr_07_fr_10_a_known_product_is_in_stock_at_floor_aisle_rack_shelf` |
-| AC-02 | — |
+| AC-02 | `tests/unit/test_search.py::test_ac_02_fr_02_milk_bread_eggs_gives_three_results` |
 | AC-03 | — |
 | AC-04 | `tests/unit/test_routing.py::TestShortestRoutes::test_a_path_walks_its_own_distance`<br>`tests/unit/test_routing.py::TestShortestRoutes::test_all_distances_from_50_starts_match`<br>`tests/unit/test_routing.py::TestStepFree::test_a_step_free_route_uses_lifts_and_no_stairs`<br>`tests/unit/test_routing.py::TestStepFree::test_ec_31_no_step_free_path_is_said_plainly`<br>`tests/unit/test_routing.py::TestStepFree::test_the_ordinary_route_may_take_the_stairs`<br>`tests/unit/test_routing.py::test_ac_06_fr_15_two_start_points_give_two_correct_routes`<br>`tests/unit/test_routing.py::test_ac_21_fr_11_ec_20_the_route_goes_to_the_nearer_placement`<br>`tests/unit/test_routing.py::test_ec_25_already_at_the_rack_is_a_zero_length_route`<br>`tests/unit/test_routing.py::test_ec_29_an_unknown_start_point_is_a_bug_not_a_guess`<br>`tests/unit/test_routing.py::test_ec_30_a_closed_lift_is_routed_around_by_the_other_core`<br>`tests/unit/test_routing.py::test_ec_32_a_placement_on_a_closed_node_is_not_routable`<br>`tests/unit/test_routing.py::test_fr_19_step_free_graph_filters_before_collapsing_parallel_edges` |
 | AC-05 | `tests/unit/test_multistop.py::test_ac_05_fr_16_fr_17_fr_18_invariants_hold_for_random_baskets`<br>`tests/unit/test_multistop.py::test_ac_05_fr_17_fr_18_ec_27_three_floors_highest_first_ending_at_a_till` |
@@ -37,25 +37,25 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | AC-16 | — |
 | AC-17 | — |
 | AC-18 | — |
-| AC-19 | — |
+| AC-19 | `tests/unit/test_search.py::test_ac_19_fr_06_ranged_ranks_first_even_against_a_better_text_match` |
 | AC-20 | `tests/unit/test_services.py::test_ac_20_fr_08_not_sold_here_and_sold_out_differ_in_state_and_wording` |
 | AC-21 | `tests/unit/test_routing.py::test_ac_21_fr_11_ec_20_the_route_goes_to_the_nearer_placement`<br>`tests/unit/test_services.py::test_ac_21_fr_11_a_product_in_two_places_reports_both` |
 | AC-22 | — |
 | AC-23 | `tests/unit/test_multistop.py::test_ac_23_fr_23_items_from_three_separate_additions_are_all_routed` |
 | AC-24 | `tests/unit/test_multistop.py::test_ac_24_fr_24_ec_46_a_sold_out_item_stays_in_the_basket_but_out_of_the_route` |
 | AC-25 | — |
-| AC-26 | — |
+| AC-26 | `tests/unit/test_search.py::TestExplainable::test_a_route_stop_order_is_read_straight_off_its_node_path`<br>`tests/unit/test_search.py::TestExplainable::test_each_result_is_placed_by_the_first_rule_separating_it`<br>`tests/unit/test_search.py::TestExplainable::test_explain_matches_rank` |
 | AC-27 | — |
 
 ## Functional requirements — `docs/requirements.md`
 
 | ID | Tests |
 |---|---|
-| FR-01 | — |
-| FR-02 | — |
-| FR-04 | — |
-| FR-05 | — |
-| FR-06 | — |
+| FR-01 | `tests/unit/test_search.py::test_fr_01_synonyms_find_the_product`<br>`tests/unit/test_search_eval.py::test_ec_02_at_least_nine_in_ten_typos_land`<br>`tests/unit/test_search_eval.py::test_exact_synonym_category_and_multi_queries_all_land`<br>`tests/unit/test_search_eval.py::test_fr_04_meaning_queries_never_resolve_confidently_to_the_wrong_category` |
+| FR-02 | `tests/unit/test_search.py::TestClassify::test_ec_01_too_short_and_ec_10_digits_are_not_searched`<br>`tests/unit/test_search.py::TestClassify::test_ec_06_at_most_30_terms_the_rest_returned_unprocessed`<br>`tests/unit/test_search.py::TestClassify::test_quantities_are_read_off_the_front`<br>`tests/unit/test_search.py::TestClassify::test_shapes`<br>`tests/unit/test_search.py::test_ac_02_fr_02_milk_bread_eggs_gives_three_results`<br>`tests/unit/test_search.py::test_fr_02_a_product_with_and_in_its_name_stays_one_term` |
+| FR-04 | `tests/unit/test_search_eval.py::test_fr_04_meaning_queries_never_resolve_confidently_to_the_wrong_category` |
+| FR-05 | `tests/unit/test_search.py::test_fr_05_ec_05_milk_is_ambiguous_and_an_exact_name_is_not` |
+| FR-06 | `tests/unit/test_search.py::test_ac_19_fr_06_ranged_ranks_first_even_against_a_better_text_match` |
 | FR-07 | `tests/unit/test_services.py::test_ac_01_fr_07_fr_10_a_known_product_is_in_stock_at_floor_aisle_rack_shelf`<br>`tests/unit/test_services.py::test_fr_07_lookups_are_batched_list_in_map_out` |
 | FR-08 | `tests/unit/test_services.py::test_ac_20_fr_08_not_sold_here_and_sold_out_differ_in_state_and_wording`<br>`tests/unit/test_services.py::test_every_availability_state_has_its_own_sentence` |
 | FR-09 | `tests/unit/test_services.py::test_fr_09_by_category_lists_the_category` |
@@ -82,13 +82,13 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 |---|---|
 | NFR-01 | — |
 | NFR-02 | — |
-| NFR-03 | `tests/unit/test_three_state.py::TestThreeState::test_allergens_none_is_checked_and_empty_is_unknown`<br>`tests/unit/test_three_state.py::TestThreeState::test_identifiers_stay_text`<br>`tests/unit/test_three_state.py::TestThreeState::test_the_three_dietary_states_load_as_three_values`<br>`tests/unit/test_three_state.py::TestThreeState::test_two_state_columns_load_as_plain_booleans` |
+| NFR-03 | `tests/unit/test_search.py::test_nfr_03_unknown_never_satisfies_a_dietary_filter`<br>`tests/unit/test_three_state.py::TestThreeState::test_allergens_none_is_checked_and_empty_is_unknown`<br>`tests/unit/test_three_state.py::TestThreeState::test_identifiers_stay_text`<br>`tests/unit/test_three_state.py::TestThreeState::test_the_three_dietary_states_load_as_three_values`<br>`tests/unit/test_three_state.py::TestThreeState::test_two_state_columns_load_as_plain_booleans` |
 | NFR-04 | — |
 | NFR-05 | — |
 | NFR-06 | — |
 | NFR-07 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_60_edge_to_unknown_node`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_negative_penalty`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_zero_weight`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_62_stairs_marked_step_free`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_corridor_through_a_ceiling`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_lift_arriving_at_the_other_core`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_64_self_loop`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_65_two_indistinguishable_connectors`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_50_identifier_disagrees_with_its_columns`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_51_floor_name_drifts_within_a_level`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_52_levels_not_contiguous`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_53_no_entrance`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_54_no_till`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_rack_with_no_shelves`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_shelf_count_on_an_aisle_end`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_56_two_nodes_drawn_on_one_point`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_40_placement_for_unknown_sku`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_41_placement_on_unknown_node`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_42_unknown_location_type`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_43_shelf_above_the_rack`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_44_zero_facings`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_45_overlapping_facings`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_counter_with_a_shelf`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_home_placement_on_an_aisle_end`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_of_six_digits`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_with_leading_zero`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_in_scientific_notation`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_repeated`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_22_none_alongside_an_allergen`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_negative_price`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_popularity_out_of_range`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_price_with_three_decimals`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_30_stock_row_for_unknown_sku`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_31_not_ranged_but_stocked`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_32_product_with_no_stock_row`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_33_negative_quantity`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_missing_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_unknown_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_11_store_id_differs_from_folder`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_provenance_not_synthetic`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_timestamp_not_iso`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_duplicate_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_unknown_and_missing_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_byte_order_mark`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_not_utf8`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_03_duplicate_primary_key`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_boolean_spelt_differently`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_two_state_boolean_left_empty`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_empty_list_segment`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_trailing_delimiter`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_an_empty_planogram_is_allowed`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_file_with_no_rows`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_required_cell_empty`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_malformed_edge_id`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_number_with_text`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_unknown_node_type`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_70_a_node_that_cannot_be_reached`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_71_a_floor_with_no_working_connector`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_72_step_free_graph_split_while_stairs_still_join_it`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_closed_node_is_not_an_orphan`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_placement_on_an_unreachable_node`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_74_a_till_that_cannot_be_reached`<br>`tests/unit/test_warnings.py::TestWarnings::test_the_demo_store_raises_only_its_deliberate_w_02`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_01_category_split_across_aisles`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_02_stocked_and_ranged_with_no_placement`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_03_weight_far_from_the_drawn_distance`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_04_rack_with_no_placements`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_05_dietary_column_mostly_unknown` |
 | NFR-08 | — |
-| NFR-09 | — |
+| NFR-09 | `tests/unit/test_search.py::TestExplainable::test_a_route_stop_order_is_read_straight_off_its_node_path`<br>`tests/unit/test_search.py::TestExplainable::test_each_result_is_placed_by_the_first_rule_separating_it`<br>`tests/unit/test_search.py::TestExplainable::test_explain_matches_rank` |
 | NFR-10 | — |
 | NFR-11 | — |
 
@@ -119,17 +119,17 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 
 | ID | Tests |
 |---|---|
-| EC-01 | — |
-| EC-02 | — |
-| EC-03 | — |
+| EC-01 | `tests/unit/test_search.py::TestClassify::test_ec_01_too_short_and_ec_10_digits_are_not_searched` |
+| EC-02 | `tests/unit/test_search.py::test_ec_02_a_misspelling_is_found_by_one_fuzzy_retry`<br>`tests/unit/test_search_eval.py::test_ec_02_at_least_nine_in_ten_typos_land` |
+| EC-03 | `tests/unit/test_search.py::test_ec_03_no_match_says_so_with_suggestions` |
 | EC-04 | — |
-| EC-05 | — |
-| EC-06 | — |
-| EC-07 | — |
-| EC-08 | — |
-| EC-09 | — |
-| EC-10 | — |
-| EC-11 | — |
+| EC-05 | `tests/unit/test_search.py::test_fr_05_ec_05_milk_is_ambiguous_and_an_exact_name_is_not` |
+| EC-06 | `tests/unit/test_search.py::TestClassify::test_ec_06_at_most_30_terms_the_rest_returned_unprocessed` |
+| EC-07 | `tests/unit/test_search.py::test_ec_07_duplicates_merge_after_resolution` |
+| EC-08 | `tests/unit/test_search.py::test_ec_08_one_term_failing_does_not_fail_the_others` |
+| EC-09 | `tests/unit/test_search.py::test_ec_09_a_category_query_returns_the_category` |
+| EC-10 | `tests/unit/test_search.py::TestClassify::test_ec_01_too_short_and_ec_10_digits_are_not_searched` |
+| EC-11 | `tests/unit/test_search.py::test_ec_11_injected_instructions_are_searched_as_plain_text` |
 | EC-12 | — |
 | EC-13 | — |
 | EC-14 | — |

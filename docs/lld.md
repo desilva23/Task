@@ -342,7 +342,7 @@ QTY    = re.compile(r"^(\d+)\s*(?:x|×)?\s+(.+)$", re.I)
 NL_CUE = re.compile(r"\b(for|with|need|want|make|making|something|what|how|recipe)\b", re.I)
 
 def classify(raw: str) -> tuple[str, list[SearchTerm]]:
-    q = " ".join(raw.split())
+    q = tidy(raw)          # collapse spaces per line — keep newlines, they separate items
     if len(q) < MIN_QUERY_CHARS:  return "too_short", []
     if DIGITS.match(q):           return "digits", []          # not a product request
     parts = [p.strip() for p in SPLIT.split(q) if p.strip()]
@@ -353,12 +353,35 @@ def classify(raw: str) -> tuple[str, list[SearchTerm]]:
     return "term", [parse_qty(q)]
 ```
 
-**Order matters, and one rule is deliberately crude.** `" and "` splits before
-the natural-language test, so `"milk and bread"` is a batch of two rather than a
-sentence. The cost: a product with "and" in its name splits wrongly — "salt and
-vinegar crisps" becomes two terms. The mitigation is cheap: if a split part
-fails to resolve, retry the unsplit string once before reporting it unresolved.
-Worth stating, because a reviewer will find this example.
+**Order matters, and one rule needs a guard.** `" and "` splits before the
+natural-language test, so `"milk and bread"` is a batch of two rather than a
+sentence. Split blindly, a product with "and" in its name breaks: "salt and
+vinegar crisps" becomes "salt" and "vinegar crisps" — and both resolve, to
+table salt and the crisps, so a retry-on-failure never fires. The guard runs
+**before** the split: when the query divides only on "and", it stays one term if
+a single product's name contains every one of its words. "Salt & Vinegar
+Crisps" and "Sweet & Sour Sauce" stay whole; "milk and bread" still splits,
+because no product is named after both.
+
+### 8.2a Fuzzy retry and categories
+
+When the best BM25 score is below `FUZZY_TRIGGER_SCORE`, search retries once:
+
+1. Correct each query word to the nearest word in the catalogue's own
+   vocabulary (`rapidfuzz` ratio ≥ `FUZZY_THRESHOLD`) and rerun BM25 —
+   "paracetomol" becomes "paracetamol", and ranking still explains itself.
+2. If that finds nothing, match the query against whole product names with
+   `WRatio` ≥ `FUZZY_THRESHOLD` — which catches run-together words such as
+   "cocacola".
+
+A term equal to a department or category name that no product is named after
+("dairy", "frozen") returns the **category** rather than an arbitrary SKU
+(EC-09). "Bread" and "milk" are product names too, so they search as products
+and come back ambiguous (EC-05).
+
+A sentence-shaped query searched by keywords — the fallback when the model is
+unavailable (EC-37) — is **never marked resolved**. Keyword-matching a sentence
+is a guess, so its best matches are offered as a choice instead.
 
 ### 8.3 Ranking
 
@@ -373,6 +396,10 @@ def rank(cands: list[Scored], term: str, stock: dict) -> list[Scored]:
         not c.product.own_brand,
     ))
 ```
+
+Each rule has a name — *carried here*, *in stock*, *size asked for*, *text
+match*, *popularity*, *own brand* — and `explain` reports, for every result after
+the first, the first rule that separates it from the one above (NFR-09, AC-26).
 
 A lexicographic tuple sort, not a weighted sum. Weighted sums need tuning and
 cannot be explained — "why did this rank third" has no short answer. A tuple
@@ -643,8 +670,9 @@ MAX_BATCH_TERMS     = 30      # EC-06
 NL_WORD_THRESHOLD   = 4
 BM25_K1, BM25_B     = 1.2, 0.5
 SEARCH_LIMIT        = 10
-FUZZY_THRESHOLD     = 80      # rapidfuzz ratio
+FUZZY_THRESHOLD     = 75      # rapidfuzz ratio — set on the query set, Phase 4
 FUZZY_TRIGGER_SCORE = 2.0     # BM25 below this triggers the fuzzy retry
+SUGGESTION_THRESHOLD = 60     # nearest names offered when nothing matches — EC-03
 AMBIGUITY_MIN_HITS  = 3
 AMBIGUITY_MARGIN    = 0.15    # §8.4
 MAX_CLARIFY_ROUNDS  = 2       # EC-35
