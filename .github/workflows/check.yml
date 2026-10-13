@@ -1,0 +1,18 @@
+# The same check as scripts/check.sh, from the lock file, on the Python in .python-version (3.12).
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+      - run: uv sync --locked
+      - run: scripts/check.sh

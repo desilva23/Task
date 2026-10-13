@@ -4,3 +4,10 @@ notes/
 # Secrets — the remote is public. GROQ_API_KEY lives only here or in the Streamlit Cloud dashboard
 .streamlit/secrets.toml
 .env
+
+# Python tooling
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.hypothesis/

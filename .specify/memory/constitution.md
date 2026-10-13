@@ -38,8 +38,11 @@ checked. `schema.md` §2.2; NFR-03; AC-17, AC-25.
 Every phase begins by writing its tests from the specification, and those tests MUST fail
 before the code that satisfies them is written.
 
-- Every test MUST name the ID it proves — an `AC-`, `FR-`, `NFR-`, `EC-` or `V-` identifier —
-  in its name or docstring.
+- Every test MUST name the ID it proves — an `AC-`, `FR-`, `NFR-`, `EC-`, `V-` or `W-`
+  identifier — in its name or docstring. A test that enforces this constitution itself rather
+  than a requirement cites the principle instead: `CONST-I` … `CONST-VII`, or `CONST-SECRETS`
+  for the secrets rule. The suite MUST reject a test that cites nothing, or an ID that is not
+  defined.
 - Code that no traced test exercises MUST NOT be merged.
 - A test's expected values are taken from the specification. They MUST NOT be edited to make a
   failing implementation pass; if the specification is wrong, the specification is amended
@@ -151,4 +154,4 @@ Versioning is semantic: MAJOR for removing or redefining a principle, MINOR for 
 materially expanding guidance, PATCH for wording. Every `/speckit-plan` MUST record a Constitution
 Check, and every gate review MUST confirm compliance with Principles I–VI before approval.
 
-**Version**: 1.0.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-13
+**Version**: 1.1.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-13

@@ -23,6 +23,17 @@ carries a requirements register and the LLD still carries the API contracts):
 · [Low-level design](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) — schemas, node contracts, algorithms, API
 · [Architecture note](https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C) — LangGraph graph, store model, routing
 
+**Running the checks.** Needs [uv](https://docs.astral.sh/uv/); it fetches Python 3.12 itself.
+
+```bash
+uv sync --locked      # create the environment from uv.lock
+scripts/check.sh      # lint, format check, every test
+```
+
+[`docs/traceability.md`](docs/traceability.md) lists every requirement, acceptance criterion,
+edge case and validation rule with the tests that prove it. It is generated — run
+`uv run python scripts/trace_matrix.py` after adding a test.
+
 ---
 
 ## The use case in one paragraph
