@@ -120,3 +120,4 @@ once T022 is done. Nothing is pushed without the owner's go-ahead.
   `config.py`, tracked `.env`, untraced test, `FR-03` cited, stale matrix — **7 of 7 fail the
   check**; the clean tree passes again.
 - CI (P0-SC5): not yet run — the branch has not been pushed.
+- **Gate approved by the owner, 2026-10-13.** Branch pushed for CI.

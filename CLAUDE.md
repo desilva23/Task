@@ -16,8 +16,8 @@ them are in `.specify/memory/constitution.md` — read it before writing code.
 Work proceeds in phases 0–8 (see **Pending work**), and the owner reviews each
 phase at a gate before the next one starts.
 
-**Phase 0 (scaffold and guard rails) is built and awaiting the owner's gate
-review.** `specs/001-project-scaffold/` holds its spec, plan and tasks. Run
+**Phase 0 (scaffold and guard rails) is complete — gate approved by the owner
+2026-10-13.** `specs/001-project-scaffold/` holds its spec, plan and tasks. Run
 `uv sync --locked` then `scripts/check.sh` — lint, format and every test.
 
 Sainsbury's is the reference retailer, but all data is synthetic and no real
@@ -156,6 +156,15 @@ Doc needs the same change by hand.
 markdown**, not hand-edited — rerun the render script rather than patching the
 HTML. The requirements and HLD pages are still hand-maintained, which is how
 the LLD page came to sit two versions behind its markdown.
+
+## Deferred — remind the owner
+
+The owner said "later" to these. Remind them at every phase gate until each is done or
+dropped; add new ones the same turn they are deferred.
+
+- **2026-10-13 — Republish the pages and Docs.** Published Requirements, HLD, LLD and
+  Architecture pages, and the HLD and LLD Docs, still show pre-GroqCloud content (Claude model
+  names, the "thinking" note on EC-38 and `SchemaValidationError`, 17 ACs instead of 27).
 
 ## Pending work, in order
 
