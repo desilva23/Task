@@ -2,7 +2,7 @@
 
 Every collected test must cite at least one defined ID — in its docstring as the documents
 write it (``AC-01``, ``CONST-IV``), in its name in snake form (``test_ac_01_…``), or through its
-class docstring. Collection fails otherwise, so a test that proves nothing can never run green.
+class or module docstring. Collection fails otherwise, so a test that proves nothing can never run green.
 
 With ``--trace-report=PATH`` the citations are written as JSON for ``scripts/trace_matrix.py``.
 """
@@ -17,9 +17,9 @@ from tests.guards.spec_ids import defined_ids
 
 REPO = Path(__file__).resolve().parents[2]
 
-DOC_SPEC = re.compile(r"\b(AC|FR|NFR|EC|V|W)-(\d{2})\b")
+DOC_SPEC = re.compile(r"\b(AC|FR|NFR|C|A|EC|V|W)-(\d{2})\b")
 DOC_CONST = re.compile(r"\bCONST-(SECRETS|[IVX]+)\b")
-NAME_SPEC = re.compile(r"(?:^|_)(ac|fr|nfr|ec|v|w)_(\d{2})(?=_|$)", re.I)
+NAME_SPEC = re.compile(r"(?:^|_)(ac|fr|nfr|c|a|ec|v|w)_(\d{2})(?=_|$)", re.I)
 NAME_CONST = re.compile(r"(?:^|_)const_(secrets|[ivx]+)(?=_|$)", re.I)
 
 
@@ -27,7 +27,8 @@ def citations(item: pytest.Item) -> list[str]:
     name = getattr(item, "originalname", item.name)
     found = {f"{k.upper()}-{n}" for k, n in NAME_SPEC.findall(name)}
     found |= {f"CONST-{c.upper()}" for c in NAME_CONST.findall(name)}
-    for owner in (getattr(item, "function", None), getattr(item, "cls", None)):
+    owners = ("function", "cls", "module")  # a class or module docstring covers its tests
+    for owner in (getattr(item, o, None) for o in owners):
         doc = getattr(owner, "__doc__", None) or ""
         found |= {f"{k}-{n}" for k, n in DOC_SPEC.findall(doc)}
         found |= {f"CONST-{c}" for c in DOC_CONST.findall(doc)}

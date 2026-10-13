@@ -27,6 +27,8 @@ KINDS = [
     ("AC", "Acceptance criteria"),
     ("FR", "Functional requirements"),
     ("NFR", "Non-functional requirements"),
+    ("C", "Constraints"),
+    ("A", "Assumptions"),
     ("EC", "Edge cases"),
     ("V", "Validation refusals"),
     ("W", "Validation warnings"),

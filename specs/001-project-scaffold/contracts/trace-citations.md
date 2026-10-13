@@ -15,6 +15,9 @@ class TestBoundaries:
     def test_services_clean(self): ...
 ```
 
+A module docstring applies to every test in the module, as a class docstring does to its
+class (added in Phase 1).
+
 Valid kinds: `AC`, `FR`, `NFR`, `EC`, `V`, `W` (two-digit numbers, as the documents write them)
 and `CONST-<I…VII|SECRETS>`. An ID must be defined as a register row in its owning document —
 see [data-model.md](../data-model.md).

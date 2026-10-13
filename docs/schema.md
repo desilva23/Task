@@ -478,6 +478,7 @@ renumber the ones a test references.
 | V-04 | Every boolean cell is `true`, `false`, or — for `diet_*` and `allergens_contains` only — empty | `TRUE`, `1`, `yes`, `N/A` being coerced to a guess |
 | V-05 | Pipe-delimited cells have no empty segments and no leading or trailing `\|` | `coke\|\|cola`, a trailing delimiter |
 | V-06 | Every required cell is non-empty; every forbidden cell is empty | — |
+| V-07 | Every typed cell parses as its type — integers, decimals, ISO dates and timestamps; `node_type` and `kind` take a listed value; `edge_id` matches `E{n:04}` | `14 units` in `shelf_qty`; a misspelt node type silently matching no rule |
 
 ### 7.2 Refusals — `store.csv`
 

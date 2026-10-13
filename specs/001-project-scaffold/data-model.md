@@ -17,7 +17,7 @@ No store data exists in this phase. These are the entities the guard rails reaso
   `V`/`W` → `docs/schema.md`; `CONST` → `.specify/memory/constitution.md`.
 - `CONST-` IDs are the numerals of the `### <numeral>.` principle headings, plus `SECRETS` for the
   bold **Secrets.** rule.
-- Expected totals at the time of writing: 27 AC, 24 FR, 11 NFR, 47 EC, 42 V, 5 W = 156, plus
+- Expected totals at the time of writing: 27 AC, 24 FR, 11 NFR, 47 EC, 42 V (43 after V-07 was added in Phase 1), 5 W = 156, plus
   8 CONST.
 
 ## Citation

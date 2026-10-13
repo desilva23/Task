@@ -36,6 +36,10 @@ class TestTracePlugin:
         source = 'class TestX:\n    """EC-38."""\n    def test_y(self):\n        pass\n'
         assert run(pytester, source).ret == 0
 
+    def test_a_module_docstring_covers_its_tests(self, pytester):
+        source = '"""C-04 — module level."""\n\ndef test_y():\n    pass\n'
+        assert run(pytester, source).ret == 0
+
     def test_the_report_lists_each_function_once_with_its_ids(self, pytester, tmp_path):
         report = tmp_path / "report.json"
         source = (

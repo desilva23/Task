@@ -5,13 +5,15 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 
 | Kind | Defined | Covered |
 |---|---:|---:|
-| Acceptance criteria (AC) | 27 | 0 |
+| Acceptance criteria (AC) | 27 | 1 |
 | Functional requirements (FR) | 24 | 0 |
-| Non-functional requirements (NFR) | 11 | 0 |
+| Non-functional requirements (NFR) | 11 | 2 |
+| Constraints (C) | 7 | 1 |
+| Assumptions (A) | 6 | 2 |
 | Edge cases (EC) | 47 | 0 |
-| Validation refusals (V) | 42 | 0 |
-| Validation warnings (W) | 5 | 0 |
-| Constitution guard rails (CONST) | 8 | 3 |
+| Validation refusals (V) | 43 | 43 |
+| Validation warnings (W) | 5 | 5 |
+| Constitution guard rails (CONST) | 8 | 5 |
 
 ## Acceptance criteria — `docs/requirements.md`
 
@@ -30,7 +32,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 | AC-11 | — |
 | AC-12 | — |
 | AC-13 | — |
-| AC-14 | — |
+| AC-14 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_60_edge_to_unknown_node`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_negative_penalty`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_zero_weight`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_62_stairs_marked_step_free`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_corridor_through_a_ceiling`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_lift_arriving_at_the_other_core`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_64_self_loop`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_65_two_indistinguishable_connectors`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_50_identifier_disagrees_with_its_columns`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_51_floor_name_drifts_within_a_level`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_52_levels_not_contiguous`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_53_no_entrance`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_54_no_till`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_rack_with_no_shelves`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_shelf_count_on_an_aisle_end`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_56_two_nodes_drawn_on_one_point`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_40_placement_for_unknown_sku`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_41_placement_on_unknown_node`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_42_unknown_location_type`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_43_shelf_above_the_rack`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_44_zero_facings`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_45_overlapping_facings`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_counter_with_a_shelf`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_home_placement_on_an_aisle_end`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_of_six_digits`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_with_leading_zero`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_in_scientific_notation`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_repeated`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_22_none_alongside_an_allergen`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_negative_price`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_popularity_out_of_range`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_price_with_three_decimals`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_30_stock_row_for_unknown_sku`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_31_not_ranged_but_stocked`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_32_product_with_no_stock_row`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_33_negative_quantity`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_missing_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_unknown_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_11_store_id_differs_from_folder`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_provenance_not_synthetic`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_timestamp_not_iso`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_duplicate_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_unknown_and_missing_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_byte_order_mark`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_not_utf8`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_03_duplicate_primary_key`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_boolean_spelt_differently`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_two_state_boolean_left_empty`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_empty_list_segment`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_trailing_delimiter`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_an_empty_planogram_is_allowed`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_file_with_no_rows`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_required_cell_empty`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_malformed_edge_id`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_number_with_text`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_unknown_node_type`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_70_a_node_that_cannot_be_reached`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_71_a_floor_with_no_working_connector`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_72_step_free_graph_split_while_stairs_still_join_it`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_closed_node_is_not_an_orphan`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_placement_on_an_unreachable_node`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_74_a_till_that_cannot_be_reached`<br>`tests/unit/test_warnings.py::TestWarnings::test_the_demo_store_raises_only_its_deliberate_w_02`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_01_category_split_across_aisles`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_02_stocked_and_ranged_with_no_placement`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_03_weight_far_from_the_drawn_distance`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_04_rack_with_no_placements`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_05_dietary_column_mostly_unknown` |
 | AC-15 | — |
 | AC-16 | — |
 | AC-17 | — |
@@ -80,15 +82,38 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 |---|---|
 | NFR-01 | — |
 | NFR-02 | — |
-| NFR-03 | — |
+| NFR-03 | `tests/unit/test_three_state.py::TestThreeState::test_allergens_none_is_checked_and_empty_is_unknown`<br>`tests/unit/test_three_state.py::TestThreeState::test_identifiers_stay_text`<br>`tests/unit/test_three_state.py::TestThreeState::test_the_three_dietary_states_load_as_three_values`<br>`tests/unit/test_three_state.py::TestThreeState::test_two_state_columns_load_as_plain_booleans` |
 | NFR-04 | — |
 | NFR-05 | — |
 | NFR-06 | — |
-| NFR-07 | — |
+| NFR-07 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_60_edge_to_unknown_node`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_negative_penalty`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_zero_weight`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_62_stairs_marked_step_free`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_corridor_through_a_ceiling`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_lift_arriving_at_the_other_core`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_64_self_loop`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_65_two_indistinguishable_connectors`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_50_identifier_disagrees_with_its_columns`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_51_floor_name_drifts_within_a_level`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_52_levels_not_contiguous`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_53_no_entrance`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_54_no_till`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_rack_with_no_shelves`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_shelf_count_on_an_aisle_end`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_56_two_nodes_drawn_on_one_point`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_40_placement_for_unknown_sku`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_41_placement_on_unknown_node`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_42_unknown_location_type`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_43_shelf_above_the_rack`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_44_zero_facings`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_45_overlapping_facings`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_counter_with_a_shelf`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_home_placement_on_an_aisle_end`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_of_six_digits`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_with_leading_zero`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_in_scientific_notation`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_repeated`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_22_none_alongside_an_allergen`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_negative_price`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_popularity_out_of_range`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_price_with_three_decimals`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_30_stock_row_for_unknown_sku`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_31_not_ranged_but_stocked`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_32_product_with_no_stock_row`<br>`tests/unit/test_refusals_files.py::TestStockFile::test_v_33_negative_quantity`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_missing_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_unknown_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_11_store_id_differs_from_folder`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_provenance_not_synthetic`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_timestamp_not_iso`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_duplicate_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_unknown_and_missing_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_byte_order_mark`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_not_utf8`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_03_duplicate_primary_key`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_boolean_spelt_differently`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_two_state_boolean_left_empty`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_empty_list_segment`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_trailing_delimiter`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_an_empty_planogram_is_allowed`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_file_with_no_rows`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_required_cell_empty`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_malformed_edge_id`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_number_with_text`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_unknown_node_type`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_70_a_node_that_cannot_be_reached`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_71_a_floor_with_no_working_connector`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_72_step_free_graph_split_while_stairs_still_join_it`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_closed_node_is_not_an_orphan`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_placement_on_an_unreachable_node`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_74_a_till_that_cannot_be_reached`<br>`tests/unit/test_warnings.py::TestWarnings::test_the_demo_store_raises_only_its_deliberate_w_02`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_01_category_split_across_aisles`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_02_stocked_and_ranged_with_no_placement`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_03_weight_far_from_the_drawn_distance`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_04_rack_with_no_placements`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_05_dietary_column_mostly_unknown` |
 | NFR-08 | — |
 | NFR-09 | — |
 | NFR-10 | — |
 | NFR-11 | — |
+
+## Constraints — `docs/requirements.md`
+
+| ID | Tests |
+|---|---|
+| C-01 | — |
+| C-02 | — |
+| C-03 | — |
+| C-04 | `tests/unit/test_demo_anchors.py::test_a_03_the_demo_store_has_three_floors`<br>`tests/unit/test_demo_anchors.py::test_a_seasonal_product_is_sold_out`<br>`tests/unit/test_demo_anchors.py::test_c_04_a_04_the_demo_store_is_synthetic_and_sized_as_assumed`<br>`tests/unit/test_demo_anchors.py::test_chilled_products_sit_in_chillers`<br>`tests/unit/test_demo_anchors.py::test_coca_cola_has_a_home_shelf_and_an_end_cap`<br>`tests/unit/test_demo_anchors.py::test_counter_and_cabinet_products_have_no_shelf`<br>`tests/unit/test_demo_anchors.py::test_diet_coke_is_sold_out_with_a_matching_alternative`<br>`tests/unit/test_demo_anchors.py::test_every_floor_has_in_stock_products`<br>`tests/unit/test_demo_anchors.py::test_gluten_free_bread_has_no_gluten_free_alternative`<br>`tests/unit/test_demo_anchors.py::test_milk_bread_and_eggs_are_in_stock_on_the_ground_floor`<br>`tests/unit/test_demo_anchors.py::test_milk_is_ambiguous`<br>`tests/unit/test_demo_anchors.py::test_pepsi_is_not_ranged_and_diet_coke_is_sold_out`<br>`tests/unit/test_demo_anchors.py::test_some_dietary_attributes_are_unknown`<br>`tests/unit/test_demo_anchors.py::test_sparkling_water_lime_is_stocked_with_no_placement`<br>`tests/unit/test_generator.py::TestGenerator::test_a_03_a_04_sizes_match_the_schema`<br>`tests/unit/test_generator.py::TestGenerator::test_a_different_seed_changes_the_seeded_details`<br>`tests/unit/test_generator.py::TestGenerator::test_c_04_the_store_declares_itself_synthetic`<br>`tests/unit/test_generator.py::TestGenerator::test_every_demo_edge_is_bidirectional`<br>`tests/unit/test_generator.py::TestGenerator::test_the_committed_demo_store_is_the_generator_output`<br>`tests/unit/test_generator.py::TestGenerator::test_the_same_seed_gives_identical_files`<br>`tests/unit/test_generator.py::TestGenerator::test_v_02_v_03_files_are_utf8_lf_and_sorted_by_primary_key` |
+| C-05 | — |
+| C-06 | — |
+| C-07 | — |
+
+## Assumptions — `docs/requirements.md`
+
+| ID | Tests |
+|---|---|
+| A-01 | — |
+| A-02 | — |
+| A-03 | `tests/unit/test_demo_anchors.py::test_a_03_the_demo_store_has_three_floors`<br>`tests/unit/test_generator.py::TestGenerator::test_a_03_a_04_sizes_match_the_schema` |
+| A-04 | `tests/unit/test_demo_anchors.py::test_c_04_a_04_the_demo_store_is_synthetic_and_sized_as_assumed`<br>`tests/unit/test_generator.py::TestGenerator::test_a_03_a_04_sizes_match_the_schema` |
+| A-05 | — |
+| A-06 | — |
 
 ## Edge cases — `docs/hld.md`
 
@@ -146,68 +171,69 @@ Each row is an ID defined in the specification, with the tests that cite it. `�
 
 | ID | Tests |
 |---|---|
-| V-01 | — |
-| V-02 | — |
-| V-03 | — |
-| V-04 | — |
-| V-05 | — |
-| V-06 | — |
-| V-10 | — |
-| V-11 | — |
-| V-12 | — |
-| V-20 | — |
-| V-21 | — |
-| V-22 | — |
-| V-23 | — |
-| V-30 | — |
-| V-31 | — |
-| V-32 | — |
-| V-33 | — |
-| V-40 | — |
-| V-41 | — |
-| V-42 | — |
-| V-43 | — |
-| V-44 | — |
-| V-45 | — |
-| V-46 | — |
-| V-50 | — |
-| V-51 | — |
-| V-52 | — |
-| V-53 | — |
-| V-54 | — |
-| V-55 | — |
-| V-56 | — |
-| V-60 | — |
-| V-61 | — |
-| V-62 | — |
-| V-63 | — |
-| V-64 | — |
-| V-65 | — |
-| V-70 | — |
-| V-71 | — |
-| V-72 | — |
-| V-73 | — |
-| V-74 | — |
+| V-01 | `tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_duplicate_column`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_01_unknown_and_missing_column` |
+| V-02 | `tests/unit/test_generator.py::TestGenerator::test_v_02_v_03_files_are_utf8_lf_and_sorted_by_primary_key`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_byte_order_mark`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_02_not_utf8` |
+| V-03 | `tests/unit/test_generator.py::TestGenerator::test_v_02_v_03_files_are_utf8_lf_and_sorted_by_primary_key`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_03_duplicate_primary_key` |
+| V-04 | `tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_boolean_spelt_differently`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_04_two_state_boolean_left_empty` |
+| V-05 | `tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_empty_list_segment`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_05_trailing_delimiter` |
+| V-06 | `tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_an_empty_planogram_is_allowed`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_file_with_no_rows`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_06_required_cell_empty` |
+| V-07 | `tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_malformed_edge_id`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_number_with_text`<br>`tests/unit/test_refusals_format.py::TestFormatRefusals::test_v_07_unknown_node_type` |
+| V-10 | `tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_missing_key`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_10_unknown_key` |
+| V-11 | `tests/unit/test_refusals_files.py::TestStoreFile::test_v_11_store_id_differs_from_folder` |
+| V-12 | `tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_provenance_not_synthetic`<br>`tests/unit/test_refusals_files.py::TestStoreFile::test_v_12_timestamp_not_iso` |
+| V-20 | `tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_of_six_digits`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_20_sku_with_leading_zero` |
+| V-21 | `tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_in_scientific_notation`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_21_barcode_repeated` |
+| V-22 | `tests/unit/test_refusals_files.py::TestProductsFile::test_v_22_none_alongside_an_allergen` |
+| V-23 | `tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_negative_price`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_popularity_out_of_range`<br>`tests/unit/test_refusals_files.py::TestProductsFile::test_v_23_price_with_three_decimals` |
+| V-30 | `tests/unit/test_refusals_files.py::TestStockFile::test_v_30_stock_row_for_unknown_sku` |
+| V-31 | `tests/unit/test_refusals_files.py::TestStockFile::test_v_31_not_ranged_but_stocked` |
+| V-32 | `tests/unit/test_refusals_files.py::TestStockFile::test_v_32_product_with_no_stock_row` |
+| V-33 | `tests/unit/test_refusals_files.py::TestStockFile::test_v_33_negative_quantity` |
+| V-40 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_40_placement_for_unknown_sku` |
+| V-41 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_41_placement_on_unknown_node` |
+| V-42 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_42_unknown_location_type` |
+| V-43 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_43_shelf_above_the_rack` |
+| V-44 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_44_zero_facings` |
+| V-45 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_45_overlapping_facings` |
+| V-46 | `tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_counter_with_a_shelf`<br>`tests/unit/test_refusals_files.py::TestPlanogramFile::test_v_46_home_placement_on_an_aisle_end` |
+| V-50 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_50_identifier_disagrees_with_its_columns` |
+| V-51 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_51_floor_name_drifts_within_a_level` |
+| V-52 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_52_levels_not_contiguous` |
+| V-53 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_53_no_entrance` |
+| V-54 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_54_no_till` |
+| V-55 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_rack_with_no_shelves`<br>`tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_55_shelf_count_on_an_aisle_end` |
+| V-56 | `tests/unit/test_refusals_files.py::TestMapNodesFile::test_v_56_two_nodes_drawn_on_one_point` |
+| V-60 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_60_edge_to_unknown_node` |
+| V-61 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_negative_penalty`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_61_zero_weight` |
+| V-62 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_62_stairs_marked_step_free` |
+| V-63 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_corridor_through_a_ceiling`<br>`tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_63_lift_arriving_at_the_other_core` |
+| V-64 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_64_self_loop` |
+| V-65 | `tests/unit/test_refusals_files.py::TestMapEdgesFile::test_v_65_two_indistinguishable_connectors` |
+| V-70 | `tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_70_a_node_that_cannot_be_reached` |
+| V-71 | `tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_71_a_floor_with_no_working_connector` |
+| V-72 | `tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_72_step_free_graph_split_while_stairs_still_join_it` |
+| V-73 | `tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_closed_node_is_not_an_orphan`<br>`tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_73_a_placement_on_an_unreachable_node` |
+| V-74 | `tests/unit/test_refusals_graph.py::TestGraphRefusals::test_v_74_a_till_that_cannot_be_reached` |
 
 ## Validation warnings — `docs/schema.md`
 
 | ID | Tests |
 |---|---|
-| W-01 | — |
-| W-02 | — |
-| W-03 | — |
-| W-04 | — |
-| W-05 | — |
+| W-01 | `tests/unit/test_warnings.py::TestWarnings::test_w_01_category_split_across_aisles` |
+| W-02 | `tests/unit/test_warnings.py::TestWarnings::test_the_demo_store_raises_only_its_deliberate_w_02`<br>`tests/unit/test_warnings.py::TestWarnings::test_w_02_stocked_and_ranged_with_no_placement` |
+| W-03 | `tests/unit/test_warnings.py::TestWarnings::test_w_03_weight_far_from_the_drawn_distance` |
+| W-04 | `tests/unit/test_warnings.py::TestWarnings::test_w_04_rack_with_no_placements` |
+| W-05 | `tests/unit/test_warnings.py::TestWarnings::test_w_05_dietary_column_mostly_unknown` |
 
 ## Constitution guard rails — `.specify/memory/constitution.md`
 
 | ID | Tests |
 |---|---|
 | CONST-I | — |
-| CONST-II | — |
-| CONST-III | `tests/unit/test_spec_ids.py::TestSpecIds::test_a_first_cell_defines_it_bold_or_not`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_a_prose_mention_does_not_define_an_id`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_a_renamed_principle_heading_is_still_read_by_numeral`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_an_id_counts_only_in_its_owning_document`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_constitution_ids_are_the_principles_and_the_secrets_rule`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_each_id_records_its_owning_document`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_the_real_documents_define_the_expected_totals`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_the_withdrawn_id_is_not_defined`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_class_docstring_covers_its_tests`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_docstring_citation_passes`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_snake_name_citation_passes`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_an_id_that_was_never_defined_fails_collection`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_an_untraced_test_fails_collection`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_the_report_lists_each_function_once_with_its_ids`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_the_withdrawn_id_fails_collection`<br>`tests/unit/test_traceability_matrix.py::TestTraceabilityMatrix::test_every_defined_id_has_a_row`<br>`tests/unit/test_traceability_matrix.py::TestTraceabilityMatrix::test_rendering_twice_gives_identical_output`<br>`tests/unit/test_traceability_matrix.py::TestTraceabilityMatrix::test_the_committed_matrix_is_current` |
+| CONST-II | `tests/unit/test_three_state.py::TestThreeState::test_allergens_none_is_checked_and_empty_is_unknown`<br>`tests/unit/test_three_state.py::TestThreeState::test_identifiers_stay_text`<br>`tests/unit/test_three_state.py::TestThreeState::test_the_three_dietary_states_load_as_three_values`<br>`tests/unit/test_three_state.py::TestThreeState::test_two_state_columns_load_as_plain_booleans` |
+| CONST-III | `tests/unit/test_spec_ids.py::TestSpecIds::test_a_first_cell_defines_it_bold_or_not`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_a_prose_mention_does_not_define_an_id`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_a_renamed_principle_heading_is_still_read_by_numeral`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_an_id_counts_only_in_its_owning_document`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_constitution_ids_are_the_principles_and_the_secrets_rule`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_each_id_records_its_owning_document`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_the_real_documents_define_the_expected_totals`<br>`tests/unit/test_spec_ids.py::TestSpecIds::test_the_withdrawn_id_is_not_defined`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_class_docstring_covers_its_tests`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_docstring_citation_passes`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_module_docstring_covers_its_tests`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_a_snake_name_citation_passes`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_an_id_that_was_never_defined_fails_collection`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_an_untraced_test_fails_collection`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_the_report_lists_each_function_once_with_its_ids`<br>`tests/unit/test_trace_plugin.py::TestTracePlugin::test_the_withdrawn_id_fails_collection`<br>`tests/unit/test_traceability_matrix.py::TestTraceabilityMatrix::test_every_defined_id_has_a_row`<br>`tests/unit/test_traceability_matrix.py::TestTraceabilityMatrix::test_rendering_twice_gives_identical_output`<br>`tests/unit/test_traceability_matrix.py::TestTraceabilityMatrix::test_the_committed_matrix_is_current` |
 | CONST-IV | `tests/unit/test_import_rules.py::TestBoundaryRules::test_a_name_that_only_starts_with_graph_is_allowed`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_graph_nodes_may_import_services`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_import_inside_a_function_is_caught`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_one_line_per_offending_statement`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_relative_import_climbing_into_graph_is_caught`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_relative_import_within_services_is_allowed`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_services_may_not_import_graph`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_services_may_not_import_runtime`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_streamlit_in_ui_and_app_is_allowed`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_streamlit_outside_ui_is_caught`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_tests_and_scripts_are_not_scanned`<br>`tests/unit/test_import_rules.py::TestBoundaryRules::test_the_repository_obeys_every_rule` |
 | CONST-V | — |
-| CONST-VI | — |
+| CONST-VI | `tests/unit/test_refusals_graph.py::TestStages::test_a_later_stage_does_not_run_after_a_failed_one`<br>`tests/unit/test_refusals_graph.py::TestStages::test_every_fault_in_a_stage_is_reported_together`<br>`tests/unit/test_refusals_graph.py::TestStages::test_the_demo_store_loads` |
 | CONST-VII | — |
 | CONST-SECRETS | `tests/unit/test_secret_files.py::TestSecretFiles::test_an_example_file_is_not_flagged`<br>`tests/unit/test_secret_files.py::TestSecretFiles::test_outside_a_work_tree_it_fails_rather_than_passing`<br>`tests/unit/test_secret_files.py::TestSecretFiles::test_the_repository_ignores_both_names`<br>`tests/unit/test_secret_files.py::TestSecretFiles::test_the_repository_tracks_no_secrets_file`<br>`tests/unit/test_secret_files.py::TestSecretFiles::test_tracked_env_is_caught`<br>`tests/unit/test_secret_files.py::TestSecretFiles::test_tracked_secrets_toml_is_caught_at_any_depth` |

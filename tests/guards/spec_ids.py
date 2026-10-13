@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 OWNERS = {
-    "docs/requirements.md": ("AC", "FR", "NFR"),
+    "docs/requirements.md": ("AC", "FR", "NFR", "C", "A"),
     "docs/hld.md": ("EC",),
     "docs/schema.md": ("V", "W"),
 }

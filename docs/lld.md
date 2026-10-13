@@ -597,8 +597,9 @@ wrong stock figure, because no model sits on those paths.
 
 ## 13. Startup validation
 
-**The rules live in `schema.md` §7** — forty-seven checks, V-01 to V-47, which
-supersede the eleven this section used to list. They are schema territory: what
+**The rules live in `schema.md` §7** — forty-three refusals numbered V-01 to V-74
+with gaps between blocks, and five warnings, W-01 to W-05. They supersede the
+eleven checks this section used to list. They are schema territory: what
 makes a store folder well formed is a property of the format, not of this
 application. What belongs here is *when* they run, in what order, and what
 happens when one fails.

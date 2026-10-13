@@ -23,12 +23,14 @@ class TestSpecIds:
 
     def test_the_real_documents_define_the_expected_totals(self):
         kinds = Counter(i.split("-")[0] for i in defined_ids(REPO))
-        assert {k: kinds[k] for k in ("AC", "FR", "NFR", "EC", "V", "W")} == {
+        assert {k: kinds[k] for k in ("AC", "FR", "NFR", "C", "A", "EC", "V", "W")} == {
             "AC": 27,
             "FR": 24,
             "NFR": 11,
+            "C": 7,
+            "A": 6,
             "EC": 47,
-            "V": 42,
+            "V": 43,
             "W": 5,
         }
 

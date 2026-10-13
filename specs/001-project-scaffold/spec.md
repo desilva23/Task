@@ -211,7 +211,7 @@ Python 3.12 and reports success.
 - **P0-SC2**: For each of the three boundary rules and the secrets rule, a deliberately planted
   violation makes the check fail — 4 out of 4 — and removing it makes the check pass.
 - **P0-SC3**: 100% of collected tests cite at least one valid traced ID.
-- **P0-SC4**: The matrix lists all 156 specification IDs — 27 AC, 24 FR, 11 NFR, 47 EC, 42 V and
+- **P0-SC4**: The matrix lists all 156 specification IDs — 27 AC, 24 FR, 11 NFR, 47 EC, 42 V (43 after V-07 was added in Phase 1) and
   5 W — and a stale matrix is caught on every run.
 - **P0-SC5**: The first CI run after the branch is pushed is green on Python 3.12.
 
