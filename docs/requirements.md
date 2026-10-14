@@ -62,7 +62,7 @@ store works with no code changes.
 | C-01 | Agentic framework is **LangGraph** | confirmed |
 | C-02 | Implementation language is **Python** | confirmed |
 | C-03 | User interface is a single **Streamlit** page | confirmed |
-| C-04 | All store data is **synthetic** and is stated as such wherever shown | confirmed |
+| C-04 | All store data is **synthetic**, and each store's files declare it | confirmed |
 | C-05 | No integration with any live retailer system | confirmed |
 | C-06 | Language models are served through **GroqCloud** | confirmed |
 | C-07 | The application is deployed on **Streamlit Community Cloud** | confirmed |

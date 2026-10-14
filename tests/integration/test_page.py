@@ -32,8 +32,11 @@ def page_text(at):
     )
 
 
-def test_c_04_the_page_says_the_data_is_synthetic(page):
-    assert "synthetic" in page_text(page).lower()
+def test_c_04_the_page_shows_no_store_line(page):
+    """The owner removed the store and synthetic-data line from the page (2026-10-14); the store
+    files still declare themselves synthetic, which V-12 enforces at load."""
+    text = page_text(page)
+    assert "synthetic" not in text.lower() and "Demo Superstore" not in text
 
 
 def test_ac_08_fr_21_fr_22_three_available_one_not_one_tap_adds_three(page):

@@ -84,6 +84,7 @@ reasoning, not maintained. Never treat them as the current design.
 | **GitHub Spec Kit**, test-first, bottom-up, gated phases | Owner's choice. Each phase is one Spec Kit feature under `specs/`; every test names the AC/FR/NFR/EC/V ID it proves |
 | **uv + ruff + pytest**, Python 3.12 | One lock file, one linter/formatter. The machine has 3.14; do not let it leak into the lock |
 | **A seeded generator** produces the synthetic store | Same seed, same store — tests and the demo can rely on exact SKUs and positions |
+| **No store or synthetic-data line on the page** | Owner's decision, 2026-10-14. C-04 now says the store files declare the data synthetic (V-12 enforces it); the page does not repeat it |
 
 ## The rule the whole design rests on
 

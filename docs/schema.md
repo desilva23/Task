@@ -218,8 +218,8 @@ is a refusal (V-10).
 | `planogram_version` | ISO date; bumped by a range change | `2026-10-01` |
 | `stock_as_of` | ISO 8601 UTC timestamp | `2026-10-09T08:40:00Z` |
 
-`data_provenance` makes C-04's synthetic-data statement a property of the data,
-so the banner cannot be lost by forgetting to hard-code it.
+`data_provenance` makes C-04 a property of the data: a store folder that does
+not declare itself synthetic is refused at load (V-12).
 
 **Not here:** `min_level` and `max_level`, derived from `map_nodes.level`, and
 the start node, which is the sole `entrance`. Deriving them removes a chance for
