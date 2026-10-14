@@ -1,0 +1,9 @@
+# Page theme and chrome — not secret, safe to commit (secrets.toml beside it is gitignored).
+[theme]
+primaryColor = "#0a7d74"
+
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

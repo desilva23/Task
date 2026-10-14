@@ -33,3 +33,4 @@ description: "Task list for Phase 6 — GroqCloud"
 - **Decision for the owner:** on the free tier the public app supports roughly 6–8 model-assisted
   searches a minute across all users; beyond that answers fall back (still correct, plainer).
   Options: accept that for the demo, or move the Groq account to a paid tier before deploying.
+- **Gate approved by the owner, 2026-10-14.** Free-tier capacity decision still open — raise at Phase 8.

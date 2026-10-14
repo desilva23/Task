@@ -157,10 +157,15 @@ def _capital(text: str) -> str:
 NUMBER = re.compile(r"\d+(?:\.\d+)?")
 
 
-def claims(line: str) -> tuple[list[str], set[str], list[str]]:
-    """The checkable content of a line: its numbers, the connectors it names, and every dietary
-    word in it — so a rewording can neither add nor drop one (AC-25)."""
+LOCATION_WORDS = ("floor", "aisle", "rack", "shelf")
+
+
+def claims(line: str) -> tuple[list[str], set[str], list[str], list[str]]:
+    """The checkable content of a line: its numbers, the connectors it names, every dietary
+    word (AC-25), and the words floor, aisle, rack and shelf — so the reworded directions still
+    name each, read as plain text (AC-27)."""
     low = line.lower()
-    words = set(re.findall(r"[a-z]+", low))
+    words = re.findall(r"[a-z]+", low)
     diet = sorted(w for w in DIET_WORDS for _ in re.finditer(rf"\b{w}\b", low))
-    return sorted(NUMBER.findall(line)), {v for v in VERTICAL if v in words}, diet
+    places = sorted(w for w in words if w in LOCATION_WORDS)
+    return sorted(NUMBER.findall(line)), {v for v in VERTICAL if v in words}, diet, places

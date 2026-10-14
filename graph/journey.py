@@ -80,6 +80,11 @@ class Journey:
             "step_free": step_free,
         })  # fmt: skip
 
+    def current(self, thread_id: str) -> Outcome:
+        """A run read back from its checkpoint — the page keeps only thread IDs (lld.md §11)."""
+        snap = self.graph.get_state({"configurable": {"thread_id": thread_id}})
+        return Outcome(snap.values, snap.interrupts[0].value if snap.interrupts else None)
+
     def sweep(self) -> list[str]:
         """Delete threads idle beyond the TTL — LangGraph never expires them itself (EC-34)."""
         cutoff = self._clock() - THREAD_TTL_MINUTES * 60
