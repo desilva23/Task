@@ -7,12 +7,7 @@ from ui.view import floor_names, start_options
 
 
 def header(services) -> None:
-    info = services.store.info
     st.title("Find it in store")
-    st.caption(
-        f"{info.store_name} · synthetic demo data, not a real store or real stock "
-        f"(stock as of {info.stock_as_of:%d %b %H:%M})"
-    )
 
 
 def where(services) -> tuple[str, bool]:
