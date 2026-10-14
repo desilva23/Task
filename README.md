@@ -28,8 +28,8 @@ claim against it before anything reaches the page.
 
 | Document | Owns | Page | Doc |
 |---|---|---|---|
-| [`docs/requirements.md`](docs/requirements.md) | What the system must do: 25 FR, 11 NFR, 28 AC | [page](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | [doc](https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b) |
-| [`docs/hld.md`](docs/hld.md) | Architecture, search design, barcode scan, interface, 54 edge cases | [page](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | [doc](https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77) |
+| [`docs/requirements.md`](docs/requirements.md) | What the system must do: 26 FR, 11 NFR, 29 AC | [page](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | [doc](https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b) |
+| [`docs/hld.md`](docs/hld.md) | Architecture, search design, barcode scan, stock alerts, interface, 60 edge cases | [page](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | [doc](https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77) |
 | [`docs/lld.md`](docs/lld.md) | Modules, state, node contracts, algorithms, configuration | [page](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | [doc](https://claude.ai/code/artifact/96a1afa2-2ca7-4f5b-a10d-ce432489f37b) |
 | [`docs/schema.md`](docs/schema.md) | The six store CSVs and the 43 refusals and 5 warnings checked at load | [page](https://claude.ai/artifact/AqRDBHcHJ97xXCxKS6TQzf) | [doc](https://claude.ai/code/artifact/abf938c6-faf9-4a5d-95f4-b6559cfe24b7) |
 
@@ -39,7 +39,7 @@ order. The rules for building against them are in
 
 ## How it was built
 
-Eleven phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
+Twelve phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
 phase's spec, plan, tasks and gate record is in `specs/`.
 
 | Phase | Built | Spec |
@@ -55,10 +55,11 @@ phase's spec, plan, tasks and gate record is in `specs/`.
 | 8 | Second store, performance, hostile input, deployment | [`specs/009-portability-deploy`](specs/009-portability-deploy) |
 | 9 | Barcode scan — camera or typed digits, exact lookup | [`specs/010-barcode-scan`](specs/010-barcode-scan) |
 | 10 | Next.js page, stateless API, Vercel | [`specs/011-nextjs-vercel`](specs/011-nextjs-vercel) |
+| 11 | Stock alert emails to the store manager (AgentMail) | [`specs/012-stock-alerts`](specs/012-stock-alerts) |
 
 [`docs/traceability.md`](docs/traceability.md) lists every requirement,
 acceptance criterion, edge case and validation rule with the tests that prove it.
-All 28 acceptance criteria are covered.
+All 29 acceptance criteria are covered.
 
 ## Running it
 
