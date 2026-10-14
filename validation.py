@@ -28,6 +28,7 @@ from models.domain import (
     Store,
     StoreInfo,
 )
+from services.barcode import check_digit_ok
 
 # ── column specifications: (type, requirement) — Y required · N optional · 3 three-state ────
 SPEC = {
@@ -413,6 +414,8 @@ def _products_file(rows, faults) -> None:
                 faults.add(
                     "V-21", "products.csv", line, f"barcode {code!r} must be exactly 13 digits"
                 )
+            elif not check_digit_ok(code):
+                faults.add("V-21", "products.csv", line, f"barcode {code} fails its check digit")
             elif code in barcodes:
                 faults.add(
                     "V-21", "products.csv", line, f"barcode {code} repeats row {barcodes[code]}"

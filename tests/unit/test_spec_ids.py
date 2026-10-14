@@ -24,20 +24,20 @@ class TestSpecIds:
     def test_the_real_documents_define_the_expected_totals(self):
         kinds = Counter(i.split("-")[0] for i in defined_ids(REPO))
         assert {k: kinds[k] for k in ("AC", "FR", "NFR", "C", "A", "EC", "V", "W")} == {
-            "AC": 27,
-            "FR": 24,
+            "AC": 28,
+            "FR": 25,
             "NFR": 11,
-            "C": 7,
-            "A": 6,
-            "EC": 47,
+            "C": 8,
+            "A": 7,
+            "EC": 54,
             "V": 43,
             "W": 5,
         }
 
-    def test_the_withdrawn_id_is_not_defined(self):
+    def test_the_reinstated_fr_03_is_defined_by_its_row(self):
+        """Withdrawn, then reinstated by the owner (2026-10-14) under the same ID."""
         ids = defined_ids(REPO)
-        assert "FR-03" not in ids
-        assert {"FR-01", "FR-02", "FR-04"} <= ids.keys()
+        assert {"FR-01", "FR-02", "FR-03", "FR-04"} <= ids.keys()
 
     def test_each_id_records_its_owning_document(self):
         ids = defined_ids(REPO)

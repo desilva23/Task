@@ -66,7 +66,17 @@ class Journey:
         notes = [f"Your search was cut to its first {MAX_QUERY_CHARS} characters."] if cut else []
         return self._run(thread_id, {
             **FRESH, "action": "search", "mode": mode, "notes": notes,
-            "raw_query": query[:MAX_QUERY_CHARS],
+            "raw_query": query[:MAX_QUERY_CHARS], "barcode": "",
+            "start_node": start_node or self.services.engine.graph.entrance,
+            "step_free": step_free,
+        })  # fmt: skip
+
+    def run_scan(self, thread_id, code: str, start_node=None, step_free=False) -> Outcome:
+        """A barcode, as decoded from a photo or typed under the camera — one exact product, then
+        the journey a typed single product takes (FR-03, hld.md §3.5)."""
+        return self._run(thread_id, {
+            **FRESH, "action": "scan", "mode": "single", "notes": [],
+            "raw_query": "", "barcode": code[:MAX_QUERY_CHARS],
             "start_node": start_node or self.services.engine.graph.entrance,
             "step_free": step_free,
         })  # fmt: skip
@@ -77,7 +87,7 @@ class Journey:
 
     def plan_route(self, thread_id, skus, start_node=None, step_free=False) -> Outcome:
         return self._run(thread_id, {
-            **FRESH, "action": "plan", "raw_query": "", "mode": "multi",
+            **FRESH, "action": "plan", "raw_query": "", "barcode": "", "mode": "multi",
             "basket": [{"sku": k} for k in skus],
             "start_node": start_node or self.services.engine.graph.entrance,
             "step_free": step_free,

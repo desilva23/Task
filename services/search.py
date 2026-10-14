@@ -87,7 +87,7 @@ def classify(raw: str) -> tuple[str, list[SearchTerm]]:
     if len(q) < MIN_QUERY_CHARS:
         return "too_short", []
     if DIGITS.match(q):
-        return "digits", []  # not a product request — there is no barcode entry (EC-10)
+        return "digits", []  # not searched — a barcode is looked up by the scan (EC-10)
     parts = _parts(q)
     if len(parts) > 1:
         return "batch", [parse_qty(p) for p in parts[:MAX_BATCH_TERMS]]  # EC-06
@@ -358,7 +358,10 @@ def prepare(raw: str, index: SearchIndex) -> Prepared:
         return Prepared(shape, (), message="Type at least two letters of a product name.")
     if shape == "digits":
         return Prepared(
-            shape, (), message="That looks like a number — type the product name instead."
+            shape,
+            (),
+            message="That looks like a barcode — turn on “Scan a barcode” to look it up, "
+            "or type the product name.",
         )
     if shape == "batch" and not HARD_SPLIT.search(q) and index.one_product_phrase(q):
         shape, terms = "term", [parse_qty(q)]  # "salt and vinegar crisps" stays whole

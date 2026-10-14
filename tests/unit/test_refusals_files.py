@@ -48,6 +48,12 @@ class TestProductsFile:
         row = store.edit("products.csv", COKE, barcode=first["barcode"])
         store.assert_refused("V-21", "products.csv", row=row)
 
+    def test_v_21_barcode_with_a_failed_check_digit(self, store):
+        code = next(r["barcode"] for r in store.rows("products.csv") if r["sku"] == COKE["sku"])
+        bad = code[:-1] + str((int(code[-1]) + 1) % 10)
+        row = store.edit("products.csv", COKE, barcode=bad)
+        store.assert_refused("V-21", "products.csv", row=row)
+
     def test_v_22_none_alongside_an_allergen(self, store):
         row = store.edit("products.csv", COKE, allergens_contains="none|milk")
         store.assert_refused("V-22", "products.csv", row=row)

@@ -1,6 +1,6 @@
 """Which IDs exist. A specification ID is defined only by a register row — a markdown table
 row whose first cell is the ID — in the one document that owns its kind. A mention in prose
-defines nothing, which is what keeps the withdrawn FR-03 uncitable."""
+defines nothing, so a withdrawn requirement stops being citable the moment its row goes."""
 
 import re
 from pathlib import Path

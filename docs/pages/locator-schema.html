@@ -332,7 +332,7 @@
     <tr><td><code>name</code></td><td>text</td><td>Y</td><td>Display name. Feeds the search index</td></tr>
     <tr><td><code>brand</code></td><td>text</td><td>Y</td><td><code>Own Brand</code> for own-label lines</td></tr>
     <tr><td><code>size</code></td><td>text</td><td>Y</td><td><code>500ml</code>, <code>1.5l</code>, <code>6 pack</code>. Parsed for variant match</td></tr>
-    <tr><td><code>barcode</code></td><td>text</td><td>N</td><td>EAN-13, exactly 13 digits when present</td></tr>
+    <tr><td><code>barcode</code></td><td>text</td><td>N</td><td>EAN-13, exactly 13 digits with a valid GS1 check digit when present. What a camera scan (FR-03) is looked up by; a product without one cannot be scanned</td></tr>
     <tr><td><code>department</code></td><td>text</td><td>Y</td><td>Top-level grouping, e.g. <code>Drinks</code></td></tr>
     <tr><td><code>aisle_category</code></td><td>text</td><td>Y</td><td>Drives category queries (EC-09) and substitute candidacy (FR-09)</td></tr>
     <tr><td><code>synonyms</code></td><td>list</td><td>N</td><td>Pipe-delimited. `coke\</td><td>cola`</td></tr>
@@ -584,7 +584,7 @@ E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true</code></pr
   <thead><tr><th>ID</th><th>Check</th><th>Catches</th></tr></thead>
   <tbody>
     <tr><td class="m">V-20</td><td><code>sku</code> is 7 digits and does not begin with <code>0</code></td><td>§2.4's unrecoverable coercion</td></tr>
-    <tr><td class="m">V-21</td><td><code>barcode</code>, when present, is exactly 13 digits and unique across the file</td><td>Scientific-notation damage; EC-10</td></tr>
+    <tr><td class="m">V-21</td><td><code>barcode</code>, when present, is exactly 13 digits with a valid GS1 check digit, and unique across the file</td><td>Scientific-notation damage; a barcode no scanner can read back (FR-03, EC-52)</td></tr>
     <tr><td class="m">V-22</td><td><code>allergens_contains</code> does not combine <code>none</code> with a named allergen</td><td>A contradictory declaration reaching NFR-03</td></tr>
     <tr><td class="m">V-23</td><td><code>price_gbp</code> ≥ 0 with at most 2 dp; <code>popularity</code> in 0.0–1.0</td><td>—</td></tr>
   </tbody>

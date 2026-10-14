@@ -2,7 +2,8 @@
 
 Starts the page with the model off, drives a three-floor journey at 390 × 844, and measures:
 no horizontal page scroll at any step, the floor plate within the viewport, and route markers
-and labels big enough to read without zooming.
+and labels big enough to read without zooming. The scan runs on Chromium's fake camera, fed a
+frame showing a catalogued barcode — the real path from camera to product.
 """
 
 import os
@@ -14,6 +15,8 @@ from pathlib import Path
 
 import pytest
 from playwright.sync_api import sync_playwright
+
+from tests.photos import barcode_image
 
 REPO = Path(__file__).resolve().parents[2]
 WIDTH, HEIGHT = 390, 844
@@ -96,4 +99,52 @@ def test_ac_15_nfr_11_the_journey_fits_a_phone(server):
             page.screenshot(path=str(out / "phone-390.png"), full_page=True)
             plate.scroll_into_view_if_needed()
             plate.screenshot(path=str(out / "phone-390-plate.png"))
+        browser.close()
+
+
+def y4m(frame, path: Path) -> Path:
+    """One still frame as a Y4M video — the format Chromium's fake camera plays on a loop."""
+    grey = frame.convert("L")
+    w, h = grey.size
+    chroma = bytes([128]) * ((w // 2) * (h // 2))
+    path.write_bytes(
+        f"YUV4MPEG2 W{w} H{h} F30:1 Ip A1:1 C420jpeg\n".encode()
+        + b"FRAME\n" + grey.tobytes() + chroma + chroma
+    )  # fmt: skip
+    return path
+
+
+def test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width(server, tmp_path):
+    """A-07 — a still photo from the browser's camera, read on the server."""
+    from PIL import Image
+
+    rows = (REPO / "data" / "SBY-DEMO-001" / "products.csv").read_text().splitlines()
+    code = next(r.split(",")[4] for r in rows if r.split(",")[1] == "Coca-Cola Classic")
+    frame = Image.new("RGB", (640, 480), (236, 232, 224))
+    bars = barcode_image(code)
+    frame.paste(bars, ((640 - bars.width) // 2, (480 - bars.height) // 2))
+    camera = y4m(frame, tmp_path / "barcode.y4m")
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(args=[
+            "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+            f"--use-file-for-fake-video-capture={camera}",
+        ])  # fmt: skip
+        context = browser.new_context(
+            viewport={"width": WIDTH, "height": HEIGHT}, is_mobile=True, permissions=["camera"]
+        )
+        page = context.new_page()
+        page.goto(server)
+        page.get_by_label("What are you looking for?").wait_for(timeout=20000)
+        assert page.locator("video").count() == 0, "the camera started before it was asked for"
+        page.get_by_text("Scan a barcode").click()
+        take = page.get_by_role("button", name="Take Photo")
+        take.wait_for(timeout=20000)
+        page.wait_for_timeout(1500)  # let the fake stream deliver frames
+        take.click()
+        page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
+        assert page.get_by_role("button", name="Add 1 available to basket").count() == 1
+        assert no_horizontal_scroll(page), "the scan scrolls sideways"
+        if os.environ.get("LOCATOR_SCREENSHOTS"):
+            page.screenshot(path=str(REPO / "specs" / "010-barcode-scan" / "phone-390-scan.png"),
+                            full_page=True)  # fmt: skip
         browser.close()

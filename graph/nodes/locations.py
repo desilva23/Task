@@ -19,7 +19,11 @@ def make_resolve_locations(services, model):
             availability[sku] = services.stock.availability(sku).value
         if plan:
             basket_skus = skus
-        elif s.get("shape") == "term" and len(skus) == 1 and availability[skus[0]] == "in_stock":
+        elif (
+            s.get("shape") in ("term", "barcode")
+            and len(skus) == 1
+            and availability[skus[0]] == "in_stock"
+        ):
             basket_skus = skus
         else:
             basket_skus = []

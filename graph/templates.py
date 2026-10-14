@@ -88,6 +88,11 @@ def compose_results(services, s: dict, subjects: list[str]) -> list[str]:
         if status == "category":
             names = ", ".join(product_label(services, k) for k in s["candidates"][i][:3])
             lines.append(f"“{text}” is a whole category, {s['category'][i]} — for example {names}.")
+        elif status == "not_catalogued":  # EC-50 — said plainly, never a nearest product
+            lines.append(
+                f"Barcode {text} is not in this store's catalogue — it may be another shop's "
+                "product, or not a grocery product."
+            )
         elif status == "unresolved":
             near = s["suggestions"][i]
             lines.append(

@@ -236,7 +236,7 @@ this branch.
 | `name` | text | Y | Display name. Feeds the search index |
 | `brand` | text | Y | `Own Brand` for own-label lines |
 | `size` | text | Y | `500ml`, `1.5l`, `6 pack`. Parsed for variant match |
-| `barcode` | text | N | EAN-13, exactly 13 digits when present |
+| `barcode` | text | N | EAN-13, exactly 13 digits with a valid GS1 check digit when present. What a camera scan (FR-03) is looked up by; a product without one cannot be scanned |
 | `department` | text | Y | Top-level grouping, e.g. `Drinks` |
 | `aisle_category` | text | Y | Drives category queries (EC-09) and substitute candidacy (FR-09) |
 | `synonyms` | list | N | Pipe-delimited. `coke\|cola` |
@@ -493,7 +493,7 @@ renumber the ones a test references.
 | ID | Check | Catches |
 |---|---|---|
 | V-20 | `sku` is 7 digits and does not begin with `0` | §2.4's unrecoverable coercion |
-| V-21 | `barcode`, when present, is exactly 13 digits and unique across the file | Scientific-notation damage; EC-10 |
+| V-21 | `barcode`, when present, is exactly 13 digits with a valid GS1 check digit, and unique across the file | Scientific-notation damage; a barcode no scanner can read back (FR-03, EC-52) |
 | V-22 | `allergens_contains` does not combine `none` with a named allergen | A contradictory declaration reaching NFR-03 |
 | V-23 | `price_gbp` ≥ 0 with at most 2 dp; `popularity` in 0.0–1.0 | — |
 

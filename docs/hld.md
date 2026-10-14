@@ -316,9 +316,9 @@ That is a batch query, handled by `classify_query` before any searching happens.
 
 Classification order: empty/too-short → reject · digits only → not a product
 request · contains `,` `;` newline or `" and "` → split · >4 words with verbs →
-model · otherwise → BM25. There is no barcode entry: FR-03 was withdrawn during
-review, and a shopper holding the product has already found it. A batch query runs the whole tree once per term,
-concurrently.
+model · otherwise → BM25. Digits typed into the search box are not searched (EC-10):
+a barcode is looked up through the scan (§3.5), where an exact match is the only
+answer. A batch query runs the whole tree once per term, concurrently.
 
 ### 3.3 Checking availability for all of them at once
 
@@ -365,6 +365,35 @@ not a second request, because there are no requests.
 
 ---
 
+### 3.5 Barcode scan
+
+FR-03 earns its place in two cases typed entry does not serve: working from an
+empty packet brought from home, and checking you have the right variant of
+something you are holding. Typed digits are the degraded path, for when the
+camera is declined, missing or cannot start (A-07, C-08).
+
+**A still photo, decoded on the server.** The page takes one photo with the
+browser camera, and the server reads the barcode from it. Live decoding while
+the shopper hovers needs a custom browser component and a secure context at
+every hop; a shutter tap is the honest proof-of-concept version. The photo is
+read in memory and discarded — it is never stored, logged or sent to the model.
+
+**A barcode is an identifier, not a search.** The decoded or typed digits are
+checked — length and GS1 check digit — and then looked up for an exact match in
+the catalogue. There is no ranking, no fuzzy retry and no nearest match: a
+barcode that is not in the catalogue says so (AC-28), because the nearest
+product to a wrong number is a wrong product. Only retail symbologies (EAN-13,
+EAN-8, UPC-A, UPC-E) are read; a QR code or a shipping label is not a product.
+
+**The same graph, entered at the same door.** A scan is a request with
+`action = scan`. `classify_query` checks the digits; a valid code goes straight
+to `resolve_items`, skipping the model, and from there the journey is the one a
+typed single product takes — availability, substitutes, location, route,
+narration and `verify`. No node is added, and the scanned product reaches the
+basket by the same button. The synthetic catalogue's barcodes sit in the GS1
+`20`–`29` range, reserved for in-store numbering, so no real product's barcode
+can match one by accident.
+
 ## 4. Interface and presentation
 
 One Streamlit page, used by a shopper standing in the store on their own phone
@@ -373,6 +402,7 @@ here and nowhere else.
 
 | Requirement | What the page does |
 |---|---|
+| FR-03 · barcode scan | A "Scan a barcode" switch under the search box. Only when it is on does the camera start, so no permission is asked until the shopper wants it; beneath the camera, a field for the digits does the same lookup |
 | FR-15 · start point | Two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
 | FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor, with transition markers where it changes floor |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
@@ -409,6 +439,9 @@ are design-level rather than implementation detail:
    `interrupt()` suspends the graph; the shopper's answer resumes the same
    `thread_id` on the following run. No second request exists, because the page
    calls the graph in-process.
+4. **A camera photo outlives the run that took it.** The widget hands back the
+   same photo on every later run, so the page remembers which photo it last
+   looked up and looks each one up once (EC-54).
 
 ---
 
@@ -448,7 +481,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-07 | Duplicate terms — "milk, milk, bread" | Deduplicate *after* resolution — "milk" and "whole milk" may resolve to the same SKU |
 | EC-08 | One term in a batch resolves to nothing | Partial success. Return what resolved, name what didn't. Never fail the whole query |
 | EC-09 | Query is a category, not a product — "dairy" | Show the aisle and offer to browse rather than returning an arbitrary SKU |
-| EC-10 | Query is digits only | Treated as not a product request rather than searched. There is no barcode entry — FR-03 was withdrawn |
+| EC-10 | Query is digits only | Treated as not a product request rather than searched, and the shopper is pointed to the barcode scan (§3.5), where digits are an exact lookup |
 | EC-11 | Prompt injection in the query or in supplier-supplied product text | Query text passed as data, never concatenated into instructions. Catalogue descriptions treated as untrusted — editable outside the retailer |
 | EC-12 | Medical or dosage question | Out of scope by design. Locate the pharmacy aisle; give no medical advice |
 
@@ -513,6 +546,18 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-45 | Zero or negative edge weight | Rejected at load. Negative weights break Dijkstra's correctness guarantee outright |
 
 ---
+
+### 6.7 Barcode scan
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-48 | Camera declined, revoked after a scan, absent, or blocked because the page is on plain HTTP (C-08) | The digits field beside the camera is the same lookup and keeps working; nothing about the search depends on the camera |
+| EC-49 | Photo with no readable barcode — damaged, creased, partly covered, blurred, too far away | "No barcode found in that photo", with what to try and the digits field. Never a guess at what it might have been |
+| EC-50 | A valid barcode that is not in this catalogue | Said plainly, with no nearest match and no suggestions (AC-28). It may be another shop's product or not a grocery product at all |
+| EC-51 | A barcode that is not a product's — a QR code, a shipping label | Not read: only retail symbologies are decoded, so it reports as no barcode found |
+| EC-52 | Mistyped digits — wrong length, or a failed check digit | "That isn't a valid barcode", before any lookup. A near-miss number is never matched to the closest real one |
+| EC-53 | Two different barcodes in one photo | Neither is chosen: the shopper is asked to scan one product at a time. The same code twice is one code |
+| EC-54 | The page re-runs with the same photo still held by the camera widget | Looked up once. A new photo, or new typed digits, is a new lookup |
 
 ## 7. Onboarding a new store
 
