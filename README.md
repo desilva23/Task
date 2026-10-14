@@ -1,6 +1,7 @@
 # Planogram-Based Product Locator
 
-A shopper types one or more products and gets, for each, whether it is in stock,
+A shopper types one or more products — or scans a barcode with the phone camera — and
+gets, for each, whether it is in stock,
 exactly where it is — floor, aisle, rack and shelf — and the shortest walking route
 to it across floors. A proof of concept on synthetic data, with Sainsbury's as the
 reference retailer; no real retailer system is involved.
@@ -23,8 +24,8 @@ claim against it before anything reaches the page.
 
 | Document | Owns | Page | Doc |
 |---|---|---|---|
-| [`docs/requirements.md`](docs/requirements.md) | What the system must do: 24 FR, 11 NFR, 27 AC | [page](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | [doc](https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b) |
-| [`docs/hld.md`](docs/hld.md) | Architecture, search design, interface, 47 edge cases | [page](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | [doc](https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77) |
+| [`docs/requirements.md`](docs/requirements.md) | What the system must do: 25 FR, 11 NFR, 28 AC | [page](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | [doc](https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b) |
+| [`docs/hld.md`](docs/hld.md) | Architecture, search design, barcode scan, interface, 54 edge cases | [page](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | [doc](https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77) |
 | [`docs/lld.md`](docs/lld.md) | Modules, state, node contracts, algorithms, configuration | [page](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | [doc](https://claude.ai/code/artifact/96a1afa2-2ca7-4f5b-a10d-ce432489f37b) |
 | [`docs/schema.md`](docs/schema.md) | The six store CSVs and the 43 refusals and 5 warnings checked at load | [page](https://claude.ai/artifact/AqRDBHcHJ97xXCxKS6TQzf) | [doc](https://claude.ai/code/artifact/abf938c6-faf9-4a5d-95f4-b6559cfe24b7) |
 
@@ -34,7 +35,7 @@ order. The rules for building against them are in
 
 ## How it was built
 
-Nine phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
+Ten phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
 phase's spec, plan, tasks and gate record is in `specs/`.
 
 | Phase | Built | Spec |
@@ -48,10 +49,11 @@ phase's spec, plan, tasks and gate record is in `specs/`.
 | 6 | GroqCloud | [`specs/007-groq`](specs/007-groq) |
 | 7 | The Streamlit page | [`specs/008-page`](specs/008-page) |
 | 8 | Second store, performance, hostile input, deployment | [`specs/009-portability-deploy`](specs/009-portability-deploy) |
+| 9 | Barcode scan — camera photo or typed digits | [`specs/010-barcode-scan`](specs/010-barcode-scan) |
 
 [`docs/traceability.md`](docs/traceability.md) lists every requirement,
 acceptance criterion, edge case and validation rule with the tests that prove it.
-All 27 acceptance criteria are covered.
+All 28 acceptance criteria are covered.
 
 ## Running it
 

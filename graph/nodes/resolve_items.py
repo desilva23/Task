@@ -5,8 +5,24 @@ from services.search import QueryFilter, SearchTerm, resolve
 TOP_OPTIONS = 5
 
 
+def by_barcode(services, s):
+    """A barcode is an exact lookup — no ranking, no fuzzy retry, no nearest match (EC-50)."""
+    found = services.catalogue.by_barcode(s["terms"][0]["text"])
+    return {
+        "term_status": ["resolved" if found else "not_catalogued"],
+        "candidates": [[found.sku] if found else []],
+        "category": [None],
+        "suggestions": [[]],
+        "resolved": {"0": found.sku} if found else {},
+        "unresolved": [],
+        "clarify_rounds": 0,
+    }
+
+
 def make_resolve_items(services, model):
     def resolve_items(s):
+        if s.get("shape") == "barcode":
+            return by_barcode(services, s)
         parsed = s.get("parsed")
         filt = None
         if parsed:

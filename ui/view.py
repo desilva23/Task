@@ -1,5 +1,6 @@
 """What the page shows, as plain data — so it is tested without a browser (P7-R02)."""
 
+import hashlib
 from dataclasses import dataclass
 
 from graph.templates import product_label
@@ -65,3 +66,34 @@ def group_results(services, s: dict) -> Groups:
 def addable(groups: Groups) -> list[str]:
     """FR-22 — the one action moves only the available items."""
     return [r.sku for r in groups.available]
+
+
+# ── the barcode scan — hld.md §3.5 ─────────────────────────────────────────────────────────
+
+NO_BARCODE = (
+    "No barcode found in that photo. Hold the barcode flat and close enough to fill the frame, "
+    "in good light — or type the numbers under it."
+)
+SEVERAL = "There's more than one barcode in that photo — scan one product at a time."
+
+
+class PhotoLatch:
+    """The camera widget hands back the same photo on every page run; look each one up once
+    (EC-54). Kept in session state, so it holds a digest, never the photo."""
+
+    def __init__(self):
+        self._seen: str | None = None
+
+    def new(self, photo: bytes | None) -> bool:
+        if photo is None:
+            return False
+        digest = hashlib.sha256(photo).hexdigest()
+        fresh, self._seen = digest != self._seen, digest
+        return fresh
+
+
+def scan_choice(codes: list[str]) -> tuple[str | None, str | None]:
+    """The code to look up, or why there is none. Two codes are never chosen between (EC-53)."""
+    if len(codes) == 1:
+        return codes[0], None
+    return None, NO_BARCODE if not codes else SEVERAL

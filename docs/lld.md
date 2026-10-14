@@ -14,6 +14,7 @@ app.py                    Streamlit entry point — the only executable
 config.py                 every threshold and cap, one place (§14)
 ui/
   search.py               the st.form search box and the position picker
+  scan.py                 the barcode scan: camera photo, typed digits (FR-03, §8.5)
   results.py              grouped results and the basket gate action
   floorplate.py           one SVG plate per floor, route overlay, markers
   directions.py           the ordered directions list — the accessible route
@@ -33,6 +34,7 @@ services/
   storegraph.py           StoreGraph — nodes, edges, adjacency
   basket.py               Basket — SKUs added across searches; routability re-checked per call
   multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
+  barcode.py              check digits and decoding a photo — no lookup, no page (§8.5)
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -152,13 +154,15 @@ def path(self, u, v, step_free=False):
 class JourneyState(TypedDict):
     # request, written once
     store_id:   str
+    action:     Literal["search", "scan", "plan"]
     raw_query:  str
+    barcode:    str                      # scan only — digits as decoded or typed (FR-03)
     mode:       Literal["auto", "single", "multi"]
     start_node: str
     step_free:  bool
 
     # classification
-    shape:  Literal["too_short", "digits", "batch", "nl", "term"]
+    shape:  Literal["too_short", "digits", "batch", "nl", "term", "barcode", "bad_barcode"]
     terms:  list[SearchTerm]                 # {text, qty}
     parsed: ParsedQuery | None
 
@@ -207,9 +211,9 @@ Three fields earn their place:
 
 | Node | Reads | Writes | Fallback on failure |
 |---|---|---|---|
-| `classify_query` | raw_query | shape, terms | n/a — pure function |
+| `classify_query` | raw_query, or barcode on a scan | shape, terms | n/a — pure function |
 | `understand_query` | raw_query | parsed, terms | treat whole query as one term; append to `degraded` |
-| `resolve_items` | terms, parsed | candidates, resolved, unresolved, not_ranged | n/a — deterministic |
+| `resolve_items` | terms, parsed | candidates, resolved, unresolved, not_ranged | n/a — deterministic. A barcode is an exact catalogue lookup: `resolved`, or `not_catalogued` (EC-50) |
 | `clarify` | candidates, clarify_rounds | resolved, clarify_rounds | after 2 rounds auto-pick rank 1 and note it |
 | `check_availability` | resolved | availability | mark unknown, never guess — EC-18 |
 | `suggest_substitutes` | availability, locations | substitutes | static same-category in-stock list |
@@ -223,7 +227,8 @@ Routers:
 
 ```python
 def after_classify(s) -> str:
-    if s["shape"] in ("too_short", "digits"): return END       # EC-01, EC-10
+    if s["shape"] in ("too_short", "digits", "bad_barcode"):
+        return END                                             # EC-01, EC-10, EC-52
     if s["shape"] == "nl":        return "understand_query"
     return "resolve_items"
 
@@ -275,6 +280,7 @@ class Catalogue:
     def by_sku(self, sku: str) -> Product | None: ...
     def search(self, term: str, filt: QueryFilter | None, limit: int) -> list[Scored]: ...
     def by_category(self, category: str) -> list[Product]: ...
+    def by_barcode(self, code: str) -> Product | None: ...                 # exact — FR-03
 
 class Planogram:
     version: str
@@ -381,6 +387,12 @@ a single product's name contains every one of its words. "Salt & Vinegar
 Crisps" and "Sweet & Sour Sauce" stay whole; "milk and bread" still splits,
 because no product is named after both.
 
+**A scan does not pass through `classify()`.** `classify_query` sees
+`action == "scan"` and checks the digits with `barcode.normalise` instead: a
+valid code becomes shape `barcode` with the 13-digit code as its one term, and
+anything else becomes `bad_barcode` with a message (EC-52). Digits typed into
+the search box still take the `digits` branch — the search box finds names.
+
 ### 8.2a Fuzzy retry and categories
 
 When the best BM25 score is below `FUZZY_TRIGGER_SCORE`, search retries once:
@@ -447,6 +459,36 @@ answer even when sold out or not carried, reported as such with alternatives,
 and the precedence ranking orders the options and alternatives (FR-06, AC-19).
 
 ---
+
+### 8.5 Barcode lookup
+
+```python
+RETAIL = (BarcodeFormat.EAN13, BarcodeFormat.EAN8, BarcodeFormat.UPCA)  # EC-51
+
+def normalise(digits: str) -> str | None:
+    d = "".join(digits.split())
+    if not d.isdigit() or len(d) not in (8, 12, 13): return None
+    if not check_digit_ok(d):                        return None      # EC-52
+    return "0" + d if len(d) == 12 else d            # UPC-A is EAN-13 with a leading 0
+
+def check_digit_ok(d: str) -> bool:                  # GS1: weights 3,1,3,… from the right
+    body = map(int, reversed(d[:-1]))
+    total = sum(n * (3 if i % 2 == 0 else 1) for i, n in enumerate(body))
+    return (10 - total % 10) % 10 == int(d[-1])
+
+def decode(photo: bytes) -> list[str]:
+    img = ImageOps.exif_transpose(Image.open(BytesIO(photo))).convert("L")
+    img.thumbnail((SCAN_MAX_SIDE_PX, SCAN_MAX_SIDE_PX))
+    found = zxingcpp.read_barcodes(img, formats=RETAIL)
+    return list(dict.fromkeys(c for c in (normalise(b.text) for b in found) if c))
+```
+
+`decode` returns every distinct product code in the photo; the page looks one up
+only when there is exactly one (EC-53). An unreadable, corrupt or empty photo is
+an empty list, never an exception. zxing-cpp ships as a wheel with its own
+decoder, so the deployment needs no system package. `Catalogue.by_barcode` is a
+dictionary built once from `products.csv`; V-21 guarantees each code is valid
+and unique, so a code finds one product or none.
 
 ## 9. Structured output models
 
@@ -615,6 +657,10 @@ def resume(choice: Choice) -> JourneyState:
     cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
     return GRAPH.invoke(Command(resume=choice), cfg)
 
+def run_scan(code: str, start_node: str, step_free: bool) -> JourneyState:
+    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}   # a new search thread
+    return GRAPH.invoke(initial_scan(code, start_node, step_free), cfg)
+
 def plan_route(basket: list[BasketItem]) -> JourneyState:
     cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
     return GRAPH.invoke({"basket": basket, "mode": "multi"}, cfg)
@@ -625,6 +671,7 @@ Three mechanics carry what the API used to:
 | Was | Is |
 |---|---|
 | `POST /journey` | `run_query(...)` — returns **results only**, never a route |
+| `POST /scan` | `run_scan(code)` — the same journey for one exact product (FR-03) |
 | `POST /journey/resume` | `resume(choice)` on the next page run, same `thread_id` |
 | `POST /route` | `plan_route(basket)` — a second graph run, from the basket |
 | `GET /journey/{id}` | `GRAPH.get_state(cfg)` — the checkpoint is the record (EC-41) |
@@ -650,6 +697,15 @@ all-pairs Dijkstra and NFR-05's five seconds are gone before the search starts.
 
 **The search box lives inside `st.form`**, so the graph is invoked on submit
 rather than on each keystroke.
+
+**The scan is `st.camera_input` behind a switch.** The widget starts the camera
+when it is drawn, so it is drawn only once the shopper turns on "Scan a
+barcode" — no permission prompt for anyone who never scans. It returns the same
+photo on every later run, so the page keeps a digest of the last photo it looked
+up and looks each photo up once (EC-54). The typed digits sit beside it in their
+own `st.form`, and both reach `Journey.run_scan`. Messages from a run that made
+no claim — too short, digits in the search box, a bad barcode — are shown as a
+notice; before this they were held in state and never drawn.
 
 **Thread lifetime.** A `thread_id` is minted per search and swept after
 `THREAD_TTL_MINUTES` (§14). LangGraph does not expire threads, so without the
@@ -724,6 +780,7 @@ AMBIGUITY_MARGIN    = 0.15    # §8.4
 MAX_CLARIFY_ROUNDS  = 2       # EC-35
 THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
 MODEL_TIMEOUT_S     = 6
+SCAN_MAX_SIDE_PX    = 2000    # EC-49 — a photo is shrunk to this before decoding
 ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
@@ -751,6 +808,7 @@ threads on its own.
 |---|---|---|
 | Unit · classify | Every branch of §8.2 | Empty · 1 char · digits only · `"milk, bread"` · `"milk and bread"` · `"salt and vinegar crisps"` (the known-crude case) · `"2 x milk"` · 200 terms |
 | Unit · search | Ranking precedence | Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected |
+| Unit · barcode | §8.5 | Valid EAN-13, EAN-8, UPC-A · failed check digit · wrong length · a rendered barcode read back, rotated and blurred · blank, corrupt and QR-only photos read as nothing · two codes in one photo |
 | Unit · routing | Matrix and reconstruction | Same-node route returns `[u]` · known-distance pair · NO_PATH raises · step-free matrix differs where it should |
 | Unit · TSP | Open-path correctness | Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till |
 | Unit · grounding | §9 guardrails | Out-of-set SKU raises `GroundingError` · `null` dietary flag never satisfies a requirement |

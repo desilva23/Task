@@ -16,11 +16,6 @@ class TestTracePlugin:
         assert result.ret != 0
         result.stderr.fnmatch_lines(["*Untraced test: test_sample.py::test_nothing_cited*"])
 
-    def test_the_withdrawn_id_fails_collection(self, pytester):
-        result = run(pytester, 'def test_barcode():\n    """FR-03 — barcode."""\n')
-        assert result.ret != 0
-        result.stderr.fnmatch_lines(["*Unknown ID FR-03 cited by test_sample.py::test_barcode*"])
-
     def test_an_id_that_was_never_defined_fails_collection(self, pytester):
         result = run(pytester, "def test_ac_99_nothing():\n    pass\n")
         assert result.ret != 0

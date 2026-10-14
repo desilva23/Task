@@ -1,6 +1,7 @@
 """The page itself, driven headless with Streamlit's AppTest. The model is forced off, so these
 never reach GroqCloud even with a key on the machine."""
 
+import csv
 from pathlib import Path
 
 import pytest
@@ -81,3 +82,57 @@ def test_fr_19_step_free_is_one_toggle(page):
     search(page, "Everyday Shampoo")
     text = page_text(page)
     assert "lift" in text and "stairs" not in text
+
+
+def scan_on(at):
+    at.toggle(key="scan_on").set_value(True).run()
+    assert not at.exception, at.exception
+    return at
+
+
+def coke_barcode():
+    rows = csv.DictReader((Path(APP).parent / "data/SBY-DEMO-001/products.csv").open())
+    return next(r["barcode"] for r in rows if r["name"] == "Coca-Cola Classic")
+
+
+def test_fr_03_ec_48_the_camera_is_drawn_only_once_the_scan_is_turned_on(page):
+    assert not page.get("camera_input")  # no permission prompt for a shopper who never scans
+    scan_on(page)
+    assert len(page.get("camera_input")) == 1
+    assert page.text_input(key="scan_digits")  # the typed path sits beside the camera
+
+
+def test_ac_28_ec_48_typed_digits_on_the_page_find_the_product(page):
+    scan_on(page)
+    page.text_input(key="scan_digits").input(coke_barcode())
+    page.button(key="scan_lookup").click().run()
+    assert not page.exception, page.exception
+    text = page_text(page)
+    assert "Available" in text and "Classic 500ml — In stock" in text  # shown escaped
+    assert not page.get("radio")  # an exact product — no choice prompt
+    page.button(key="add_available").click().run()  # scanned products build a basket
+    assert len(page.session_state["basket"]) == 1
+
+
+def test_ec_52_bad_digits_on_the_page_say_so(page):
+    scan_on(page)
+    page.text_input(key="scan_digits").input("1234567890123")
+    page.button(key="scan_lookup").click().run()
+    assert "isn't a valid barcode" in page_text(page)
+
+
+def test_ec_50_a_foreign_barcode_on_the_page_says_so(page):
+    scan_on(page)
+    page.text_input(key="scan_digits").input("5449000000996")
+    page.button(key="scan_lookup").click().run()
+    assert "not in this store's catalogue" in page_text(page)
+
+
+def test_ec_10_digits_in_the_search_box_point_to_the_scan(page):
+    search(page, coke_barcode())
+    assert "Scan a barcode" in page_text(page)
+
+
+def test_ec_01_a_too_short_search_says_why(page):
+    search(page, "m")
+    assert "at least two letters" in page_text(page)

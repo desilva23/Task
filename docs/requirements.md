@@ -19,7 +19,7 @@ and deterministic tools supply every fact. It must work on any store by
 replacing the store data, with no code changes.
 
 **In scope:** typed requests (single, several at once, natural language);
-product matching against a store catalogue; availability from a mock inventory;
+barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory;
 location to floor, aisle, rack and shelf; shortest route from any start point,
 across floors; one combined route for several products; step-free routing;
 a single-page user interface.
@@ -27,6 +27,8 @@ a single-page user interface.
 **Out of scope:** voice input; live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
 loyalty and recommendations; shelf-compliance detection from photographs;
+recognising a product from a photograph — the camera reads a barcode and
+nothing else;
 more than one store running concurrently; colleague workflows — order picking,
 replenishment, shelf-edge tasks.
 
@@ -66,6 +68,7 @@ store works with no code changes.
 | C-05 | No integration with any live retailer system | confirmed |
 | C-06 | Language models are served through **GroqCloud** | confirmed |
 | C-07 | The application is deployed on **Streamlit Community Cloud** | confirmed |
+| C-08 | The site is served over **HTTPS**. Camera access requires a secure context, so FR-03's camera does not work over plain HTTP, including on a local machine addressed by IP | confirmed |
 
 | ID | Assumption | Status | If it later proves wrong |
 |---|---|---|---|
@@ -75,6 +78,7 @@ store works with no code changes.
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
+| A-07 | The shopper's mobile browser can grant camera access and take a still photo the system can read an EAN-13 from. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | Live decoding in the browser, which needs a custom component |
 
 ---
 
@@ -86,6 +90,7 @@ store works with no code changes.
 |---|---|---|
 | FR-01 | A shopper can find a product by typing its name | confirmed |
 | FR-02 | A shopper can request **several products in one search**, separated by commas, semicolons, new lines or the word "and", without first building a basket | confirmed |
+| FR-03 | A shopper can find a product by **scanning its barcode with the phone camera**. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits | confirmed — withdrawn during review, reinstated by the owner 2026-10-14 |
 | FR-04 | A request phrased in natural language resolves to real catalogue products — never to an invented one | confirmed |
 | FR-05 | Where more than one product could match, the system **asks the shopper to choose** rather than selecting one | confirmed |
 | FR-06 | Results are ordered so that products stocked at this store rank above products that are not | confirmed |
@@ -188,6 +193,7 @@ finished being written.
 | AC-25 | NFR-03 | Across every response in the test suite, each mention of gluten free, nut free, vegan or halal corresponds to a product whose recorded attribute is `true`; a product with an empty attribute is shown as unknown and never described as having or lacking the property |
 | AC-26 | NFR-09 | With every model call disabled, each ranked result's position is explained by the first ranking rule separating it from its neighbour, and each route's stop order is reproduced from its node path alone |
 | AC-27 | NFR-10 | Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07 |
+| AC-28 | FR-03 | A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
 
 ---
 
@@ -199,6 +205,13 @@ Required behaviours, not solutions. Each becomes a test case.
 "yoghurt") · non-English text, emoji, punctuation only · many items at once,
 duplicated items, quantities ("2 x milk") · text that is not a product request ·
 text written to subvert the system's instructions.
+
+**Barcode scan** — camera permission declined, or revoked after one successful
+scan · a browser with no camera · a damaged, creased or partly obscured barcode
+that will not decode · a barcode decoded correctly but absent from this
+catalogue · a barcode from something that is not a grocery product at all ·
+mistyped digits · the page opened over plain HTTP, where the camera cannot
+start.
 
 **Matching** — synonyms and colloquial names ("coke", "nappies", "kitchen
 roll") · several sizes or variants of the same product · a generic word that is

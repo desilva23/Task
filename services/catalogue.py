@@ -11,6 +11,7 @@ class Catalogue:
     def __init__(self, store: Store):
         self._store = store
         self._products = store.products
+        self._by_barcode = {p.barcode: p for p in store.products.values() if p.barcode}
 
     @cached_property
     def index(self) -> SearchIndex:
@@ -23,6 +24,10 @@ class Catalogue:
 
     def by_sku(self, sku: str) -> Product | None:
         return self._products.get(sku)
+
+    def by_barcode(self, code: str) -> Product | None:
+        """Exact — V-21 makes every code unique, so a code is one product or none (FR-03)."""
+        return self._by_barcode.get(code)
 
     def by_category(self, category: str) -> list[Product]:
         return sorted(

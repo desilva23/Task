@@ -26,6 +26,9 @@ def _add(skus: list[str]) -> None:
 
 
 def results(services, state: dict) -> None:
+    if not state.get("results") and state.get("message"):
+        st.info(md(state["message"]))  # a run that made no claim says why (EC-01, EC-10, EC-52)
+        return
     groups = group_results(services, state)
     if groups.available:
         st.subheader("Available")

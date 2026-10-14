@@ -10,7 +10,7 @@ import uuid
 
 import streamlit as st
 
-from ui import directions, resources, results, search
+from ui import directions, resources, results, scan, search
 
 st.set_page_config(page_title="Find it in store", page_icon="🛒", layout="centered")
 
@@ -28,9 +28,13 @@ def main() -> None:
     search.header(svc)
     start, step_free = search.where(svc)
     query = search.search_box()
+    code = scan.scan()
     if query:
         ss.thread, ss.route_thread = f"search-{uuid.uuid4().hex}", None
         journey.run_query(ss.thread, query, start_node=start, step_free=step_free)
+    elif code:
+        ss.thread, ss.route_thread = f"scan-{uuid.uuid4().hex}", None
+        journey.run_scan(ss.thread, code, start_node=start, step_free=step_free)
 
     shown = None
     if ss.thread:

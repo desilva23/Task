@@ -6,8 +6,9 @@ from typing import Literal, TypedDict
 
 class JourneyState(TypedDict, total=False):
     # request
-    action: Literal["search", "plan"]
+    action: Literal["search", "scan", "plan"]
     raw_query: str
+    barcode: str  # scan only — digits as decoded or typed (FR-03)
     mode: Literal["auto", "single", "multi"]
     start_node: str
     step_free: bool
@@ -20,7 +21,7 @@ class JourneyState(TypedDict, total=False):
     message: str | None
 
     # resolution, per term index
-    term_status: list[str]  # resolved · ambiguous · category · unresolved
+    term_status: list[str]  # resolved · ambiguous · category · unresolved · not_catalogued
     candidates: list[list[str]]  # ranked SKUs
     category: list[str | None]
     suggestions: list[list[str]]

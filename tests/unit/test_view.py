@@ -12,7 +12,7 @@ from graph.journey import Journey
 from graph.model import FakeModel, NoModel, good_model
 from graph.services import Services
 from ui.floorplate import floor_plates
-from ui.view import addable, group_results, start_options
+from ui.view import PhotoLatch, addable, group_results, scan_choice, start_options
 from validation import load_store
 
 DEMO = Path(__file__).resolve().parents[2] / "data" / "SBY-DEMO-001"
@@ -136,3 +136,20 @@ class TestView:
         ]
         assert [r.sku for r in groups.unavailable] == [sku("Diet Coke")]
         assert addable(groups) == [sku("Bananas"), sku("Baked Beans"), sku("Dental Floss")]
+
+
+class TestScan:
+    def test_ec_54_each_photo_is_looked_up_once(self):
+        latch = PhotoLatch()
+        assert latch.new(None) is False
+        assert latch.new(b"photo one") is True
+        assert latch.new(b"photo one") is False  # the same photo on the next page run
+        assert latch.new(b"photo two") is True
+        assert latch.new(b"photo one") is True  # a retake of the first is a new photo
+
+    def test_ec_49_ec_53_what_a_photo_leads_to(self):
+        assert scan_choice(["2040634867035"]) == ("2040634867035", None)
+        code, message = scan_choice([])
+        assert code is None and "No barcode found" in message
+        code, message = scan_choice(["2040634867035", "2050711329905"])
+        assert code is None and "one product at a time" in message

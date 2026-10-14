@@ -11,8 +11,8 @@ def after_start(s) -> str:
 
 
 def after_classify(s) -> str:
-    if s["shape"] in ("too_short", "digits"):
-        return END  # EC-01, EC-10 — nothing claimed
+    if s["shape"] in ("too_short", "digits", "bad_barcode"):
+        return END  # EC-01, EC-10, EC-52 — nothing claimed
     if s["shape"] == "nl":
         return "understand_query"
     return "resolve_items"
