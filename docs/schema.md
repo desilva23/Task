@@ -587,8 +587,8 @@ three-floor demo nearly free.
 | `products.csv` | 180 | 180 |
 | `stock.csv` | 180 | 180 |
 | `planogram.csv` | ~250 | ~250 |
-| `map_nodes.csv` | **314** | **143** |
-| `map_edges.csv` | **352 rows → 704 arcs** | **160 rows → 320 arcs** |
+| `map_nodes.csv` | **314** | **125** |
+| `map_edges.csv` | **352 rows → 704 arcs** | **140 rows → 280 arcs** |
 
 Where the 314 nodes come from:
 
@@ -611,6 +611,12 @@ Edge rows: 180 rack-to-rack (5 per aisle × 36) + 72 rack-to-aisle-end +
 + 1 entrance + 6 till + 7 counter, cabinet and bin links = **352 rows**.
 Every row in the demo store is bidirectional, so expanding each into two arcs
 gives **704 directed arcs**.
+
+The portability store is shaped differently on purpose, not just shorter: two
+floors, 15 aisles (8 + 7) of **5** racks rather than 6, several categories
+sharing each aisle so a rack holds several products on different shelves, four
+tills, and both locked cabinets on floor 1. Its catalogue and stock files are
+the demo store's, unchanged — only the map and the planogram move.
 
 The aisle, rack and till counts are **authoring choices**, not derived facts.
 Changing them touches only the two map files and the `node_id` values in

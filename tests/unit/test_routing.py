@@ -111,7 +111,7 @@ class TestStepFree:
         level_changes = [h for h in hops if h.kind in ("lift", "stairs", "escalator")]
         assert [h.kind for h in level_changes] == ["lift", "lift"]
 
-    def test_the_ordinary_route_may_take_the_stairs(self, engine):
+    def test_fr_14_the_ordinary_route_may_take_the_stairs(self, engine):
         hops = engine.hops(engine.path("F0-ENTRANCE", "F2-A05-R04"))
         assert "stairs" in {h.kind for h in hops}  # stairs 11 m beat a lift's 6 m + 25 m wait
 

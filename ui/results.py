@@ -3,6 +3,7 @@
 import streamlit as st
 
 from graph.templates import product_label
+from ui.text import md
 from ui.view import addable, group_results
 
 
@@ -13,7 +14,7 @@ def clarify(pending: dict) -> dict | None:
         picks = {}
         for q in pending["questions"]:
             labels = {o["label"]: o["sku"] for o in q["options"]}
-            choice = st.radio(f"“{q['term']}”", list(labels), key=f"choose_{q['index']}")
+            choice = st.radio(f"“{md(q['term'])}”", list(labels), key=f"choose_{q['index']}")
             picks[q["index"]] = labels[choice]
         answered = st.form_submit_button("Continue", key="answer", type="primary", width="stretch")
     return picks if answered else None
@@ -29,11 +30,11 @@ def results(services, state: dict) -> None:
     if groups.available:
         st.subheader("Available")
         for row in groups.available:
-            st.markdown(f"- {row.statement}")
+            st.markdown(f"- {md(row.statement)}")
     if groups.unavailable:
         st.subheader("Not available")
         for row in groups.unavailable:
-            st.markdown(f"- {row.statement}")
+            st.markdown(f"- {md(row.statement)}")
             st.button(
                 f"Add {row.label} anyway (it won't be routed)",
                 key=f"add_one_{row.sku}",
@@ -41,7 +42,7 @@ def results(services, state: dict) -> None:
                 args=([row.sku],),
             )
     for note in groups.notes:
-        st.markdown(f"- {note}")
+        st.markdown(f"- {md(note)}")
     ready = [s for s in addable(groups) if s not in st.session_state.basket]
     if len(groups.available) + len(groups.unavailable) > 1 or state.get("shape") != "term":
         if ready or not groups.available:

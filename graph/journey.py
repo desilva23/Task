@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from config import THREAD_TTL_MINUTES
+from config import MAX_QUERY_CHARS, THREAD_TTL_MINUTES
 from graph.build import build_graph
 
 FRESH = {
@@ -62,8 +62,11 @@ class Journey:
         return Outcome(self.graph.get_state(cfg).values, pending[0].value if pending else None)
 
     def run_query(self, thread_id, query, start_node=None, step_free=False, mode="auto") -> Outcome:
+        cut = len(query) > MAX_QUERY_CHARS  # NFR-06 — cut, and say so
+        notes = [f"Your search was cut to its first {MAX_QUERY_CHARS} characters."] if cut else []
         return self._run(thread_id, {
-            **FRESH, "action": "search", "raw_query": query, "mode": mode,
+            **FRESH, "action": "search", "mode": mode, "notes": notes,
+            "raw_query": query[:MAX_QUERY_CHARS],
             "start_node": start_node or self.services.engine.graph.entrance,
             "step_free": step_free,
         })  # fmt: skip

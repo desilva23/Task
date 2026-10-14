@@ -28,6 +28,11 @@ def free_port() -> int:
 
 @pytest.fixture(scope="module")
 def server():
+    if os.environ.get(
+        "LOCATOR_URL"
+    ):  # the deployed app — LOCATOR_URL=https://… pytest tests/browser
+        yield os.environ["LOCATOR_URL"]
+        return
     port = free_port()
     env = {**os.environ, "LOCATOR_MODEL": "off"}
     proc = subprocess.Popen(

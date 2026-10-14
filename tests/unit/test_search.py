@@ -69,9 +69,11 @@ class TestClassify:
         assert digits.shape == "digits" and digits.terms == () and "name" in digits.message
 
     def test_ec_06_at_most_30_terms_the_rest_returned_unprocessed(self):
+        # 200 items also exceed MAX_QUERY_CHARS (Phase 8), so the text is cut first and the
+        # items beyond 30 that survive the cut are reported unprocessed; both caps are said
         result = search(", ".join(f"item{i}" for i in range(200)))
-        assert len(result.terms) == 30 and len(result.unprocessed) == 170
-        assert "30" in result.message
+        assert len(result.terms) == 30 and result.unprocessed
+        assert "first 30 items" in result.message and "characters" in result.message
 
 
 def test_ac_02_fr_02_milk_bread_eggs_gives_three_results():

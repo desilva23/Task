@@ -1,0 +1,181 @@
+sku,name,brand,size,barcode,department,aisle_category,synonyms,diet_gluten_free,diet_vegan,diet_vegetarian,diet_halal,allergens_contains,age_restricted,price_gbp,own_brand,popularity
+1145692,Fusilli,Own Brand,500g,2097656470194,Food Cupboard,"Pasta, Rice & Noodles",pasta,false,true,true,true,gluten,false,1.06,true,0.10
+1173731,Chicken Breast Fillets,Own Brand,600g,2069053292327,Meat & Fish,Fresh Meat,chicken,true,false,false,,none,false,5.57,true,0.75
+1242449,Trick or Treat Bucket,Own Brand,each,2066174239552,Seasonal,Halloween,halloween|bucket,,,,,,false,5.39,true,0.86
+1247525,Provence Rose,Own Brand,75cl,2090912787586,"Beer, Wine & Spirits",Wine,wine|rose wine,true,,,false,sulphites,true,6.87,true,0.09
+1306176,Sponge Scourers,Own Brand,4 pack,2045472728289,Household,Cleaning,sponges|scourer,,,,,,false,3.37,true,0.22
+1314015,Salad Tomatoes,Own Brand,6 pack,2014554013704,Fruit & Veg,Vegetables,tomato|tomatoes,true,true,true,true,none,false,2.13,true,0.95
+1339023,Custard Creams,Own Brand,400g,2052043506658,Food Cupboard,Biscuits,biscuits,false,false,true,,gluten|milk,false,0.89,true,0.26
+1411926,Medium Toothbrush,Own Brand,2 pack,2003422766064,Health & Beauty,Oral Care,toothbrush,,,,,,false,1.27,true,0.11
+1424765,Fresh Guacamole,Own Brand,150g,2070315606035,Chilled,Pizza & Dips,guac|guacamole,true,true,true,true,none,false,2.38,true,0.39
+1428980,Oven Chips,McCain,1.5kg,2088279268930,Frozen,Frozen Veg & Chips,chips|fries,true,true,true,true,none,false,2.64,false,0.33
+1494930,Witch Hat,Own Brand,each,2042717905221,Seasonal,Halloween,fancy dress|costume,,,,,,false,2.40,true,0.75
+1549908,Large Pork Pie,Own Brand,each,,Deli,Deli Counter,pork pie,false,false,false,false,gluten|eggs,false,2.82,true,0.25
+1651458,Lemon Cheesecake,Own Brand,450g,2025389409617,Frozen,Ice Cream & Desserts,cheesecake|dessert,false,false,true,,gluten|milk|eggs,false,2.00,true,0.81
+1656683,Crunchy Granola,Own Brand,500g,2098190719824,Food Cupboard,Breakfast Cereals,granola|cereal,false,true,true,true,gluten|nuts,false,3.33,true,0.88
+1725589,Washing Up Liquid,Fairy,433ml,2083734634527,Household,Cleaning,washing up|dish soap,,,,,,false,3.74,false,0.53
+1770130,Cloudy Lemonade,Own Brand,2l,2058854417022,Drinks,Soft Drinks,lemonade,true,true,true,,none,false,2.30,true,0.17
+1772899,Beef Lasagne,Own Brand,400g,2042900575323,Chilled,Ready Meals,lasagne|lasagna,false,false,false,,gluten|milk,false,2.52,true,0.18
+1783346,English Muffins,Own Brand,4 pack,2097969805461,Bakery,Rolls & Wraps,muffins,false,true,true,true,gluten,false,1.40,true,0.29
+1895915,Broccoli,Own Brand,350g,2063972026766,Fruit & Veg,Vegetables,brocoli,true,true,true,true,none,false,1.78,true,0.56
+1939744,Thick Bleach,Own Brand,750ml,2051972766386,Household,Cleaning,bleach,,,,,,false,4.63,true,0.86
+2052547,Cod Loin,Own Brand,per 100g,,Meat & Fish,Fish Counter,cod|fish,true,false,false,,fish,false,2.16,true,0.22
+2067076,Follow On Milk,Aptamil,800g,2074807508098,Baby,Baby Milk,formula|baby milk,true,false,true,true,milk,false,10.70,false,0.45
+2101785,Hungry Infant Milk,Cow & Gate,800g,2067924402813,Baby,Baby Milk,formula|baby milk,true,false,true,true,milk,false,10.63,false,0.60
+2138907,Gluten Free Penne,Free From,500g,2054959637501,Food Cupboard,"Pasta, Rice & Noodles",pasta|gf pasta,true,true,true,true,none,false,1.13,false,0.67
+2141243,Paracetamol 500mg,Own Brand,16 tablets,2049240556067,Health & Beauty,Medicines,paracetamol|painkillers,,,,,,false,2.34,true,0.78
+2179151,Macaroni Cheese,Own Brand,400g,2060143117179,Chilled,Ready Meals,mac and cheese,false,false,true,,gluten|milk,false,2.73,true,0.59
+2192195,Porridge Oats,Own Brand,1kg,2091250845945,Food Cupboard,Breakfast Cereals,oats|porridge,false,true,true,true,gluten,false,2.99,true,0.60
+2235764,Brown Onions,Own Brand,1kg,2032463054724,Fruit & Veg,Vegetables,onion,true,true,true,true,none,false,2.39,true,0.82
+2274628,First Infant Milk,Aptamil,800g,2066825690831,Baby,Baby Milk,formula|baby milk,true,false,true,true,milk,false,9.06,false,0.27
+2291362,Mouthwash,Listerine,500ml,2090212220615,Health & Beauty,Oral Care,mouthwash,,,,,,false,2.44,false,0.58
+2361977,Shower Gel,Radox,250ml,2040072505919,Health & Beauty,Hair & Body,body wash,,,,,,false,4.82,false,0.70
+2380030,Fruit Pastilles,Rowntree's,143g,2045216511146,Food Cupboard,Chocolate & Sweets,sweets,true,false,false,,none,false,0.85,false,0.11
+2487330,Chickpeas,Own Brand,400g,2008152781387,Food Cupboard,Tins & Cans,chickpea,true,true,true,true,none,false,1.30,true,0.06
+2627045,Easy Peeler Clementines,Own Brand,600g,2076626419203,Fruit & Veg,Fruit,clementine|satsuma|orange,true,true,true,true,none,false,1.98,true,0.92
+2719249,Halal Chicken Thighs,Own Brand,1kg,2027876038522,Meat & Fish,Fresh Meat,chicken|halal,true,false,false,true,none,false,3.89,true,0.30
+2731100,Dry Dog Food,Bakers,2kg,2064770595768,Pet,Pet Food & Care,dog food,,,,,,false,6.33,false,0.49
+2738528,Baking Paper,Own Brand,10m,2057726075131,Household,Home & Kitchen,parchment,,,,,,false,1.85,true,0.40
+2752988,White Bread Medium Sliced,Own Brand,800g,2071201677658,Bakery,Bread,bread|white bread|loaf,false,true,true,true,gluten,false,1.61,true,0.53
+2776148,Swing Bin Liners,Own Brand,20 pack,2044417900605,Household,Kitchen Roll & Toilet Tissue,bin bags|bin liners,,,,,,false,3.33,true,0.43
+2985040,Green Pesto,Own Brand,190g,2051523789444,Food Cupboard,Cooking Sauces,pesto,true,false,true,,milk|nuts,false,2.33,true,0.62
+3083618,Milk Chocolate Bar,Cadbury,110g,2084572587419,Food Cupboard,Chocolate & Sweets,chocolate,true,false,true,,milk,false,2.06,false,0.24
+3163000,Seeded Batch Loaf,Own Brand,800g,2014162448066,Bakery,Bread,bread|loaf,false,true,true,true,gluten|sesame,false,1.27,true,0.50
+3324179,Alcohol Free Lager,Own Brand,4 x 330ml,2045365444739,"Beer, Wine & Spirits",Beer & Cider,beer|alcohol free|lager,false,,,false,gluten,false,5.23,true,0.67
+3335630,Semi Skimmed Milk,Own Brand,2 pint,2059335422696,Dairy,Milk,milk|semi skimmed,true,false,true,true,milk,false,1.29,true,0.40
+3371823,Pepperoni Pizza,Own Brand,12 inch,2035189324393,Chilled,Pizza & Dips,pizza,false,false,false,false,gluten|milk,false,2.53,true,0.50
+3427175,Cream of Tomato Soup,Heinz,400g,2078934578108,Food Cupboard,Tins & Cans,soup,true,false,true,true,milk,false,1.72,false,0.51
+3441574,Baked Beans,Heinz,415g,2024705984302,Food Cupboard,Tins & Cans,beans|baked beans,true,true,true,true,none,false,1.22,false,0.24
+3486248,Beef Mince 5% Fat,Own Brand,500g,2058292992389,Meat & Fish,Fresh Meat,mince|beef,true,false,false,,none,false,5.37,true,0.86
+3568562,Crumpets,Own Brand,6 pack,2040244281139,Bakery,Rolls & Wraps,crumpet,false,true,true,true,gluten,false,1.47,true,0.51
+3583809,Antiseptic Cream,Savlon,30g,2045737035480,Health & Beauty,Medicines,antiseptic,,,,,,false,3.09,false,0.12
+3602838,Instant Coffee,Nescafe,200g,2054344313911,Food Cupboard,Tea & Coffee,coffee,true,true,true,true,none,false,3.15,false,0.44
+3733693,Sourdough Loaf,Own Brand,each,,Bakery,Bakery Counter,sourdough|bread,false,true,true,true,gluten,false,1.17,true,0.72
+3824395,Baby Rice,Cow & Gate,100g,2011855538868,Baby,Baby Care,baby food,true,true,true,true,none,false,1.30,false,0.41
+3841409,Vanilla Extract,Nielsen-Massey,60ml,2097728955642,Food Cupboard,Home Baking,vanilla,true,true,true,true,none,false,0.83,false,0.31
+3874903,Kombucha Ginger,Remedy,330ml,2032498790048,Drinks,Water & Juice,kombucha,true,true,true,,none,false,2.01,false,0.79
+4025484,Skimmed Milk,Own Brand,2 pint,2085184193425,Dairy,Milk,milk|skimmed,true,false,true,true,milk,false,0.97,true,0.07
+4058003,Cling Film,Own Brand,30m,2012995380577,Household,Home & Kitchen,clingfilm,,,,,,false,3.43,true,0.36
+4084142,Kitchen Roll,Plenty,2 pack,2064644851082,Household,Kitchen Roll & Toilet Tissue,kitchen towel,,,,,,false,3.01,false,0.84
+4215524,Basmati Rice,Tilda,1kg,2001874865137,Food Cupboard,"Pasta, Rice & Noodles",rice,true,true,true,true,none,false,2.62,false,0.21
+4244168,Gala Apples,Own Brand,6 pack,2060503737108,Fruit & Veg,Fruit,apple|apples,true,true,true,true,none,false,1.77,true,0.60
+4286290,Sea Salt Kettle Chips,Kettle,150g,2042442682312,Food Cupboard,Crisps & Snacks,crisps,false,true,true,true,none,false,2.58,false,0.59
+4298261,Digestive Biscuits,McVitie's,400g,2064612461022,Food Cupboard,Biscuits,digestives|biscuits,false,false,true,,gluten|milk,false,1.85,false,0.84
+4306564,Chocolate Ice Cream,Ben & Jerry's,465ml,2080476704174,Frozen,Ice Cream & Desserts,ice cream,true,false,true,,milk,false,3.58,false,0.53
+4342322,Everyday Conditioner,Own Brand,400ml,2007522573577,Health & Beauty,Hair & Body,conditioner,,,,,,false,3.35,true,0.34
+4370956,Gluten Free White Bread,Free From,400g,2065146991672,Bakery,Bread,bread|gf bread,true,false,true,true,eggs,false,1.89,false,0.31
+4422487,Mixed Vegetables,Own Brand,1kg,2022400805694,Frozen,Frozen Veg & Chips,frozen veg,true,true,true,true,none,false,2.15,true,0.44
+4446374,Fabric Plasters,Elastoplast,40 pack,2035474376496,Health & Beauty,Medicines,plasters|band aid,,,,,,false,1.86,false,0.10
+4488842,Milk Chocolate Digestives,McVitie's,300g,2054164755144,Food Cupboard,Biscuits,biscuits|chocolate biscuits,false,false,true,,gluten|milk,false,0.79,false,0.08
+4646480,Rice Pops,Own Brand,440g,2050615087710,Food Cupboard,Breakfast Cereals,cereal,false,true,true,true,gluten,false,3.37,true,0.07
+4654087,Pepsi Max Cola,Pepsi,500ml,2043726910497,Drinks,Soft Drinks,pepsi|cola|pepsi max cola,true,true,true,,none,false,1.33,false,0.51
+4707524,Still Spring Water,Own Brand,6 x 500ml,2056456865111,Drinks,Water & Juice,water,true,true,true,,none,false,1.20,true,0.84
+4711706,Organic Kale,Own Brand,200g,2027125013188,Fruit & Veg,Vegetables,kale,true,true,true,true,none,false,0.81,true,0.80
+4762766,Whole Milk,Own Brand,2 pint,2072962789017,Dairy,Milk,milk|full fat,true,false,true,true,milk,false,1.69,true,0.44
+4768378,Toilet Tissue,Andrex,9 roll,2007284879207,Household,Kitchen Roll & Toilet Tissue,toilet roll|loo roll,,,,,,false,3.68,false,0.87
+4843046,Rich Tea,Own Brand,300g,2058143432996,Food Cupboard,Biscuits,biscuits,false,false,true,,gluten|milk,false,2.26,true,0.61
+4867761,Salted Peanuts,Own Brand,200g,2016732341043,Food Cupboard,Crisps & Snacks,peanuts|nuts,true,true,true,true,peanuts,false,1.42,true,0.92
+4883332,Fruit Ice Lollies,Own Brand,6 pack,2059704934935,Frozen,Ice Cream & Desserts,lolly|lollies,true,true,true,,none,false,4.46,true,0.61
+4948902,Smoked Back Bacon,Own Brand,300g,2083866695250,Meat & Fish,Fresh Meat,bacon,true,false,false,false,none,false,5.30,true,0.60
+4949463,Premium Lager,Own Brand,4 x 440ml,2071021911680,"Beer, Wine & Spirits",Beer & Cider,beer|lager,false,,,false,gluten,true,3.25,true,0.31
+4976359,Baking Potatoes,Own Brand,4 pack,2033638229244,Fruit & Veg,Vegetables,potato|potatoes|spuds,true,true,true,true,none,false,1.61,true,0.43
+5030608,Kitchen Foil,Bacofoil,30m,2010528800653,Household,Home & Kitchen,foil,,,,,,false,2.76,false,0.28
+5078844,Salmon Fillet,Own Brand,per 100g,,Meat & Fish,Fish Counter,salmon|fish,true,false,false,,fish,false,2.62,true,0.30
+5095026,Natural Yogurt,Own Brand,500g,2082545452603,Dairy,Eggs & Yogurt,yogurt|yoghurt,true,false,true,true,milk,false,1.03,true,0.68
+5186196,Stain Remover,Vanish,1l,2056347806049,Household,Laundry,stain,,,,,,false,4.02,false,0.61
+5193066,Wholemeal Bread Medium Sliced,Own Brand,800g,2099814047446,Bakery,Bread,bread|brown bread|loaf,false,true,true,true,gluten,false,2.07,true,0.88
+5339448,Baby Wipes,Own Brand,3 x 64,2072424059078,Baby,Baby Care,wipes,,,,,,false,7.44,true,0.66
+5386566,Sparkling Water Lime,Own Brand,1l,2041184551801,Drinks,Water & Juice,fizzy water|water,true,true,true,,none,false,2.44,true,0.53
+5493319,Salt & Vinegar Crisps,Walkers,6 pack,2032863843928,Food Cupboard,Crisps & Snacks,crisps,false,true,true,true,none,false,1.76,false,0.45
+5548441,Halloween Sweets Tub,Own Brand,600g,2064880064956,Seasonal,Halloween,sweets|halloween,true,false,false,,none,false,5.66,true,0.85
+5598455,Apple Juice,Own Brand,1l,2010303106581,Drinks,Water & Juice,juice,true,true,true,,none,false,0.72,true,0.88
+5655212,Orange Squash,Robinsons,1l,2083573553362,Drinks,Soft Drinks,squash|cordial,true,true,true,,none,false,1.71,false,0.51
+5703246,Mint Imperials,Own Brand,200g,2041931706331,Food Cupboard,Chocolate & Sweets,mints|sweets,true,true,true,,none,false,1.27,true,0.12
+5728270,Mayonnaise,Hellmann's,400g,2015305762018,Food Cupboard,Condiments & Oils,mayo,true,false,true,true,eggs,false,3.19,false,0.39
+5801484,Smooth Orange Juice,Tropicana,1l,2009623329602,Drinks,Water & Juice,orange juice|oj|juice,true,true,true,,none,false,2.10,false,0.93
+5801942,Non Bio Washing Powder,Own Brand,1.4kg,2012004621462,Household,Laundry,washing powder|detergent,,,,,,false,5.36,true,0.12
+5941902,Everyday Tea Bags,Own Brand,80 pack,2041752702253,Food Cupboard,Tea & Coffee,tea|teabags,true,true,true,true,none,false,2.74,true,0.86
+5975681,Bran Flakes,Own Brand,750g,2050972176966,Food Cupboard,Breakfast Cereals,cereal,false,true,true,true,gluten,false,3.69,true,0.44
+6103504,All Butter Croissant,Own Brand,each,,Bakery,Bakery Counter,croissant,false,false,true,,gluten|milk|eggs,false,1.01,true,0.64
+6133055,Strawberry Yogurt,Muller,4 x 125g,2064253486934,Dairy,Eggs & Yogurt,yogurt|yoghurt,true,false,true,true,milk,false,2.82,false,0.78
+6141098,Blended Scotch Whisky,Famous Grouse,70cl,2020800730035,"Beer, Wine & Spirits",Spirits,whisky|whiskey,true,,,false,none,true,23.84,false,0.70
+6194814,Glow Sticks,Own Brand,15 pack,2049839179349,Seasonal,Halloween,glow,,,,,,false,5.81,true,0.08
+6375834,Sauvignon Blanc,Own Brand,75cl,2008609006087,"Beer, Wine & Spirits",Wine,wine|white wine,true,,,false,sulphites,true,11.17,true,0.38
+6460956,Semi Skimmed Milk,Own Brand,4 pint,2072541405208,Dairy,Milk,milk|semi skimmed,true,false,true,true,milk,false,1.19,true,0.89
+6497655,Tomato Ketchup,Heinz,460g,2056274427300,Food Cupboard,Condiments & Oils,ketchup|tomato sauce,true,true,true,true,none,false,1.66,false,0.36
+6499412,Lightly Salted Tortilla Chips,Own Brand,200g,2029811832905,Food Cupboard,Crisps & Snacks,nachos|tortilla chips,false,true,true,true,none,false,2.78,true,0.37
+6501396,Dark Chocolate 70%,Own Brand,100g,2067832929600,Food Cupboard,Chocolate & Sweets,chocolate,true,true,true,,none,false,1.42,true,0.22
+6501660,Strawberries,Own Brand,400g,2051025606454,Fruit & Veg,Fruit,strawberry,true,true,true,true,none,false,1.67,true,0.93
+6557846,Merlot,Own Brand,75cl,2013281811201,"Beer, Wine & Spirits",Wine,wine|red wine,true,,,false,sulphites,true,11.95,true,0.45
+6562279,Nappies Size 4,Pampers,44 pack,2003138163010,Baby,Baby Care,nappies|diapers,,,,,,false,4.31,false,0.18
+6585985,Everyday Shampoo,Own Brand,400ml,2020955138038,Health & Beauty,Hair & Body,shampoo,,,,,,false,4.41,true,0.87
+6695374,Mozzarella,Own Brand,125g,2079297450612,Dairy,Cheese & Butter,cheese,true,false,true,true,milk,false,1.60,true,0.58
+6726026,Dishwasher Tablets,Finish,30 pack,2007963360668,Household,Cleaning,dishwasher,,,,,,false,3.89,false,0.68
+6749151,Cold & Flu Capsules,Lemsip,16 pack,2061845702199,Health & Beauty,Medicines,cold|flu,,,,,,false,3.11,false,0.52
+6798915,Vegetable Oil,Own Brand,1l,2029563810985,Food Cupboard,Condiments & Oils,oil,true,true,true,true,none,false,3.57,true,0.45
+6929532,Pale Ale,Own Brand,500ml,2045692723200,"Beer, Wine & Spirits",Beer & Cider,beer|ipa,false,,,false,gluten,true,6.36,true,0.65
+6979912,Apple Cider,Own Brand,4 x 500ml,2058452600352,"Beer, Wine & Spirits",Beer & Cider,cider,true,,,false,sulphites,true,6.43,true,0.91
+7011583,Ready Salted Crisps,Walkers,6 pack,2032723388965,Food Cupboard,Crisps & Snacks,crisps,false,true,true,true,none,false,3.00,false,0.71
+7047103,Chopped Tomatoes,Own Brand,400g,2079698833410,Food Cupboard,Tins & Cans,tinned tomatoes|tomatoes,true,true,true,true,none,false,1.11,true,0.28
+7066586,Sparkling Water,Own Brand,2l,2093094807660,Drinks,Water & Juice,fizzy water|water,true,true,true,,none,false,0.98,true,0.67
+7123456,Coca-Cola Classic,Coca-Cola,500ml,2040634867035,Drinks,Soft Drinks,coke|cola|coca cola,true,true,true,,none,false,1.65,false,0.82
+7130563,Apple & Banana Puree,Ella's Kitchen,4 x 100g,2092527268627,Baby,Baby Care,baby food,true,true,true,true,none,false,3.67,false,0.14
+7163858,Fluoride Toothpaste,Colgate,75ml,2052319213341,Health & Beauty,Oral Care,toothpaste,,,,,,false,1.48,false,0.90
+7165343,Mixed Olives,Own Brand,per 100g,,Deli,Deli Counter,olives,true,true,true,true,none,false,1.67,true,0.93
+7236507,Caster Sugar,Silver Spoon,1kg,2061444968422,Food Cupboard,Home Baking,sugar,true,true,true,true,none,false,1.61,false,0.16
+7282126,Vanilla Ice Cream,Own Brand,1l,2075160409008,Frozen,Ice Cream & Desserts,ice cream,true,false,true,,milk,false,2.07,true,0.76
+7365873,Multi Surface Spray,Dettol,750ml,2048764794757,Household,Cleaning,cleaner|spray,,,,,,false,3.36,false,0.67
+7398965,Roll On Deodorant,Sure,50ml,2067974726792,Health & Beauty,Hair & Body,deodorant|deo,,,,,,false,3.65,false,0.93
+7424925,Coca-Cola Zero Sugar,Coca-Cola,500ml,2005828953437,Drinks,Soft Drinks,coke|cola|coke zero,true,true,true,,none,false,1.64,false,0.34
+7544549,Self Raising Flour,Own Brand,1.5kg,2080523187059,Food Cupboard,Home Baking,flour,false,true,true,true,gluten,false,3.03,true,0.31
+7570251,Tikka Masala Sauce,Patak's,450g,2032556166815,Food Cupboard,Cooking Sauces,curry sauce,true,false,true,true,milk,false,2.99,false,0.41
+7636068,Large Free Range Eggs,Happy Egg,6 pack,2063578687477,Dairy,Eggs & Yogurt,eggs|egg,true,false,true,true,eggs,false,3.29,false,0.81
+7658853,Oat Drink,Oatly,1l,2079156338204,Dairy,Milk,oat milk|milk alternative,false,true,true,true,gluten,false,1.15,false,0.16
+7736545,Dog Treats,Dentastix,7 pack,2067602676079,Pet,Pet Food & Care,dog treats,,,,,,false,5.96,false,0.09
+7767430,Tuna Chunks in Spring Water,Own Brand,145g,2005104030852,Food Cupboard,Tins & Cans,tuna|fish,true,false,false,true,fish,false,0.69,true,0.59
+7881790,Clumping Cat Litter,Own Brand,10l,2075430467011,Pet,Pet Food & Care,cat litter,,,,,,false,4.54,true,0.62
+7914705,Prosecco,Own Brand,75cl,2010169950250,"Beer, Wine & Spirits",Wine,fizz|sparkling wine,true,,,false,sulphites,true,8.42,true,0.26
+7949102,Dental Floss,Own Brand,50m,2052469449669,Health & Beauty,Oral Care,floss,,,,,,false,2.96,true,0.73
+7962134,Carrots,Own Brand,1kg,2045784857202,Fruit & Veg,Vegetables,carrot,true,true,true,true,none,false,2.07,true,0.46
+7979529,Honey Roast Ham,Own Brand,per 100g,,Deli,Deli Counter,ham,true,false,false,false,none,false,2.60,true,0.59
+8001400,Mature Cheddar,Own Brand,400g,2014986098850,Dairy,Cheese & Butter,cheese|cheddar,true,false,true,true,milk,false,1.50,true,0.14
+8024866,Pork Sausages,Own Brand,8 pack,2031001932777,Meat & Fish,Fresh Meat,sausages|bangers,false,false,false,false,gluten|sulphites,false,3.25,true,0.14
+8059072,Sweetcorn,Own Brand,750g,2087566578974,Frozen,Frozen Veg & Chips,corn,true,true,true,true,none,false,2.24,true,0.09
+8151715,Garden Peas,Own Brand,900g,2008119489134,Frozen,Frozen Veg & Chips,peas|frozen peas,true,true,true,true,none,false,2.49,true,0.21
+8176786,Facial Tissues,Kleenex,3 pack,2032594009914,Household,Kitchen Roll & Toilet Tissue,tissues,,,,,,false,3.35,false,0.21
+8234538,Free Range Eggs,Own Brand,6 pack,2008866905758,Dairy,Eggs & Yogurt,eggs|egg,true,false,true,true,eggs,false,2.51,true,0.06
+8454756,Baking Powder,Own Brand,170g,2052133130718,Food Cupboard,Home Baking,baking,true,true,true,true,none,false,0.93,true,0.95
+8502747,King Prawns,Own Brand,per 100g,,Meat & Fish,Fish Counter,prawns|shrimp,true,false,false,,crustaceans,false,3.48,true,0.70
+8510133,Sweet & Sour Sauce,Own Brand,500g,2093360537536,Food Cupboard,Cooking Sauces,sauce,true,true,true,true,none,false,1.57,true,0.94
+8515543,Chicken Tikka Masala,Own Brand,400g,2058795647601,Chilled,Ready Meals,curry|tikka,false,false,false,,gluten|milk,false,2.74,true,0.58
+8522594,Spaghetti,Own Brand,500g,2037955025480,Food Cupboard,"Pasta, Rice & Noodles",pasta,false,true,true,true,gluten,false,1.88,true,0.91
+8566955,Plain Flour,Own Brand,1.5kg,2008843839434,Food Cupboard,Home Baking,flour,false,true,true,true,gluten,false,1.14,true,0.44
+8574739,Margherita Pizza,Own Brand,12 inch,2014427636405,Chilled,Pizza & Dips,pizza,false,false,true,,gluten|milk,false,3.97,true,0.76
+8580405,Soft White Rolls,Own Brand,6 pack,2009576180114,Bakery,Rolls & Wraps,rolls|baps,false,true,true,true,gluten,false,1.14,true,0.08
+8668862,Bio Laundry Liquid,Persil,1.3l,2016742056043,Household,Laundry,washing liquid|detergent,,,,,,false,6.64,false,0.30
+8669481,Bananas,Own Brand,5 pack,2082746378955,Fruit & Veg,Fruit,banana,true,true,true,true,none,false,0.67,true,0.52
+8684559,Free Range Eggs,Own Brand,12 pack,2030855132746,Dairy,Eggs & Yogurt,eggs|egg,true,false,true,true,eggs,false,1.36,true,0.78
+8728778,Egg Noodles,Own Brand,250g,2098617679786,Food Cupboard,"Pasta, Rice & Noodles",noodles,false,false,true,true,gluten|eggs,false,1.29,true,0.75
+8731330,Green Tea,Twinings,40 pack,2002639407227,Food Cupboard,Tea & Coffee,tea,true,true,true,true,none,false,5.79,false,0.49
+8797494,Table Salt,Own Brand,750g,2013652201044,Food Cupboard,Condiments & Oils,salt,true,true,true,true,none,false,1.41,true,0.35
+8818284,Pumpkin Carving Kit,Own Brand,5 piece,2097605647417,Seasonal,Halloween,pumpkin,,,,,,false,4.26,true,0.06
+8886016,Salted Butter,Own Brand,250g,2066088393425,Dairy,Cheese & Butter,butter,true,false,true,true,milk,false,3.20,true,0.33
+8913505,Cottage Pie,Own Brand,400g,2004187340339,Chilled,Ready Meals,pie,false,false,false,,gluten|milk,false,2.51,true,0.35
+8946195,Blueberries,Own Brand,150g,2050627889708,Fruit & Veg,Fruit,blueberry,true,true,true,true,none,false,2.72,true,0.31
+8966957,Spreadable Butter,Lurpak,500g,2002612435070,Dairy,Cheese & Butter,butter|spread,true,false,true,true,milk,false,1.91,false,0.30
+8973011,Halloumi,Own Brand,225g,2091189395313,Dairy,Cheese & Butter,cheese,true,false,true,true,milk,false,1.78,true,0.86
+9038772,Corn Flakes,Kellogg's,500g,2031860088080,Food Cupboard,Breakfast Cereals,cornflakes|cereal,false,true,true,true,gluten,false,2.55,false,0.22
+9058530,London Dry Gin,Gordon's,70cl,2044045673476,"Beer, Wine & Spirits",Spirits,gin,true,,,false,none,true,15.23,false,0.45
+9116608,Diet Coke,Coca-Cola,500ml,2050711329905,Drinks,Soft Drinks,coke|cola|diet coke,true,true,true,,none,false,1.12,false,0.64
+9210954,Plain Tortilla Wraps,Own Brand,8 pack,2072475028450,Bakery,Rolls & Wraps,wraps|tortilla,false,true,true,true,gluten,false,0.93,true,0.62
+9262383,Vodka,Smirnoff,70cl,2036422921317,"Beer, Wine & Spirits",Spirits,vodka,true,,,false,none,true,14.80,false,0.42
+9399502,Ground Coffee,Own Brand,227g,2080187042862,Food Cupboard,Tea & Coffee,coffee,true,true,true,true,none,false,2.34,true,0.09
+9456212,Extra Virgin Olive Oil,Own Brand,500ml,2030556294750,Food Cupboard,Condiments & Oils,olive oil|oil,true,true,true,true,none,false,3.42,true,0.25
+9514968,Cat Food Pouches,Felix,12 pack,2077995197853,Pet,Pet Food & Care,cat food,,,,,,false,2.07,false,0.09
+9579624,Food Bags,Own Brand,50 pack,2055780070567,Household,Home & Kitchen,freezer bags,,,,,,false,1.36,true,0.14
+9672366,Ibuprofen 200mg,Own Brand,16 tablets,2036247848417,Health & Beauty,Medicines,ibuprofen|painkillers,,,,,,false,4.01,true,0.61
+9813599,Cinnamon Swirl,Own Brand,each,,Bakery,Bakery Counter,cinnamon bun,false,false,true,,gluten|milk|eggs,false,2.13,true,0.50
+9832443,Antibacterial Hand Wash,Carex,250ml,2097450759136,Health & Beauty,Hair & Body,soap|hand soap,,,,,,false,3.03,false,0.72
+9869432,Houmous,Own Brand,200g,2099776561226,Chilled,Pizza & Dips,hummus|houmous,true,true,true,true,sesame,false,1.83,true,0.59
+9977210,Fabric Conditioner,Comfort,1.3l,2059041362347,Household,Laundry,softener,,,,,,false,6.18,false,0.70
+9997145,Tomato & Basil Pasta Sauce,Dolmio,500g,2085686410730,Food Cupboard,Cooking Sauces,pasta sauce,true,true,true,true,none,false,1.88,false,0.46

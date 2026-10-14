@@ -2,6 +2,7 @@
 
 import streamlit as st
 
+from config import MAX_QUERY_CHARS
 from ui.view import floor_names, start_options
 
 
@@ -36,6 +37,7 @@ def search_box() -> str | None:
             "What are you looking for?",
             key="query",
             placeholder="e.g. milk, bread, eggs — or 'something for a headache'",
+            max_chars=MAX_QUERY_CHARS,
         )
         submitted = st.form_submit_button("Search", key="search", type="primary", width="stretch")
     return query if submitted and query.strip() else None

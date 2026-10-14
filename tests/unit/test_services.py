@@ -66,7 +66,7 @@ def test_ac_21_fr_11_a_product_in_two_places_reports_both(demo):
     "name, node, kind",
     [("Salmon Fillet", "F0-CTR-02", "COUNTER"), ("London Dry Gin", "F1-CAB-01", "ASSISTED")],
 )
-def test_fr_12_ec_22_ec_23_counters_and_cabinets_have_no_shelf_and_need_a_colleague(
+def test_ac_16_fr_12_ec_22_ec_23_counters_and_cabinets_have_no_shelf_and_need_a_colleague(
     demo, name, node, kind
 ):
     (loc,) = Planogram(demo).locations(sku_named(demo, name))

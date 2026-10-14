@@ -174,21 +174,7 @@ def build_rows(seed: int) -> dict[str, list[dict[str, str]]]:
     zones = {(a.level, a.number): a.category for a in AISLES}
     nodes, edges = build_map(shelf_counts, zones)
 
-    def num(v):
-        return "" if v is None else str(v)
-
-    node_rows = [{
-        "node_id": n.node_id, "node_type": n.node_type, "level": str(n.level),
-        "floor_name": n.floor_name, "aisle": num(n.aisle), "rack": num(n.rack),
-        "shelf_count": num(n.shelf_count), "zone": n.zone,
-        "x_m": f"{n.x_m:.1f}", "y_m": f"{n.y_m:.1f}", "is_open": "true",
-    } for n in nodes]  # fmt: skip
-    edge_rows = [{
-        "edge_id": f"E{i:04}", "from_node": e.from_node, "to_node": e.to_node, "kind": e.kind,
-        "weight_m": f"{e.weight_m:.1f}", "penalty_m": f"{e.penalty_m:.1f}",
-        "bidirectional": "true", "step_free": _bool(e.step_free), "trolley": _bool(e.trolley),
-        "is_open": "true",
-    } for i, e in enumerate(edges, start=1)]  # fmt: skip
+    node_rows_, edge_rows_ = node_rows(nodes), edge_rows(edges)
 
     def pk(row):
         return (row["sku"], row["node_id"], row["shelf_no"], row["facing_from"])
@@ -198,9 +184,31 @@ def build_rows(seed: int) -> dict[str, list[dict[str, str]]]:
         "products.csv": sorted(products, key=lambda r: r["sku"]),
         "stock.csv": sorted(stock, key=lambda r: r["sku"]),
         "planogram.csv": sorted(placements, key=pk),
-        "map_nodes.csv": sorted(node_rows, key=lambda r: r["node_id"]),
-        "map_edges.csv": edge_rows,
+        "map_nodes.csv": sorted(node_rows_, key=lambda r: r["node_id"]),
+        "map_edges.csv": edge_rows_,
     }
+
+
+def _num(v):
+    return "" if v is None else str(v)
+
+
+def node_rows(nodes) -> list[dict[str, str]]:
+    return [{
+        "node_id": n.node_id, "node_type": n.node_type, "level": str(n.level),
+        "floor_name": n.floor_name, "aisle": _num(n.aisle), "rack": _num(n.rack),
+        "shelf_count": _num(n.shelf_count), "zone": n.zone,
+        "x_m": f"{n.x_m:.1f}", "y_m": f"{n.y_m:.1f}", "is_open": "true",
+    } for n in nodes]  # fmt: skip
+
+
+def edge_rows(edges) -> list[dict[str, str]]:
+    return [{
+        "edge_id": f"E{i:04}", "from_node": e.from_node, "to_node": e.to_node, "kind": e.kind,
+        "weight_m": f"{e.weight_m:.1f}", "penalty_m": f"{e.penalty_m:.1f}",
+        "bidirectional": "true", "step_free": _bool(e.step_free), "trolley": _bool(e.trolley),
+        "is_open": "true",
+    } for i, e in enumerate(edges, start=1)]  # fmt: skip
 
 
 def to_csv(name: str, rows: list[dict[str, str]]) -> str:
@@ -211,12 +219,20 @@ def to_csv(name: str, rows: list[dict[str, str]]) -> str:
     return out.getvalue()
 
 
-def build_store(seed: int = DEFAULT_SEED) -> dict[str, str]:
-    """The six files as text, keyed by file name."""
-    return {name: to_csv(name, rows) for name, rows in build_rows(seed).items()}
+STORES = {"demo": STORE_ID, "port": "SBY-PORT-002"}
 
 
-def write_store(folder: Path, seed: int = DEFAULT_SEED) -> None:
+def build_store(seed: int = DEFAULT_SEED, store: str = "demo") -> dict[str, str]:
+    """The six files as text, keyed by file name. ``store`` is "demo" or "port"."""
+    rows = build_rows(seed)
+    if store == "port":
+        from datagen.port import build_port_rows
+
+        rows = build_port_rows(rows)
+    return {name: to_csv(name, r) for name, r in rows.items()}
+
+
+def write_store(folder: Path, seed: int = DEFAULT_SEED, store: str = "demo") -> None:
     folder.mkdir(parents=True, exist_ok=True)
-    for name, text in build_store(seed).items():
+    for name, text in build_store(seed, store).items():
         (folder / name).write_bytes(text.encode("utf-8"))

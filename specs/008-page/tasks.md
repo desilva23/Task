@@ -26,3 +26,4 @@ description: "Task list for Phase 7 — the Streamlit page"
      (AC-27 with the model on).
   3. Floor changes are drawn as one arrow per core; the directions list names the connector.
   4. Theme colour teal (`.streamlit/config.toml`, committed; `secrets.toml` stays ignored).
+- **Gate approved by the owner, 2026-10-14.**

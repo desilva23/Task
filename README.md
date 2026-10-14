@@ -23,6 +23,10 @@ carries a requirements register and the LLD still carries the API contracts):
 · [Low-level design](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) — schemas, node contracts, algorithms, API
 · [Architecture note](https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C) — LangGraph graph, store model, routing
 
+**Running the app.** `uv run streamlit run app.py` — add `.streamlit/secrets.toml` with
+`GROQ_API_KEY = "…"` for the model, or run without it on the deterministic wording.
+Deploying: [`docs/deploy.md`](docs/deploy.md).
+
 **Running the checks.** Needs [uv](https://docs.astral.sh/uv/); it fetches Python 3.12 itself.
 
 ```bash

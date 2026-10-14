@@ -693,6 +693,7 @@ error in §12 that refuses to start.
 
 ```python
 MIN_QUERY_CHARS     = 2       # EC-01
+MAX_QUERY_CHARS     = 1000    # NFR-06 — over-long input is cut, and the cut is said
 MAX_BATCH_TERMS     = 30      # EC-06
 NL_WORD_THRESHOLD   = 3       # set live in Phase 6 — four-word requests reach the model
 BM25_K1, BM25_B     = 1.2, 0.5

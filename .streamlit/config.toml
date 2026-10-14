@@ -4,6 +4,7 @@ primaryColor = "#0a7d74"
 
 [client]
 toolbarMode = "minimal"
+showErrorDetails = "none"  # never a stack trace on the page (AC-13)
 
 [browser]
 gatherUsageStats = false

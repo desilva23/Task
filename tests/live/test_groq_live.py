@@ -73,3 +73,27 @@ def test_fr_04_a_sentence_reaches_real_products():
     assert cands and set(cands) <= real
     categories = {services().catalogue.by_sku(k).aisle_category for k in cands}
     print(f"\n  categories offered: {sorted(categories)}")
+
+
+def test_ac_12_live_one_product_and_ten_products_inside_budget():
+    """Three runs each with GroqCloud — kept small for the free tier's 8,000 tokens a minute."""
+    names = ["Bananas", "Carrots", "Whole Milk", "Baked Beans", "Fusilli", "Coca-Cola Classic",
+             "Everyday Shampoo", "Toilet Tissue", "Dental Floss", "Salmon Fillet"]  # fmt: skip
+    j = Journey(services(), groq())
+    one, ten = [], []
+    for i in range(3):
+        t = time.perf_counter()
+        j.run_query(f"p1-{i}", "Coca-Cola Classic")
+        one.append(time.perf_counter() - t)
+        t = time.perf_counter()
+        out = j.run_query(f"p10-{i}", ", ".join(names))
+        while out.pending:
+            out = j.resume(
+                f"p10-{i}", {q["index"]: q["options"][0]["sku"] for q in out.pending["questions"]}
+            )
+        j.plan_route(f"p10r-{i}", list(dict.fromkeys(out.state["resolved"].values())))
+        ten.append(time.perf_counter() - t)
+    print(
+        f"\n  live: one product {[round(x, 2) for x in one]} s · ten {[round(x, 2) for x in ten]} s"
+    )
+    assert max(one) < 5 and max(ten) < 10

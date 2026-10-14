@@ -12,7 +12,7 @@ from dataclasses import dataclass
 
 RACKS_PER_AISLE = 6
 AISLE_SPACING_M = 6.0
-NORTH_Y, FIRST_RACK_Y, RACK_STEP_M, SOUTH_Y = 6.0, 9.0, 3.2, 28.0
+NORTH_Y, FIRST_RACK_Y, RACK_STEP_M = 6.0, 9.0, 3.2
 REAR_CORE_X = 90.0  # beyond the widest floor's last aisle, so it lines up on every floor
 
 LIFT_WEIGHT_M, LIFT_PENALTY_M = 6.0, 25.0  # a ~30 s wait as its walking equivalent
@@ -82,30 +82,43 @@ def rack_id(level: int, aisle: int, rack: int) -> str:
     return f"F{level}-A{aisle:02}-R{rack:02}"
 
 
-def build_map(shelf_counts: dict[tuple[int, int], int], zones: dict[tuple[int, int], str]):
-    """Nodes and edges for FLOORS. ``shelf_counts`` and ``zones`` are keyed by (level, aisle)."""
+def south_y(racks: int) -> float:
+    return round(FIRST_RACK_Y + RACK_STEP_M * (racks - 1) + 3.0, 1)
+
+
+def build_map(
+    shelf_counts: dict[tuple[int, int], int],
+    zones: dict[tuple[int, int], str],
+    floors=FLOORS,
+    extras=EXTRAS,
+    racks: int = RACKS_PER_AISLE,
+    rear_core_x: float = REAR_CORE_X,
+):
+    """Nodes and edges for ``floors``. ``shelf_counts`` and ``zones`` are keyed by (level, aisle).
+    The defaults are the demo store; the portability store passes its own shape (FR-25)."""
     nodes: list[Node] = []
-    floor_of = {f.level: f.name for f in FLOORS}
+    floor_of = {f.level: f.name for f in floors}
+    south = south_y(racks)
 
     def add(node_id, node_type, level, x, y, zone, aisle=None, rack=None, shelves=None):
         nodes.append(
             Node(node_id, node_type, level, floor_of[level], aisle, rack, shelves, zone, x, y)
         )
 
-    for f in FLOORS:
+    for f in floors:
         for a in range(1, f.aisles + 1):
             x, zone = AISLE_SPACING_M * a, zones[(f.level, a)]
             add(aisle_id(f.level, a, "N"), "aisle_end", f.level, x, NORTH_Y, zone, aisle=a)
-            for r in range(1, RACKS_PER_AISLE + 1):
+            for r in range(1, racks + 1):
                 y = round(FIRST_RACK_Y + RACK_STEP_M * (r - 1), 1)
                 shelves = shelf_counts[(f.level, a)]
                 add(rack_id(f.level, a, r), "rack", f.level, x, y, zone, a, r, shelves)
-            add(aisle_id(f.level, a, "S"), "aisle_end", f.level, x, SOUTH_Y, zone, aisle=a)
-        add(f"F{f.level}-X01", "junction", f.level, 0.0, SOUTH_Y, "Front Corridor")
-        add(f"F{f.level}-X02", "junction", f.level, REAR_CORE_X, NORTH_Y, "Rear Corridor")
+            add(aisle_id(f.level, a, "S"), "aisle_end", f.level, x, south, zone, aisle=a)
+        add(f"F{f.level}-X01", "junction", f.level, 0.0, south, "Front Corridor")
+        add(f"F{f.level}-X02", "junction", f.level, rear_core_x, NORTH_Y, "Rear Corridor")
         add(f"F{f.level}-CORE-FRONT", "core", f.level, 0.0, 32.0, "Front Core")
-        add(f"F{f.level}-CORE-REAR", "core", f.level, REAR_CORE_X, 2.0, "Rear Core")
-    for node_id, node_type, x, y, zone, _ in EXTRAS:
+        add(f"F{f.level}-CORE-REAR", "core", f.level, rear_core_x, 2.0, "Rear Core")
+    for node_id, node_type, x, y, zone, _ in extras:
         add(node_id, node_type, int(node_id[1]), x, y, zone)
 
     at = {n.node_id: n for n in nodes}
@@ -115,11 +128,11 @@ def build_map(shelf_counts: dict[tuple[int, int], int], zones: dict[tuple[int, i
         return Edge(a, b, kind, round(d, 1))
 
     edges: list[Edge] = []
-    for f in FLOORS:
+    for f in floors:
         lv, n = f.level, f.aisles
         for a in range(1, n + 1):
             chain = [aisle_id(lv, a, "N")]
-            chain += [rack_id(lv, a, r) for r in range(1, RACKS_PER_AISLE + 1)]
+            chain += [rack_id(lv, a, r) for r in range(1, racks + 1)]
             chain += [aisle_id(lv, a, "S")]
             edges += [walk(p, q, "aisle") for p, q in zip(chain, chain[1:], strict=False)]
         for end in ("N", "S"):
@@ -134,10 +147,10 @@ def build_map(shelf_counts: dict[tuple[int, int], int], zones: dict[tuple[int, i
             walk(f"F{lv}-X02", f"F{lv}-CORE-REAR", "corridor"),
         ]
     for core in ("FRONT", "REAR"):
-        for lower in range(len(FLOORS) - 1):
+        for lower in range(len(floors) - 1):
             a, b = f"F{lower}-CORE-{core}", f"F{lower + 1}-CORE-{core}"
             edges.append(Edge(a, b, "lift", LIFT_WEIGHT_M, LIFT_PENALTY_M))
             edges.append(Edge(a, b, "stairs", STAIRS_WEIGHT_M, step_free=False, trolley=False))
-    for node_id, *_, link in EXTRAS:
+    for node_id, *_, link in extras:
         edges.append(walk(node_id, link, "corridor"))
     return nodes, edges

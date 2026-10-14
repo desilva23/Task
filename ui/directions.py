@@ -4,6 +4,7 @@ drawn from the same route (FR-20, AC-22)."""
 import streamlit as st
 
 from ui.floorplate import floor_plates
+from ui.text import md
 
 
 def route(services, state: dict) -> None:
@@ -12,11 +13,11 @@ def route(services, state: dict) -> None:
         return
     st.subheader("Your route")
     if r["kind"] == "none":
-        st.warning(r["message"])
+        st.warning(md(r["message"]))
         return
-    st.markdown("\n".join(f"{i}. {line}" for i, line in enumerate(state["directions"], 1)))
+    st.markdown("\n".join(f"{i}. {md(line)}" for i, line in enumerate(state["directions"], 1)))
     for item in r.get("excluded") or []:
-        st.markdown(f"- {item['message']}")
+        st.markdown(f"- {md(item['message'])}")
     if r["kind"] == "multi":
         st.caption(
             "Why this order: the highest floor first, one pass per floor, ending at the checkouts."

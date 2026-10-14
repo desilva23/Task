@@ -1,0 +1,126 @@
+node_id,node_type,level,floor_name,aisle,rack,shelf_count,zone,x_m,y_m,is_open
+F0-A01-N,aisle_end,0,Ground Floor,1,,,Fruit · Vegetables · Bread,6.0,6.0,true
+F0-A01-R01,rack,0,Ground Floor,1,1,5,Fruit · Vegetables · Bread,6.0,9.0,true
+F0-A01-R02,rack,0,Ground Floor,1,2,5,Fruit · Vegetables · Bread,6.0,12.2,true
+F0-A01-R03,rack,0,Ground Floor,1,3,5,Fruit · Vegetables · Bread,6.0,15.4,true
+F0-A01-R04,rack,0,Ground Floor,1,4,5,Fruit · Vegetables · Bread,6.0,18.6,true
+F0-A01-R05,rack,0,Ground Floor,1,5,5,Fruit · Vegetables · Bread,6.0,21.8,true
+F0-A01-S,aisle_end,0,Ground Floor,1,,,Fruit · Vegetables · Bread,6.0,24.8,true
+F0-A02-N,aisle_end,0,Ground Floor,2,,,Rolls & Wraps · Milk · Cheese & Butter,12.0,6.0,true
+F0-A02-R01,rack,0,Ground Floor,2,1,5,Rolls & Wraps · Milk · Cheese & Butter,12.0,9.0,true
+F0-A02-R02,rack,0,Ground Floor,2,2,5,Rolls & Wraps · Milk · Cheese & Butter,12.0,12.2,true
+F0-A02-R03,rack,0,Ground Floor,2,3,5,Rolls & Wraps · Milk · Cheese & Butter,12.0,15.4,true
+F0-A02-R04,rack,0,Ground Floor,2,4,5,Rolls & Wraps · Milk · Cheese & Butter,12.0,18.6,true
+F0-A02-R05,rack,0,Ground Floor,2,5,5,Rolls & Wraps · Milk · Cheese & Butter,12.0,21.8,true
+F0-A02-S,aisle_end,0,Ground Floor,2,,,Rolls & Wraps · Milk · Cheese & Butter,12.0,24.8,true
+F0-A03-N,aisle_end,0,Ground Floor,3,,,Eggs & Yogurt · Fresh Meat,18.0,6.0,true
+F0-A03-R01,rack,0,Ground Floor,3,1,5,Eggs & Yogurt · Fresh Meat,18.0,9.0,true
+F0-A03-R02,rack,0,Ground Floor,3,2,5,Eggs & Yogurt · Fresh Meat,18.0,12.2,true
+F0-A03-R03,rack,0,Ground Floor,3,3,5,Eggs & Yogurt · Fresh Meat,18.0,15.4,true
+F0-A03-R04,rack,0,Ground Floor,3,4,5,Eggs & Yogurt · Fresh Meat,18.0,18.6,true
+F0-A03-R05,rack,0,Ground Floor,3,5,5,Eggs & Yogurt · Fresh Meat,18.0,21.8,true
+F0-A03-S,aisle_end,0,Ground Floor,3,,,Eggs & Yogurt · Fresh Meat,18.0,24.8,true
+F0-A04-N,aisle_end,0,Ground Floor,4,,,Ready Meals · Pizza & Dips,24.0,6.0,true
+F0-A04-R01,rack,0,Ground Floor,4,1,5,Ready Meals · Pizza & Dips,24.0,9.0,true
+F0-A04-R02,rack,0,Ground Floor,4,2,5,Ready Meals · Pizza & Dips,24.0,12.2,true
+F0-A04-R03,rack,0,Ground Floor,4,3,5,Ready Meals · Pizza & Dips,24.0,15.4,true
+F0-A04-R04,rack,0,Ground Floor,4,4,5,Ready Meals · Pizza & Dips,24.0,18.6,true
+F0-A04-R05,rack,0,Ground Floor,4,5,5,Ready Meals · Pizza & Dips,24.0,21.8,true
+F0-A04-S,aisle_end,0,Ground Floor,4,,,Ready Meals · Pizza & Dips,24.0,24.8,true
+F0-A05-N,aisle_end,0,Ground Floor,5,,,Frozen Veg & Chips · Ice Cream & Desserts,30.0,6.0,true
+F0-A05-R01,rack,0,Ground Floor,5,1,5,Frozen Veg & Chips · Ice Cream & Desserts,30.0,9.0,true
+F0-A05-R02,rack,0,Ground Floor,5,2,5,Frozen Veg & Chips · Ice Cream & Desserts,30.0,12.2,true
+F0-A05-R03,rack,0,Ground Floor,5,3,5,Frozen Veg & Chips · Ice Cream & Desserts,30.0,15.4,true
+F0-A05-R04,rack,0,Ground Floor,5,4,5,Frozen Veg & Chips · Ice Cream & Desserts,30.0,18.6,true
+F0-A05-R05,rack,0,Ground Floor,5,5,5,Frozen Veg & Chips · Ice Cream & Desserts,30.0,21.8,true
+F0-A05-S,aisle_end,0,Ground Floor,5,,,Frozen Veg & Chips · Ice Cream & Desserts,30.0,24.8,true
+F0-A06-N,aisle_end,0,Ground Floor,6,,,Breakfast Cereals · Tea & Coffee,36.0,6.0,true
+F0-A06-R01,rack,0,Ground Floor,6,1,5,Breakfast Cereals · Tea & Coffee,36.0,9.0,true
+F0-A06-R02,rack,0,Ground Floor,6,2,5,Breakfast Cereals · Tea & Coffee,36.0,12.2,true
+F0-A06-R03,rack,0,Ground Floor,6,3,5,Breakfast Cereals · Tea & Coffee,36.0,15.4,true
+F0-A06-R04,rack,0,Ground Floor,6,4,5,Breakfast Cereals · Tea & Coffee,36.0,18.6,true
+F0-A06-R05,rack,0,Ground Floor,6,5,5,Breakfast Cereals · Tea & Coffee,36.0,21.8,true
+F0-A06-S,aisle_end,0,Ground Floor,6,,,Breakfast Cereals · Tea & Coffee,36.0,24.8,true
+F0-A07-N,aisle_end,0,Ground Floor,7,,,"Tins & Cans · Pasta, Rice & Noodles",42.0,6.0,true
+F0-A07-R01,rack,0,Ground Floor,7,1,5,"Tins & Cans · Pasta, Rice & Noodles",42.0,9.0,true
+F0-A07-R02,rack,0,Ground Floor,7,2,5,"Tins & Cans · Pasta, Rice & Noodles",42.0,12.2,true
+F0-A07-R03,rack,0,Ground Floor,7,3,5,"Tins & Cans · Pasta, Rice & Noodles",42.0,15.4,true
+F0-A07-R04,rack,0,Ground Floor,7,4,5,"Tins & Cans · Pasta, Rice & Noodles",42.0,18.6,true
+F0-A07-R05,rack,0,Ground Floor,7,5,5,"Tins & Cans · Pasta, Rice & Noodles",42.0,21.8,true
+F0-A07-S,aisle_end,0,Ground Floor,7,,,"Tins & Cans · Pasta, Rice & Noodles",42.0,24.8,true
+F0-A08-N,aisle_end,0,Ground Floor,8,,,Cooking Sauces · Condiments & Oils,48.0,6.0,true
+F0-A08-R01,rack,0,Ground Floor,8,1,5,Cooking Sauces · Condiments & Oils,48.0,9.0,true
+F0-A08-R02,rack,0,Ground Floor,8,2,5,Cooking Sauces · Condiments & Oils,48.0,12.2,true
+F0-A08-R03,rack,0,Ground Floor,8,3,5,Cooking Sauces · Condiments & Oils,48.0,15.4,true
+F0-A08-R04,rack,0,Ground Floor,8,4,5,Cooking Sauces · Condiments & Oils,48.0,18.6,true
+F0-A08-R05,rack,0,Ground Floor,8,5,5,Cooking Sauces · Condiments & Oils,48.0,21.8,true
+F0-A08-S,aisle_end,0,Ground Floor,8,,,Cooking Sauces · Condiments & Oils,48.0,24.8,true
+F0-BIN-01,bin,0,Ground Floor,,,,Front of Store,12.0,31.0,true
+F0-CORE-FRONT,core,0,Ground Floor,,,,Front Core,0.0,32.0,true
+F0-CORE-REAR,core,0,Ground Floor,,,,Rear Core,54.0,2.0,true
+F0-CTR-01,counter,0,Ground Floor,,,,Deli Counter,12.0,2.0,true
+F0-CTR-02,counter,0,Ground Floor,,,,Fish Counter,24.0,2.0,true
+F0-CTR-03,counter,0,Ground Floor,,,,Bakery Counter,36.0,2.0,true
+F0-ENTRANCE,entrance,0,Ground Floor,,,,Entrance,6.0,36.0,true
+F0-TILL-01,till,0,Ground Floor,,,,Checkouts,18.0,34.0,true
+F0-TILL-02,till,0,Ground Floor,,,,Checkouts,24.0,34.0,true
+F0-TILL-03,till,0,Ground Floor,,,,Checkouts,30.0,34.0,true
+F0-TILL-04,till,0,Ground Floor,,,,Checkouts,36.0,34.0,true
+F0-X01,junction,0,Ground Floor,,,,Front Corridor,0.0,24.8,true
+F0-X02,junction,0,Ground Floor,,,,Rear Corridor,54.0,6.0,true
+F1-A01-N,aisle_end,1,First Floor,1,,,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,6.0,true
+F1-A01-R01,rack,1,First Floor,1,1,5,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,9.0,true
+F1-A01-R02,rack,1,First Floor,1,2,5,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,12.2,true
+F1-A01-R03,rack,1,First Floor,1,3,5,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,15.4,true
+F1-A01-R04,rack,1,First Floor,1,4,5,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,18.6,true
+F1-A01-R05,rack,1,First Floor,1,5,5,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,21.8,true
+F1-A01-S,aisle_end,1,First Floor,1,,,Soft Drinks · Water & Juice · Crisps & Snacks,6.0,24.8,true
+F1-A02-N,aisle_end,1,First Floor,2,,,Biscuits · Chocolate & Sweets · Home Baking,12.0,6.0,true
+F1-A02-R01,rack,1,First Floor,2,1,5,Biscuits · Chocolate & Sweets · Home Baking,12.0,9.0,true
+F1-A02-R02,rack,1,First Floor,2,2,5,Biscuits · Chocolate & Sweets · Home Baking,12.0,12.2,true
+F1-A02-R03,rack,1,First Floor,2,3,5,Biscuits · Chocolate & Sweets · Home Baking,12.0,15.4,true
+F1-A02-R04,rack,1,First Floor,2,4,5,Biscuits · Chocolate & Sweets · Home Baking,12.0,18.6,true
+F1-A02-R05,rack,1,First Floor,2,5,5,Biscuits · Chocolate & Sweets · Home Baking,12.0,21.8,true
+F1-A02-S,aisle_end,1,First Floor,2,,,Biscuits · Chocolate & Sweets · Home Baking,12.0,24.8,true
+F1-A03-N,aisle_end,1,First Floor,3,,,Beer & Cider · Wine,18.0,6.0,true
+F1-A03-R01,rack,1,First Floor,3,1,5,Beer & Cider · Wine,18.0,9.0,true
+F1-A03-R02,rack,1,First Floor,3,2,5,Beer & Cider · Wine,18.0,12.2,true
+F1-A03-R03,rack,1,First Floor,3,3,5,Beer & Cider · Wine,18.0,15.4,true
+F1-A03-R04,rack,1,First Floor,3,4,5,Beer & Cider · Wine,18.0,18.6,true
+F1-A03-R05,rack,1,First Floor,3,5,5,Beer & Cider · Wine,18.0,21.8,true
+F1-A03-S,aisle_end,1,First Floor,3,,,Beer & Cider · Wine,18.0,24.8,true
+F1-A04-N,aisle_end,1,First Floor,4,,,Hair & Body · Oral Care,24.0,6.0,true
+F1-A04-R01,rack,1,First Floor,4,1,5,Hair & Body · Oral Care,24.0,9.0,true
+F1-A04-R02,rack,1,First Floor,4,2,5,Hair & Body · Oral Care,24.0,12.2,true
+F1-A04-R03,rack,1,First Floor,4,3,5,Hair & Body · Oral Care,24.0,15.4,true
+F1-A04-R04,rack,1,First Floor,4,4,5,Hair & Body · Oral Care,24.0,18.6,true
+F1-A04-R05,rack,1,First Floor,4,5,5,Hair & Body · Oral Care,24.0,21.8,true
+F1-A04-S,aisle_end,1,First Floor,4,,,Hair & Body · Oral Care,24.0,24.8,true
+F1-A05-N,aisle_end,1,First Floor,5,,,Medicines · Cleaning · Laundry,30.0,6.0,true
+F1-A05-R01,rack,1,First Floor,5,1,5,Medicines · Cleaning · Laundry,30.0,9.0,true
+F1-A05-R02,rack,1,First Floor,5,2,5,Medicines · Cleaning · Laundry,30.0,12.2,true
+F1-A05-R03,rack,1,First Floor,5,3,5,Medicines · Cleaning · Laundry,30.0,15.4,true
+F1-A05-R04,rack,1,First Floor,5,4,5,Medicines · Cleaning · Laundry,30.0,18.6,true
+F1-A05-R05,rack,1,First Floor,5,5,5,Medicines · Cleaning · Laundry,30.0,21.8,true
+F1-A05-S,aisle_end,1,First Floor,5,,,Medicines · Cleaning · Laundry,30.0,24.8,true
+F1-A06-N,aisle_end,1,First Floor,6,,,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,6.0,true
+F1-A06-R01,rack,1,First Floor,6,1,5,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,9.0,true
+F1-A06-R02,rack,1,First Floor,6,2,5,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,12.2,true
+F1-A06-R03,rack,1,First Floor,6,3,5,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,15.4,true
+F1-A06-R04,rack,1,First Floor,6,4,5,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,18.6,true
+F1-A06-R05,rack,1,First Floor,6,5,5,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,21.8,true
+F1-A06-S,aisle_end,1,First Floor,6,,,Kitchen Roll & Toilet Tissue · Pet Food & Care,36.0,24.8,true
+F1-A07-N,aisle_end,1,First Floor,7,,,Baby Care · Home & Kitchen · Halloween,42.0,6.0,true
+F1-A07-R01,rack,1,First Floor,7,1,5,Baby Care · Home & Kitchen · Halloween,42.0,9.0,true
+F1-A07-R02,rack,1,First Floor,7,2,5,Baby Care · Home & Kitchen · Halloween,42.0,12.2,true
+F1-A07-R03,rack,1,First Floor,7,3,5,Baby Care · Home & Kitchen · Halloween,42.0,15.4,true
+F1-A07-R04,rack,1,First Floor,7,4,5,Baby Care · Home & Kitchen · Halloween,42.0,18.6,true
+F1-A07-R05,rack,1,First Floor,7,5,5,Baby Care · Home & Kitchen · Halloween,42.0,21.8,true
+F1-A07-S,aisle_end,1,First Floor,7,,,Baby Care · Home & Kitchen · Halloween,42.0,24.8,true
+F1-BIN-01,bin,1,First Floor,,,,Front of Store,12.0,31.0,true
+F1-CAB-01,cabinet,1,First Floor,,,,Spirits,30.0,2.0,true
+F1-CAB-02,cabinet,1,First Floor,,,,Baby,42.0,2.0,true
+F1-CORE-FRONT,core,1,First Floor,,,,Front Core,0.0,32.0,true
+F1-CORE-REAR,core,1,First Floor,,,,Rear Core,54.0,2.0,true
+F1-X01,junction,1,First Floor,,,,Front Corridor,0.0,24.8,true
+F1-X02,junction,1,First Floor,,,,Rear Corridor,54.0,6.0,true

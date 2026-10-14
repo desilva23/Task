@@ -21,6 +21,7 @@ from config import (
     FUZZY_THRESHOLD,
     FUZZY_TRIGGER_SCORE,
     MAX_BATCH_TERMS,
+    MAX_QUERY_CHARS,
     MIN_QUERY_CHARS,
     NL_WORD_THRESHOLD,
     SEARCH_LIMIT,
@@ -75,7 +76,9 @@ def _parts(q: str) -> list[str]:
 
 
 def _tidy(raw: str) -> str:
-    """Collapse spaces within each line but keep the newlines — they separate items."""
+    """Collapse spaces within each line but keep the newlines — they separate items. Control
+    characters (a null byte) are dropped, and the length is capped (NFR-06)."""
+    raw = "".join(c for c in raw[:MAX_QUERY_CHARS] if c.isprintable() or c == "\n")
     return "\n".join(" ".join(line.split()) for line in raw.splitlines() if line.strip())
 
 
@@ -362,12 +365,14 @@ def prepare(raw: str, index: SearchIndex) -> Prepared:
     if shape == "nl":
         terms = [SearchTerm(q)]  # keyword fallback; the model reads sentences (Phase 6)
     overflow = tuple(_parts(q)[MAX_BATCH_TERMS:]) if shape == "batch" else ()
-    message = (
-        f"Only the first {MAX_BATCH_TERMS} items were searched; {len(overflow)} were not."
-        if overflow
-        else None
-    )
-    return Prepared(shape, tuple(terms), overflow, message)
+    notes = []
+    if len(raw) > MAX_QUERY_CHARS:
+        notes.append(f"Your search was cut to its first {MAX_QUERY_CHARS} characters.")
+    if overflow:
+        notes.append(
+            f"Only the first {MAX_BATCH_TERMS} items were searched; {len(overflow)} were not."
+        )
+    return Prepared(shape, tuple(terms), overflow, " ".join(notes) or None)
 
 
 def search_query(

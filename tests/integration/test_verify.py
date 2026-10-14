@@ -1,4 +1,4 @@
-"""AC-10, NFR-02, EC-47 — a wrong claim never reaches the page.
+"""AC-10, NFR-01, NFR-02, EC-47 — a wrong claim never reaches the page.
 
 Each test corrupts one claim — in the model's wording or in state itself — and checks the verify
 gate blocks it, renders the template from the services instead, and records the mismatch.
