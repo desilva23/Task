@@ -1,0 +1,44 @@
+# Stock alerts to the store manager (FR-26, hld.md §3.6). On each push to main that changes the
+# live store's stock file, compare it with the previous version and email what crossed into low
+# or out. Run it by hand with "current" to email everything already low or out.
+name: stock alerts
+
+on:
+  push:
+    branches: [main]
+    paths: ["data/SBY-DEMO-001/stock.csv"]
+  workflow_dispatch:
+    inputs:
+      current:
+        description: "Email everything already low or out (switching alerts on)"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency: stock-alerts  # one at a time, in push order
+
+env:
+  STORE: data/SBY-DEMO-001  # the store the site serves; the portability store is a test fixture
+
+jobs:
+  alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # the previous version of the stock file
+      - uses: astral-sh/setup-uv@v10.3.0
+      - run: uv sync --locked --no-dev --group alerts
+      - name: Email the store manager
+        env:
+          AGENTMAIL_API_KEY: ${{ secrets.AGENTMAIL_API_KEY }}
+          AGENTMAIL_INBOX_ID: ${{ secrets.AGENTMAIL_INBOX_ID }}
+          STORE_MANAGER_EMAIL: ${{ secrets.STORE_MANAGER_EMAIL }}
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.current }}" = "true" ]; then
+            uv run --no-sync python -m notify.run --store "$STORE" --current
+          else
+            uv run --no-sync python -m notify.run --store "$STORE" --before "${{ github.event.before || 'HEAD~1' }}"
+          fi

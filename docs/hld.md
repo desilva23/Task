@@ -398,6 +398,30 @@ basket by the same button. The synthetic catalogue's barcodes sit in the GS1
 `20`–`29` range, reserved for in-store numbering, so no real product's barcode
 can match one by accident.
 
+### 3.6 Stock alerts
+
+The store manager gets two emails, through AgentMail (C-09): **low stock** when a
+stocked product's shelf quantity falls to `LOW_STOCK_UNITS` or below, and **out of
+stock** when it reaches zero (FR-26). Each lists every product that crossed into
+that state in this update, with the units left and where it sits — floor, aisle,
+rack and shelf — so the manager knows which shelf to deal with.
+
+**Alerts are changes, not states.** Stock arrives as a new version of the store's
+stock file (A-08). The alert job compares that version with the one before it and
+reports a product only when it got worse: fine → low, fine → out, low → out. A
+product that stays low, recovers, or is not stocked at this branch sends nothing,
+so the manager is never told the same thing twice and no record of past alerts is
+needed. When alerts are first switched on, one "current state" email lists
+everything already low or out.
+
+**Plain code end to end.** Which products crossed, and every word of the email,
+come from the stock data and the planogram; no model is involved, so there is
+nothing to verify. The job runs in GitHub Actions on each push to `main` that
+changes a `stock.csv`, with the AgentMail key, the sending inbox and the manager's
+address held as repository secrets — the repository is public, and none of the
+three is in it. Each email carries an idempotency key built from the store, the
+commit and the alert kind, so re-running the job never delivers an email twice.
+
 ## 4. Interface and presentation
 
 One Next.js page, used by a shopper standing in the store on their own phone
@@ -572,6 +596,17 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-52 | Mistyped digits — wrong length, or a failed check digit | "That isn't a valid barcode", before any lookup. A near-miss number is never matched to the closest real one |
 | EC-53 | Two different barcodes in one frame | Neither is chosen: the shopper is asked to scan one product at a time, and the camera keeps looking. The same code twice is one code |
 | EC-54 | The camera keeps seeing the same barcode after it is read | Looked up once: the camera stops at the first read. Scanning again, or typing digits, is a new lookup |
+
+### 6.8 Stock alerts
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-55 | A product goes from low to out in one update | One out-of-stock alert. The low alert it already had is not repeated |
+| EC-56 | A product recovers, or stays low or out | Nothing is sent |
+| EC-57 | A product is not stocked at this branch (`ranged=false`) | Never alerted: it was never on the shelf to run out |
+| EC-58 | The mail service fails or rejects the send | The job fails and shows it in GitHub; re-running it sends once, by the idempotency key. The website is unaffected |
+| EC-59 | The secrets are missing | The job stops with a message naming the missing setting, and sends nothing. A dry run prints the emails instead |
+| EC-60 | An update makes no product cross a threshold | No email at all — not an empty one |
 
 ## 7. Onboarding a new store
 

@@ -5,12 +5,12 @@ Each row is an ID defined in the specification, with the tests that cite it. `â€
 
 | Kind | Defined | Covered |
 |---|---:|---:|
-| Acceptance criteria (AC) | 28 | 28 |
-| Functional requirements (FR) | 25 | 25 |
+| Acceptance criteria (AC) | 29 | 29 |
+| Functional requirements (FR) | 26 | 26 |
 | Non-functional requirements (NFR) | 11 | 11 |
-| Constraints (C) | 8 | 4 |
-| Assumptions (A) | 7 | 3 |
-| Edge cases (EC) | 54 | 41 |
+| Constraints (C) | 9 | 4 |
+| Assumptions (A) | 8 | 4 |
+| Edge cases (EC) | 60 | 47 |
 | Validation refusals (V) | 43 | 43 |
 | Validation warnings (W) | 5 | 5 |
 | Constitution guard rails (CONST) | 8 | 5 |
@@ -47,6 +47,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `â€
 | AC-26 | `tests/unit/test_search.py::TestExplainable::test_a_route_stop_order_is_read_straight_off_its_node_path`<br>`tests/unit/test_search.py::TestExplainable::test_each_result_is_placed_by_the_first_rule_separating_it`<br>`tests/unit/test_search.py::TestExplainable::test_explain_matches_rank` |
 | AC-27 | `tests/unit/test_view.py::TestDirectionsAsText::test_a_rewording_that_drops_a_location_word_is_blocked`<br>`tests/unit/test_view.py::TestDirectionsAsText::test_every_stop_and_every_floor_change_is_named`<br>`tests/unit/test_view.py::TestRouteDrawnTwice::test_each_floor_change_has_a_marker_at_both_ends`<br>`tests/unit/test_view.py::TestRouteDrawnTwice::test_stop_markers_are_numbered_in_directions_order`<br>`tests/unit/test_view.py::TestRouteDrawnTwice::test_the_plates_trace_exactly_the_route`<br>`tests/unit/test_view.py::TestView::test_ac_08_available_first_and_one_action_adds_only_those`<br>`tests/unit/test_view.py::TestView::test_start_options_default_to_the_entrance_and_cover_every_aisle`<br>`tests/unit/test_view.py::test_fr_20_ac_15_no_label_on_any_plate_touches_another_thing` |
 | AC-28 | `tests/browser/test_phone_width.py::test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width`<br>`tests/browser/test_phone_width.py::test_ec_48_ac_28_camera_declined_typed_digits_still_find_it`<br>`tests/integration/test_api.py::test_ac_28_ec_48_typed_digits_find_the_product_with_no_choice`<br>`tests/integration/test_scan.py::test_ac_11_fr_03_a_scan_works_with_every_model_call_failing`<br>`tests/integration/test_scan.py::test_ac_28_a_scan_returns_that_exact_product_with_no_choice`<br>`tests/integration/test_scan.py::test_ac_28_ec_48_typed_digits_return_the_same_product`<br>`tests/integration/test_scan.py::test_ac_28_ec_50_a_barcode_not_in_the_catalogue_says_so`<br>`tests/integration/test_scan.py::test_ec_52_mistyped_digits_are_refused_before_any_lookup`<br>`tests/integration/test_scan.py::test_fr_03_a_scan_never_asks_the_model_to_understand_it`<br>`tests/integration/test_scan.py::test_fr_08_ec_04_a_scanned_product_reports_as_a_typed_one_would`<br>`tests/integration/test_scan.py::test_fr_23_fr_03_a_scanned_product_is_routed_from_the_basket` |
+| AC-29 | `tests/unit/test_stock_alerts.py::test_a_08_the_job_reads_the_previous_version_from_git`<br>`tests/unit/test_stock_alerts.py::test_ac_29_one_low_one_out_gives_one_email_of_each`<br>`tests/unit/test_stock_alerts.py::test_ac_29_the_job_sends_each_email_once_per_update`<br>`tests/unit/test_stock_alerts.py::test_ec_55_low_to_out_is_one_out_alert`<br>`tests/unit/test_stock_alerts.py::test_ec_56_staying_low_or_recovering_sends_nothing`<br>`tests/unit/test_stock_alerts.py::test_ec_57_a_product_not_stocked_here_is_never_alerted`<br>`tests/unit/test_stock_alerts.py::test_ec_58_a_failed_send_fails_the_job`<br>`tests/unit/test_stock_alerts.py::test_ec_59_a_dry_run_prints_instead_of_sending`<br>`tests/unit/test_stock_alerts.py::test_ec_59_missing_settings_stop_the_job_and_send_nothing`<br>`tests/unit/test_stock_alerts.py::test_ec_60_no_crossing_no_email`<br>`tests/unit/test_stock_alerts.py::test_fr_26_switching_on_lists_everything_already_low_or_out` |
 
 ## Functional requirements â€” `docs/requirements.md`
 
@@ -77,6 +78,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `â€
 | FR-23 | `tests/integration/test_graph.py::test_fr_23_two_runs_results_then_a_route_from_the_basket`<br>`tests/integration/test_scan.py::test_fr_23_fr_03_a_scanned_product_is_routed_from_the_basket`<br>`tests/unit/test_multistop.py::test_ac_23_fr_23_items_from_three_separate_additions_are_all_routed` |
 | FR-24 | `tests/integration/test_api.py::test_fr_24_an_unavailable_item_routed_is_left_out_and_said_so`<br>`tests/unit/test_multistop.py::test_ac_24_fr_24_ec_46_a_sold_out_item_stays_in_the_basket_but_out_of_the_route` |
 | FR-25 | `tests/acceptance/test_acceptance.py::test_ac_09_ac_01_a_known_product_is_found_with_floor_aisle_rack_shelf`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_02_three_products_then_one_route_covering_all`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_03_one_choice_keeps_the_rest`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_04_route_distance_is_the_true_shortest`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_05_every_floor_once_highest_first_ending_at_a_till`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_06_two_starts_two_correct_routes`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_07_step_free_uses_lifts_or_says_there_is_none`<br>`tests/acceptance/test_acceptance.py::test_ac_09_ac_08_grouped_and_one_action_adds_only_the_available` |
+| FR-26 | `tests/unit/test_stock_alerts.py::test_a_08_the_job_reads_the_previous_version_from_git`<br>`tests/unit/test_stock_alerts.py::test_ac_29_one_low_one_out_gives_one_email_of_each`<br>`tests/unit/test_stock_alerts.py::test_ac_29_the_job_sends_each_email_once_per_update`<br>`tests/unit/test_stock_alerts.py::test_ec_55_low_to_out_is_one_out_alert`<br>`tests/unit/test_stock_alerts.py::test_ec_56_staying_low_or_recovering_sends_nothing`<br>`tests/unit/test_stock_alerts.py::test_ec_57_a_product_not_stocked_here_is_never_alerted`<br>`tests/unit/test_stock_alerts.py::test_ec_58_a_failed_send_fails_the_job`<br>`tests/unit/test_stock_alerts.py::test_ec_59_a_dry_run_prints_instead_of_sending`<br>`tests/unit/test_stock_alerts.py::test_ec_59_missing_settings_stop_the_job_and_send_nothing`<br>`tests/unit/test_stock_alerts.py::test_ec_60_no_crossing_no_email`<br>`tests/unit/test_stock_alerts.py::test_fr_26_switching_on_lists_everything_already_low_or_out` |
 
 ## Non-functional requirements â€” `docs/requirements.md`
 
@@ -106,6 +108,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `â€
 | C-06 | `tests/live/test_groq_live.py::test_ac_12_live_one_product_and_ten_products_inside_budget`<br>`tests/live/test_groq_live.py::test_c_06_understand_returns_a_strictly_valid_parse`<br>`tests/live/test_groq_live.py::test_fr_04_a_sentence_reaches_real_products`<br>`tests/live/test_groq_live.py::test_fr_09_live_substitutes_are_chosen_from_the_safe_list`<br>`tests/live/test_groq_live.py::test_nfr_05_one_product_journey_verified_within_five_seconds`<br>`tests/unit/test_groq_client.py::TestFailuresBecomeFallbacks::test_the_session_budget_is_enforced`<br>`tests/unit/test_groq_client.py::TestFailuresBecomeFallbacks::test_transport_failures`<br>`tests/unit/test_groq_client.py::TestFailuresBecomeFallbacks::test_unparseable_reply`<br>`tests/unit/test_groq_client.py::TestJourneyWithAFailingGroq::test_same_route_and_availability_as_no_model_at_all`<br>`tests/unit/test_groq_client.py::TestKeyHandling::test_a_key_in_the_environment_or_the_secrets_file_is_used`<br>`tests/unit/test_groq_client.py::TestKeyHandling::test_no_key_means_no_model`<br>`tests/unit/test_groq_client.py::TestKeyHandling::test_the_key_never_appears_in_repr_or_errors`<br>`tests/unit/test_groq_client.py::TestRequestShape::test_caps_timeout_no_retries_low_reasoning`<br>`tests/unit/test_groq_client.py::TestRequestShape::test_each_task_uses_its_configured_model`<br>`tests/unit/test_groq_client.py::TestRequestShape::test_ec_11_instructions_and_shopper_text_travel_separately`<br>`tests/unit/test_groq_client.py::TestRequestShape::test_strict_json_schema_is_requested`<br>`tests/unit/test_groq_client.py::TestStrictSchema::test_every_property_required_and_nothing_extra`<br>`tests/unit/test_groq_client.py::TestStrictSchema::test_our_validation_still_enforces_what_was_stripped`<br>`tests/unit/test_groq_client.py::TestStrictSchema::test_undocumented_constraint_keywords_are_stripped` |
 | C-07 | â€” |
 | C-08 | â€” |
+| C-09 | â€” |
 
 ## Assumptions â€” `docs/requirements.md`
 
@@ -118,6 +121,7 @@ Each row is an ID defined in the specification, with the tests that cite it. `â€
 | A-05 | â€” |
 | A-06 | â€” |
 | A-07 | `tests/browser/test_phone_width.py::test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width` |
+| A-08 | `tests/unit/test_stock_alerts.py::test_a_08_the_job_reads_the_previous_version_from_git`<br>`tests/unit/test_stock_alerts.py::test_ac_29_one_low_one_out_gives_one_email_of_each`<br>`tests/unit/test_stock_alerts.py::test_ac_29_the_job_sends_each_email_once_per_update`<br>`tests/unit/test_stock_alerts.py::test_ec_55_low_to_out_is_one_out_alert`<br>`tests/unit/test_stock_alerts.py::test_ec_56_staying_low_or_recovering_sends_nothing`<br>`tests/unit/test_stock_alerts.py::test_ec_57_a_product_not_stocked_here_is_never_alerted`<br>`tests/unit/test_stock_alerts.py::test_ec_58_a_failed_send_fails_the_job`<br>`tests/unit/test_stock_alerts.py::test_ec_59_a_dry_run_prints_instead_of_sending`<br>`tests/unit/test_stock_alerts.py::test_ec_59_missing_settings_stop_the_job_and_send_nothing`<br>`tests/unit/test_stock_alerts.py::test_ec_60_no_crossing_no_email`<br>`tests/unit/test_stock_alerts.py::test_fr_26_switching_on_lists_everything_already_low_or_out` |
 
 ## Edge cases â€” `docs/hld.md`
 
@@ -177,6 +181,12 @@ Each row is an ID defined in the specification, with the tests that cite it. `â€
 | EC-52 | `tests/integration/test_api.py::test_ec_52_bad_digits_say_so`<br>`tests/integration/test_scan.py::test_ec_52_mistyped_digits_are_refused_before_any_lookup`<br>`tests/unit/test_barcode.py::TestDigits::test_ec_52_a_failed_check_digit_or_a_wrong_length_is_not_a_barcode`<br>`tests/unit/test_barcode.py::TestDigits::test_ec_52_two_swapped_digits_are_caught` |
 | EC-53 | `tests/browser/test_phone_width.py::test_ec_53_two_barcodes_in_view_are_never_chosen_between` |
 | EC-54 | `tests/browser/test_phone_width.py::test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width` |
+| EC-55 | `tests/unit/test_stock_alerts.py::test_ec_55_low_to_out_is_one_out_alert` |
+| EC-56 | `tests/unit/test_stock_alerts.py::test_ec_56_staying_low_or_recovering_sends_nothing` |
+| EC-57 | `tests/unit/test_stock_alerts.py::test_ec_57_a_product_not_stocked_here_is_never_alerted` |
+| EC-58 | `tests/unit/test_stock_alerts.py::test_ec_58_a_failed_send_fails_the_job` |
+| EC-59 | `tests/unit/test_stock_alerts.py::test_ec_59_a_dry_run_prints_instead_of_sending`<br>`tests/unit/test_stock_alerts.py::test_ec_59_missing_settings_stop_the_job_and_send_nothing` |
+| EC-60 | `tests/unit/test_stock_alerts.py::test_ec_60_no_crossing_no_email` |
 
 ## Validation refusals â€” `docs/schema.md`
 

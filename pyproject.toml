@@ -15,6 +15,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+alerts = [
+    "agentmail>=2.0.17",
+]
 dev = [
     "pytest",
     "hypothesis",

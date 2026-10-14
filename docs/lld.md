@@ -36,6 +36,10 @@ services/
   basket.py               Basket — SKUs added across searches; routability re-checked per call
   multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
   barcode.py              check digits — no decoding, no lookup (§8.5)
+  stock_alerts.py         which products crossed into low or out, and their emails (§11a)
+notify/
+  run.py                  the stock alert job: compare versions, send (GitHub Actions)
+  mail.py                 AgentMail sender, and a printing one for dry runs
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -726,6 +730,31 @@ proxies `/api/*` to it.
 
 ---
 
+## 11a. Stock alerts
+
+```python
+def state(pos) -> str | None:              # None · "low" · "out"; unstocked here → None
+    if pos is None or not pos.ranged: return None
+    if pos.shelf_qty == 0:            return "out"
+    return "low" if pos.shelf_qty <= LOW_STOCK_UNITS else None
+
+def changes(before, after) -> list[Alert]: # only what got worse: none→low, none→out, low→out
+    return [Alert(...) for sku in after.stock
+            if state(after) and LEVEL[state(after)] > LEVEL[state(before)]]
+```
+
+`emails` turns the alerts into at most two emails — low, then out — each listing
+product, SKU, units left and every place it is kept. `notify.run` loads the store,
+reads the previous `stock.csv` with `git show <before>:<store>/stock.csv`, swaps it
+into a temporary copy of the folder so the same validator loads it, and sends
+through AgentMail with the idempotency key `<store>-<commit>-<mode>-<kind>`.
+Settings (`AGENTMAIL_API_KEY`, `AGENTMAIL_INBOX_ID`, `STORE_MANAGER_EMAIL`) come from
+the environment; with any missing the job exits 2 without sending, and
+`--dry-run` prints instead. The `agentmail` SDK is in its own dependency group
+(`alerts`), imported only for a real send, so neither the site's function nor the
+tests carry it. `.github/workflows/stock-alerts.yml` runs the job on pushes to
+`main` that change the live store's stock, and by hand with `current`.
+
 ## 12. Error taxonomy
 
 | Error | Raised when | Handling |
@@ -794,6 +823,7 @@ MAX_CLARIFY_ROUNDS  = 2       # EC-35
 THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
 MODEL_TIMEOUT_S     = 6
 ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
+LOW_STOCK_UNITS     = 5       # FR-26 — "very low": this many on the shelf or fewer, not zero
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
 

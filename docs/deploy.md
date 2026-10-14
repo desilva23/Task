@@ -51,6 +51,26 @@ URL. Work on a branch, check its preview, and merge when the check passes.
    LOCATOR_URL=https://<your-project>.vercel.app uv run pytest tests/browser
    ```
 
+## Stock alerts to the store manager
+
+The store manager is emailed when a product falls to 5 or fewer on the shelf, and again when it
+runs out (FR-26). The emails come from a GitHub Action, through AgentMail.
+
+1. In AgentMail, note the **API key** and the **inbox address** you send from (it looks like
+   `store23@agentmail.to` — copy it exactly from the dashboard).
+2. On GitHub, open `desilva23/Task` → **Settings → Secrets and variables → Actions → New
+   repository secret**, and add three:
+   - `AGENTMAIL_API_KEY` — the API key
+   - `AGENTMAIL_INBOX_ID` — the inbox address
+   - `STORE_MANAGER_EMAIL` — where the alerts go
+3. To switch alerts on, open **Actions → stock alerts → Run workflow** (leave "current"
+   ticked): the manager gets one email listing everything already low and one listing
+   everything out. After that, every push that changes `data/SBY-DEMO-001/stock.csv` emails
+   only what newly crossed into low or out.
+
+To see the emails without sending, run
+`uv run python -m notify.run --store data/SBY-DEMO-001 --current --dry-run`.
+
 ## Optional hardening
 
 - **Rate limit.** In the project's **Firewall**, add a rule that rate-limits `/api/*` per IP

@@ -27,3 +27,6 @@ MODEL_DESCRIBE = "openai/gpt-oss-20b"
 MODEL_MAX_TOKENS = 1024  # per call; reasoning tokens count against it
 MODEL_REASONING_EFFORT = "low"  # short tasks; reasoning still counts against the cap
 MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only
+
+# stock alerts — hld.md §3.6
+LOW_STOCK_UNITS = 5  # FR-26 — "very low": this many on the shelf or fewer, and not zero

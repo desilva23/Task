@@ -22,7 +22,8 @@ replacing the store data, with no code changes.
 barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory;
 location to floor, aisle, rack and shelf; shortest route from any start point,
 across floors; one combined route for several products; step-free routing;
-a single-page user interface.
+a single-page user interface; an email to the store manager when a product runs
+low or runs out.
 
 **Out of scope:** voice input; live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
@@ -53,6 +54,7 @@ store works with no code changes.
 |---|---|---|
 | **Shopper** | Find one or several products quickly; know before walking whether it is worth the trip | Yes |
 | **Store colleague** | — | No |
+| **Store manager** | Hear when a product is about to run out, and when it has, without watching a screen | Yes — email alerts only (FR-26) |
 | **Store data owner** | Onboard a new store by supplying its data files | Yes |
 
 ---
@@ -69,6 +71,7 @@ store works with no code changes.
 | C-06 | Language models are served through **GroqCloud** | confirmed |
 | C-07 | The application is deployed on **Vercel**: the page as static files, the agent as a Python function | confirmed — Streamlit Community Cloud until the owner's change of 2026-10-14 |
 | C-08 | The site is served over **HTTPS**. Camera access requires a secure context, so FR-03's camera does not work over plain HTTP, including on a local machine addressed by IP | confirmed |
+| C-09 | Stock alerts are sent by email through **AgentMail** | confirmed — owner's choice, 2026-10-14 |
 
 | ID | Assumption | Status | If it later proves wrong |
 |---|---|---|---|
@@ -79,6 +82,7 @@ store works with no code changes.
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
 | A-07 | The shopper's mobile browser can grant camera access and read an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | A still photo sent to the server and decoded there |
+| A-08 | Stock changes arrive as a new version of the store's stock file. Alerts compare each version with the one before it | confirmed | A live stock feed: the same comparison runs on each update instead of each file version |
 
 ---
 
@@ -139,6 +143,12 @@ store works with no code changes.
 |---|---|---|
 | FR-25 | A **different store works by replacing its data files only** — no code changes, including a store with a different number of floors | confirmed |
 
+### 4.7 Stock alerts
+
+| ID | Requirement | Status |
+|---|---|---|
+| FR-26 | The **store manager is emailed** when a product stocked at the branch falls to a **very low** shelf quantity, and again when it **runs out**. Each product is reported once per change, not again while it stays low or out | confirmed — owner, 2026-10-14 |
+
 ---
 
 ## 5. Non-functional requirements
@@ -194,6 +204,7 @@ finished being written.
 | AC-26 | NFR-09 | With every model call disabled, each ranked result's position is explained by the first ranking rule separating it from its neighbour, and each route's stop order is reproduced from its node path alone |
 | AC-27 | NFR-10 | Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07 |
 | AC-28 | FR-03 | A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
+| AC-29 | FR-26 | A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once |
 
 ---
 

@@ -92,6 +92,7 @@ reasoning, not maintained. Never treat them as the current design.
 | **GitHub Spec Kit**, test-first, bottom-up, gated phases | Owner's choice. Each phase is one Spec Kit feature under `specs/`; every test names the AC/FR/NFR/EC/V ID it proves |
 | **uv + ruff + pytest**, Python 3.12 | One lock file, one linter/formatter. The machine has 3.14; do not let it leak into the lock |
 | **A seeded generator** produces the synthetic store | Same seed, same store — tests and the demo can rely on exact SKUs and positions |
+| **Stock alerts by email** (FR-26, C-09) — the only colleague-facing feature | Owner's request, 2026-10-14: email the store manager when a product falls to `LOW_STOCK_UNITS` (5) or fewer, and when it runs out — nothing else from the colleague workflows. Alerts are **changes, not states**: the GitHub Action compares the pushed `stock.csv` with the previous commit, so nothing is stored and nothing repeats. AgentMail via its SDK in the `alerts` dependency group; key, inbox and manager address are repository secrets. Plain code — no model |
 | **No store or synthetic-data line on the page** | Owner's decision, 2026-10-14. C-04 now says the store files declare the data synthetic (V-12 enforces it); the page does not repeat it |
 
 ## The rule the whole design rests on
@@ -117,7 +118,8 @@ gluten free" about products nobody checked.
   known; use explicit edges.
 - **Do not promise the colleague-facing version.** It is out of scope and a
   different problem, not a later phase. Kept out of the requirements deliberately
-  so it does not read as a commitment.
+  so it does not read as a commitment. The one exception, at the owner's request, is
+  the stock alert email to the store manager (FR-26).
 - **Do not put a schedule in the requirements document.** A timebox is a project
   fact, not a requirement, and cannot be tested.
 

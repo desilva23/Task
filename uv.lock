@@ -8,6 +8,22 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "agentmail"
+version = "2.0.17"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ba/61/f6a8b2098a54d6b59f27f7dfa80166731daf74e4cbd88c91cc08f5badccc/agentmail-2.0.17.tar.gz", hash = "sha256:531650cc3000a95a008591885d18ddd0b6ff80090076c88b125a1213b081c1a2", size = 228854, upload-time = "2026-10-12T21:56:21.925Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/53/d8/e1e21eb1f756bfd4e244cd3dbd7afbed571ea7b25adba59d61e7d0dc359c/agentmail-2.0.17-py3-none-any.whl", hash = "sha256:dddcb1729edf21e0667b88f2a6f71ffefabf311e136bf5e75a1ce3888697ae8f", size = 473243, upload-time = "2026-10-12T21:56:20.531Z" },
+]
+
+[[package]]
 name = "annotated-doc"
 version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
@@ -601,6 +617,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+alerts = [
+    { name = "agentmail" },
+]
 dev = [
     { name = "httpx" },
     { name = "hypothesis" },
@@ -624,6 +643,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+alerts = [{ name = "agentmail", specifier = ">=2.0.17" }]
 dev = [
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "hypothesis" },

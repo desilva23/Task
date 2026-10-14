@@ -108,6 +108,7 @@ requires amending the specification, not a pull request.
 | Barcode decoding | zxing-wasm in the page, from live camera frames; retail symbologies only; the server re-checks the digits |
 | Data | Six CSVs per `schema.md`, synthetic only (C-04), produced by a seeded generator |
 | Deployment | Vercel (C-07) — the page from the CDN, the API as one Python function |
+| Stock alerts | AgentMail (C-09), from a GitHub Action; SDK only in the `alerts` dependency group; settings are repository secrets |
 
 **Secrets.** The repository is public. `GROQ_API_KEY` MUST be supplied through
 `.streamlit/secrets.toml` locally and a Vercel project environment variable when deployed. It is
@@ -139,6 +140,7 @@ A lower document that disagrees with a higher one is wrong.
 | 8 | Portability store, performance, hostile input, deployment | AC-09, AC-12, AC-13 |
 | 9 | Barcode scan — FR-03 reinstated by the owner | AC-28 |
 | 10 | Next.js page and Vercel deployment — C-03 and C-07 changed by the owner | AC-15, AC-28, AC-13 |
+| 11 | Stock alert emails to the store manager | AC-29 |
 
 **Gate.** A phase is complete only when all of its traced tests pass, `ruff` is clean, the
 traceability matrix is updated, and the owner has reviewed it. The next phase MUST NOT start
@@ -158,4 +160,4 @@ Versioning is semantic: MAJOR for removing or redefining a principle, MINOR for 
 materially expanding guidance, PATCH for wording. Every `/speckit-plan` MUST record a Constitution
 Check, and every gate review MUST confirm compliance with Principles I–VI before approval.
 
-**Version**: 1.4.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-14
+**Version**: 1.5.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-14
