@@ -26,7 +26,7 @@ def route(services, state: dict) -> None:
     for tab, plate in zip(tabs, plates, strict=True):
         with tab:
             # st.html drops inline SVG in Streamlit 1.65; markdown keeps it, data attributes
-            # included. The SVG is ours, drawn from validated map data with text escaped.
+            # included. The SVG is ours, drawn from validated map data, with no free text in it.
             st.markdown(plate.svg, unsafe_allow_html=True)
 
 

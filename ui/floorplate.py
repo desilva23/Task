@@ -6,7 +6,6 @@ stop marker is about 20 px across and its number about 12 px tall (AC-15).
 """
 
 from dataclasses import dataclass
-from html import escape
 
 MARGIN, MARKER_R, LABEL = 5.0, 2.6, 3.2
 ROUTE, STOP, CHANGE = "#0a7d74", "#0a7d74", "#b45309"
