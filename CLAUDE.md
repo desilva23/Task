@@ -167,8 +167,8 @@ gluten free" about products nobody checked.
 **Vercel:** https://find-it-in-store.vercel.app — project `find-it-in-store` (team
 `desilva23s-projects`, id `prj_p08gyhd9sPwl0ist4fnzjjoYSbHJ`), linked to this repository,
 created 2026-10-14. Production follows `main`: every push deploys itself. Any other branch gets a
-preview URL behind Vercel login. `GROQ_API_KEY` is the owner's to add in the project's environment
-variables; without it the site runs on the plain wording. Test the live site with
+preview URL behind Vercel login. `GROQ_API_KEY` is set in the project's environment variables
+(owner, 2026-10-15): the model is live — sentences resolve, directions are reworded and verified. Test the live site with
 `LOCATOR_URL=https://find-it-in-store.vercel.app uv run pytest tests/browser` — `docs/deploy.md`.
 
 **Retired:** the Streamlit Community Cloud app (https://weurhd8vy4j68dmbhcbkd6.streamlit.app)
