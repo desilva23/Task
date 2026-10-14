@@ -10,7 +10,7 @@ from datagen.catalogue import AISLES, SPOTS, parse_items
 from datagen.layout import Floor, aisle_id, build_map, rack_id
 
 STORE_ID = "SBY-PORT-002"
-STORE_NAME = "Sainsbury's Portability Test Store"
+STORE_NAME = "Portability Test Store"
 RACKS = 5
 SHELVES = 5
 FLOORS = (Floor(0, "Ground Floor", 8), Floor(1, "First Floor", 7))

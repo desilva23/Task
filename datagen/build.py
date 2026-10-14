@@ -17,7 +17,7 @@ STORE_ID = "SBY-DEMO-001"
 
 STORE = {
     "store_id": STORE_ID,
-    "store_name": "Sainsbury's Demo Superstore",
+    "store_name": "Demo Superstore",
     "data_provenance": "synthetic",
     "planogram_version": "2026-10-01",
     "stock_as_of": "2026-10-09T08:40:00Z",

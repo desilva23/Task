@@ -69,7 +69,7 @@
   <div class="meta">
     <span><b>Files</b> six CSVs, one folder per store</span>
     <span><b>Demo store</b> 314 nodes · 352 edge rows · 3 floors</span>
-    <span><b>Validation</b> 47 checks, V-01 to V-47</span>
+    <span><b>Validation</b> 43 refusals and 5 warnings, checked at load</span>
   </div>
 </header>
 
@@ -309,7 +309,7 @@
   <thead><tr><th><code>key</code></th><th><code>value</code></th><th>Example</th></tr></thead>
   <tbody>
     <tr><td><code>store_id</code></td><td>text, must equal the folder name</td><td><code>SBY-DEMO-001</code></td></tr>
-    <tr><td><code>store_name</code></td><td>text, shown in the UI</td><td><code>Sainsbury's Demo Superstore</code></td></tr>
+    <tr><td><code>store_name</code></td><td>text, shown in the UI</td><td><code>Demo Superstore</code></td></tr>
     <tr><td><code>data_provenance</code></td><td><code>synthetic</code> — the only accepted value</td><td><code>synthetic</code></td></tr>
     <tr><td><code>planogram_version</code></td><td>ISO date; bumped by a range change</td><td><code>2026-10-01</code></td></tr>
     <tr><td><code>stock_as_of</code></td><td>ISO 8601 UTC timestamp</td><td><code>2026-10-09T08:40:00Z</code></td></tr>
@@ -497,7 +497,7 @@
 <pre><code># store.csv
 key,value
 store_id,SBY-DEMO-001
-store_name,Sainsbury's Demo Superstore
+store_name,Demo Superstore
 data_provenance,synthetic
 planogram_version,2026-10-01
 stock_as_of,2026-10-09T08:40:00Z
