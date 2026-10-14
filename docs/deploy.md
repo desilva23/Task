@@ -18,7 +18,7 @@ the key never goes into the repository.
 2. **Create app** → **Deploy a public app from GitHub**.
 3. Fill in:
    - **Repository:** `desilva23/Task`
-   - **Branch:** `claude/planogram-store-navigation-czn7bh` (or `main`, once merged)
+   - **Branch:** `main`
    - **Main file path:** `app.py`
    - **App URL:** your choice
 4. Open **Advanced settings**:
@@ -45,6 +45,14 @@ Top-level secrets also become environment variables, so these can go in the Secr
 |---|---|
 | `LOCATOR_STORE = "data/SBY-PORT-002"` | Serve the two-floor portability store instead of the demo store |
 | `LOCATOR_MODEL = "off"` | Run on the deterministic wording only — no Groq calls at all |
+
+## Moving the app to another branch
+
+Streamlit cannot change a deployed app's branch in its settings. Note the app URL's
+subdomain and the Secrets, **delete the app**, then deploy again from the new branch with
+the same subdomain and the same Secrets — the subdomain is free again as soon as the app
+is deleted. Do not rename or delete the old branch first: the app is tied to it, and
+changing it before deleting the app can leave the app view-only.
 
 ## If something goes wrong
 
