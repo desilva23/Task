@@ -8,7 +8,7 @@ when its best matches are too close to call. Every result can say why it ranked 
 import re
 import unicodedata
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from rank_bm25 import BM25Okapi
 from rapidfuzz import fuzz, process
@@ -129,6 +129,7 @@ class Scored:
     product: Product
     text_score: float
     method: str  # bm25 · corrected · name
+    near_best: bool = True  # within AMBIGUITY_MARGIN of the best text score — set by rank()
 
     @property
     def sku(self) -> str:
@@ -145,6 +146,12 @@ class SearchIndex:
             p.sku: [p.name, *p.synonyms] for p in self.products
         }  # what a shopper might call it
         self.name_tokens = {tok for p in self.products for tok in normalise(p.name)}
+        self.named_by = {  # the words that name a product: never its category or its size
+            p.sku: set(normalise(" ".join([p.name, p.brand, *p.synonyms]))) for p in self.products
+        }
+        self.described_by = {  # … and the words a shopper may add to pick one: its size
+            p.sku: self.named_by[p.sku] | set(normalise(p.size)) for p in self.products
+        }
         self.categories: dict[str, tuple[str, str]] = {}
         for p in self.products:
             for field_name in ("department", "aisle_category"):
@@ -201,7 +208,45 @@ class SearchIndex:
             elif not found:
                 found = self._by_name(text, filt, FUZZY_THRESHOLD)
                 corrected = text if found else None
-        return found[:limit], corrected
+        return self._named_first(found, normalise(corrected or text))[:limit], corrected
+
+    def _named_first(self, found: list[Scored], words: list[str]) -> list[Scored]:
+        """Offer the products the shopper named, most completely named first (§8.1).
+
+        A category or a size is evidence only when nothing is named: "eggs" matches the yogurts
+        through their category, "Eggs & Yogurt". And a product named by every word beats one
+        named by some: "ice cream" is not Antiseptic Cream, "coca cola" is not Pepsi Max Cola.
+        The fuzzy name match has already compared whole names, so it is kept as it is."""
+        if not found or found[0].method == "name":
+            return found
+        wanted = set(words)
+        whole = [c for c in found if self.names_all(c, wanted)]
+        some = [c for c in found if wanted & self.named_by[c.sku]]
+        return whole or some or found
+
+    def names_all(self, c: Scored, words: set[str]) -> bool:
+        """The search names this product — at least one word is its name, brand or a synonym —
+        and every other word is accounted for, its size included ("semi skimmed milk 2 pint").
+        A misspelt word counts when it is within the fuzzy threshold of one of the product's
+        own ("tomatoe ketchup"). The fuzzy name match compared whole names, so it counts."""
+        if c.method == "name":
+            return True
+        mine = self.described_by[c.sku]
+        return bool(words & self.named_by[c.sku]) and all(
+            w in mine or any(fuzz.ratio(w, m) >= FUZZY_THRESHOLD for m in mine) for w in words
+        )
+
+    def nearest(
+        self, found: list[Scored], words: set[str], text: str, n: int = 3
+    ) -> tuple[str, ...]:
+        """Suggestions for a search only partly named: products named by more of its words
+        first, then those named by its last word — usually the thing itself ("green apples",
+        "fresh milk") — then the popular ones."""
+        last = (normalise(text) or [""])[-1]
+        order = sorted(found, key=lambda c: (-len(words & self.named_by[c.sku]),
+                                             last not in self.named_by[c.sku],
+                                             -c.product.popularity, c.sku))  # fmt: skip
+        return tuple(dict.fromkeys(c.product.name for c in order))[:n]
 
     def category_of(self, text: str) -> tuple[str, str] | None:
         """EC-09: a department or category that no product is named after."""
@@ -248,8 +293,9 @@ RULES: tuple[tuple[str, Rule], ...] = (
     ("carried here", lambda c, t, s: not s[c.sku].ranged),
     ("in stock", lambda c, t, s: s[c.sku].shelf_qty == 0),
     ("size asked for", lambda c, t, s: not variant_match(c.product, t)),
-    ("text match", lambda c, t, s: -round(c.text_score, 9)),
+    ("text match", lambda c, t, s: not c.near_best),
     ("popularity", lambda c, t, s: -c.product.popularity),
+    ("closer text match", lambda c, t, s: -round(c.text_score, 9)),
     ("own brand", lambda c, t, s: not c.product.own_brand),
 )
 TIED = "tied — catalogue order"
@@ -260,8 +306,16 @@ def _key(c: Scored, term: SearchTerm, stock: Mapping[str, StockPosition]) -> tup
 
 
 def rank(cands: list[Scored], term: SearchTerm, stock: Mapping[str, StockPosition]) -> list[Scored]:
-    """A precedence list a buyer can read, not a weighted sum (lld.md §8.3)."""
-    return sorted(cands, key=lambda c: _key(c, term, stock))
+    """A precedence list a buyer can read, not a weighted sum (lld.md §8.3). Text matches
+    within the ambiguity margin of the best are equal (§8.4): a few hundredths of BM25, from how
+    long each product's description is, must not put infant formula above semi-skimmed for
+    "milk". Popularity decides between them."""
+    best = max((c.text_score for c in cands), default=0.0)
+    tiered = [
+        replace(c, near_best=best <= 0 or c.text_score >= best * (1 - AMBIGUITY_MARGIN))
+        for c in cands
+    ]
+    return sorted(tiered, key=lambda c: _key(c, term, stock))
 
 
 def explain(
@@ -326,6 +380,11 @@ def resolve(
     found, corrected = index.search(term.text, filt)
     if not found:
         return TermResult(term, "unresolved", suggestions=tuple(index.suggestions(term.text)))
+    words = set(normalise(corrected or term.text))
+    if not sentence and filt is None and not index.names_all(found[0], words):
+        # Part of the search names a product, the rest names nothing here: "face wash" is not
+        # Shower Gel ("body wash"). Offer it as a suggestion, never as the answer (EC-03).
+        return TermResult(term, "unresolved", suggestions=index.nearest(found, words, term.text))
     ranked = rank(found, term, stock)
     # Which product was asked for is a question of text alone: a sold-out or unranged product
     # the shopper named is still the answer, reported as such (EC-04, EC-13). The precedence

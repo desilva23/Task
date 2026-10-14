@@ -97,25 +97,26 @@ requires amending the specification, not a pull request.
 
 | Concern | Binding choice |
 |---|---|
-| Language | Python **3.12**, pinned — Streamlit Community Cloud's default, so local and deployed match |
+| Language | Python **3.12**, pinned, for the agent and the API; TypeScript for the page |
 | Packaging | `uv` with a committed `uv.lock`; one dependency file only |
 | Quality tools | `ruff` (lint + format), `pytest`; `hypothesis` where a property is clearer than an example |
 | Orchestration | LangGraph (C-01), compiled once, called in-process |
-| Interface | One Streamlit page (C-03); store, index and matrices built in `@st.cache_resource` |
+| Interface | One Next.js page, a static export (C-03), calling a stateless FastAPI function under `/api`; store, index and matrices built once per function instance. `fastapi` is imported only in `api/` |
 | Model provider | GroqCloud (C-06) through `langchain-groq`. Only models with **strict** structured-output support are permitted for schema-bound calls — at ratification, `openai/gpt-oss-20b` and `openai/gpt-oss-120b`. Model IDs live in configuration, never in code, and MUST be re-verified before Phase 6 |
 | Routing maths | `scipy.sparse.csgraph.shortest_path`, method `D`, directed |
 | Search | `rank_bm25`, `rapidfuzz` |
-| Barcode decoding | `zxing-cpp` over a still photo, with Pillow; retail symbologies only |
+| Barcode decoding | zxing-wasm in the page, from live camera frames; retail symbologies only; the server re-checks the digits |
 | Data | Six CSVs per `schema.md`, synthetic only (C-04), produced by a seeded generator |
-| Deployment | Streamlit Community Cloud (C-07) |
+| Deployment | Vercel (C-07) — the page from the CDN, the API as one Python function |
 
 **Secrets.** The repository is public. `GROQ_API_KEY` MUST be supplied through
-`.streamlit/secrets.toml` locally and the Community Cloud secrets field when deployed, as a
-top-level key so it also reaches the environment. `secrets.toml` and `.env` MUST be gitignored,
+`.streamlit/secrets.toml` locally and a Vercel project environment variable when deployed. It is
+read only by the Python function and never reaches the page. `secrets.toml` and `.env` MUST be gitignored,
 and a test MUST fail if either is tracked.
 
 **Public-deployment guard.** A deployed app spends the owner's key on behalf of anyone with the
-URL. Model calls MUST be capped per session and per call (`max_tokens`), and a spend limit MUST
+URL. Model calls MUST be capped per visitor (a cookie count, since the API is stateless) and per
+call (`max_tokens`), and a spend limit MUST
 be set in the Groq console before the app is made public.
 
 ## Development Workflow and Quality Gates
@@ -137,6 +138,7 @@ A lower document that disagrees with a higher one is wrong.
 | 7 | Streamlit page | AC-08, AC-15, AC-22, AC-27 |
 | 8 | Portability store, performance, hostile input, deployment | AC-09, AC-12, AC-13 |
 | 9 | Barcode scan — FR-03 reinstated by the owner | AC-28 |
+| 10 | Next.js page and Vercel deployment — C-03 and C-07 changed by the owner | AC-15, AC-28, AC-13 |
 
 **Gate.** A phase is complete only when all of its traced tests pass, `ruff` is clean, the
 traceability matrix is updated, and the owner has reviewed it. The next phase MUST NOT start
@@ -156,4 +158,4 @@ Versioning is semantic: MAJOR for removing or redefining a principle, MINOR for 
 materially expanding guidance, PATCH for wording. Every `/speckit-plan` MUST record a Constitution
 Check, and every gate review MUST confirm compliance with Principles I–VI before approval.
 
-**Version**: 1.3.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-14
+**Version**: 1.4.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-14

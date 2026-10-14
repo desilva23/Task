@@ -10,15 +10,16 @@ All three are private — share from each page's Share menu.
 ## 1. Module layout
 
 ```
-app.py                    Streamlit entry point — the only executable
-config.py                 every threshold and cap, one place (§14)
-ui/
-  search.py               the st.form search box and the position picker
-  scan.py                 the barcode scan: camera photo, typed digits (FR-03, §8.5)
-  results.py              grouped results and the basket gate action
+app/  components/  lib/   the Next.js page — a static export served from the CDN (§11)
+  lib/api.ts              the four calls the page makes, and the JSON they return
+  lib/scan.ts             barcode decoding on the phone — zxing-wasm, retail formats (§8.5)
+  components/Scanner.tsx  the camera behind a switch; typed digits beside it (FR-03)
+api/
+  index.py                FastAPI — the HTTP API, one Vercel Python function (§11)
+present/
+  view.py                 what the page shows, as plain data: groups, route, notices
   floorplate.py           one SVG plate per floor, route overlay, markers
-  directions.py           the ordered directions list — the accessible route
-  resources.py            @st.cache_resource builders: store, index, matrices
+config.py                 every threshold and cap, one place (§14)
 graph/
   build.py                StateGraph assembly, checkpointer, compile
   state.py                JourneyState TypedDict + reducers
@@ -34,7 +35,7 @@ services/
   storegraph.py           StoreGraph — nodes, edges, adjacency
   basket.py               Basket — SKUs added across searches; routability re-checked per call
   multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
-  barcode.py              check digits and decoding a photo — no lookup, no page (§8.5)
+  barcode.py              check digits — no decoding, no lookup (§8.5)
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -45,20 +46,21 @@ data/
                           planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
 datagen/                  seeded generator for the synthetic demo store (schema.md §8)
 tests/
-  unit/  integration/  fixtures/
+  unit/  integration/  acceptance/  browser/  fixtures/
+vercel.json               /api/* to the Python function; what its bundle leaves out
 ```
 
 **Two rules the layout enforces.** `graph/nodes/*` may import from `services/*`,
 never the reverse, and `services/*` never imports `langchain` or `langgraph` —
 which keeps the deterministic core testable without a graph runtime and without
 a model, and is what makes the fallbacks in §6 honest rather than aspirational.
-And nothing below `ui/` imports `streamlit`: the page is the only module that
-knows it is a page, so putting a service in front of the same graph later
-changes nothing underneath it.
+And nothing outside `api/` imports `fastapi`, `starlette` or `uvicorn`: the
+API is the only module that knows it is a web service, so the graph and the
+services run the same under a test, a script or the function.
 
-There is no `api/` package and no separate frontend. `app.py` calls the compiled
-graph in the same process (C-03), so no module in this tree imports a web
-framework.
+The page is a separate program in TypeScript. It holds no fact: every
+statement, direction and floor plate it shows arrived from the API already
+verified, and it renders all of it as text except the plates (§11).
 
 ---
 
@@ -357,6 +359,30 @@ penalised, and product names are all short, so the standard value over-penalises
 the ones that happen to carry synonyms. Both constants belong on the eval set,
 not in a reviewer's opinion.
 
+**Named products first.** The category and the size are in the index so that a
+query naming nothing still finds something, but they are weak evidence. After
+BM25, the candidates are narrowed to the best non-empty tier:
+
+1. products whose name, brand or synonyms contain **every** query word;
+2. products whose name, brand or synonyms contain **some** query word;
+3. everything BM25 found.
+
+Found live on 2026-10-14: "eggs" offered two yogurts, because their category is
+"Eggs & Yogurt"; "tea" offered coffee, "kitchen roll" facial tissues, "ice cream"
+antiseptic cream, "coca cola" Pepsi. An audit over every name, word and synonym
+in the catalogue found 94 of 569 queries offering something not named; after the
+tiers, the only ones left are brand matches (Diet Coke for "coca"). The audit is
+a unit test, so a new product cannot bring the problem back.
+
+**A partial name is a suggestion, not an answer.** A term resolves only when the
+top candidate is named by at least one of the search's words and accounts for
+all of them — its name, brand, synonyms or size, a misspelling within
+`FUZZY_THRESHOLD` included (`names_all`). Otherwise the term is unresolved and
+the candidates become suggestions (EC-03). Found live: "face wash" answered with
+Shower Gel, whose synonym "body wash" shares one word. Sentences are exempt —
+they are never auto-resolved anyway — and so is a search the model has already
+narrowed with a filter.
+
 ### 8.2 Query classification
 
 ```python
@@ -421,14 +447,22 @@ def rank(cands: list[Scored], term: str, stock: dict) -> list[Scored]:
         not stock[c.sku].ranged,          # ranged first — a hard gate
         stock[c.sku].shelf_qty == 0,      # in stock before out of stock
         not variant_match(c.product, term),
-        -c.bm25,
+        not c.near_best,                  # within the §8.4 margin of the best text score
         -c.product.popularity,
+        -c.bm25,                          # a closer text match only breaks popularity ties
         not c.product.own_brand,
     ))
 ```
 
+**Near-equal text is equal text.** A raw BM25 score separates "Follow On Milk"
+from "Semi Skimmed Milk" by a few hundredths, from nothing but the length of
+their descriptions, and as a ranking rule above popularity it put infant formula
+first for "milk". Text matches within `AMBIGUITY_MARGIN` of the best — the same
+margin §8.4 uses to call results near-equal — rank as equal, and popularity
+decides between them.
+
 Each rule has a name — *carried here*, *in stock*, *size asked for*, *text
-match*, *popularity*, *own brand* — and `explain` reports, for every result after
+match*, *popularity*, *closer text match*, *own brand* — and `explain` reports, for every result after
 the first, the first rule that separates it from the one above (NFR-09, AC-26).
 
 A lexicographic tuple sort, not a weighted sum. Weighted sums need tuning and
@@ -463,8 +497,6 @@ and the precedence ranking orders the options and alternatives (FR-06, AC-19).
 ### 8.5 Barcode lookup
 
 ```python
-RETAIL = (BarcodeFormat.EAN13, BarcodeFormat.EAN8, BarcodeFormat.UPCA)  # EC-51
-
 def normalise(digits: str) -> str | None:
     d = "".join(digits.split())
     if not d.isdigit() or len(d) not in (8, 12, 13): return None
@@ -475,20 +507,18 @@ def check_digit_ok(d: str) -> bool:                  # GS1: weights 3,1,3,… fr
     body = map(int, reversed(d[:-1]))
     total = sum(n * (3 if i % 2 == 0 else 1) for i, n in enumerate(body))
     return (10 - total % 10) % 10 == int(d[-1])
-
-def decode(photo: bytes) -> list[str]:
-    img = ImageOps.exif_transpose(Image.open(BytesIO(photo))).convert("L")
-    img.thumbnail((SCAN_MAX_SIDE_PX, SCAN_MAX_SIDE_PX))
-    found = zxingcpp.read_barcodes(img, formats=RETAIL)
-    return list(dict.fromkeys(c for c in (normalise(b.text) for b in found) if c))
 ```
 
-`decode` returns every distinct product code in the photo; the page looks one up
-only when there is exactly one (EC-53). An unreadable, corrupt or empty photo is
-an empty list, never an exception. zxing-cpp ships as a wheel with its own
-decoder, so the deployment needs no system package. `Catalogue.by_barcode` is a
-dictionary built once from `products.csv`; V-21 guarantees each code is valid
-and unique, so a code finds one product or none.
+**Decoding is on the phone.** `lib/scan.ts` draws a camera frame to a canvas
+every 250 ms (at most 1280 px on the long side) and reads it with zxing-wasm —
+zxing-cpp compiled to WebAssembly, the WASM file served from our own origin —
+for `EAN13`, `EAN8` and `UPCA` only (EC-51). One distinct code stops the camera
+and is sent to `/api/scan` (EC-54); two or more are never chosen between
+(EC-53); after six seconds with nothing read the page says what to try (EC-49).
+The server trusts none of it: the digits are checked by `normalise` again.
+
+`Catalogue.by_barcode` is a dictionary built once from `products.csv`; V-21
+guarantees each code is valid and unique, so a code finds one product or none.
 
 ## 9. Structured output models
 
@@ -640,76 +670,59 @@ easy mistake to ship.
 
 ---
 
-## 11. The Streamlit interface
+## 11. The page and the API
 
-There is no HTTP layer (C-03). The page calls the compiled graph in the same
-process, so what would have been a request contract is a function signature.
+The page is a Next.js static export; the agent is one Python function. Between
+them, four calls (C-03):
+
+| Call | Body | Does |
+|---|---|---|
+| `GET /api/store` | — | Floors and the spots on each, for the position picker (FR-15) |
+| `POST /api/search` | `query`, `answers[]`, `start`, `step_free` | `Journey.answer` — the search, resumed with each round's answer (FR-05) |
+| `POST /api/scan` | `code`, `start`, `step_free` | `Journey.run_scan` — one exact product (FR-03) |
+| `POST /api/route` | `skus[]`, `start`, `step_free` | `Journey.plan_route` — the basket, routed (FR-16, FR-23) |
+
+Each returns the same shape, built by `present.view.page_view` from a verified
+state: `pending` (the questions, if the run paused), `notice` (why a run made no
+claim), `available` / `unavailable` rows, `notes`, `addable` and `offer_add`
+(the basket gate, FR-22), `route` (directions, exclusions, the floor plates as
+SVG) and `degraded`.
 
 ```python
-# app.py — the whole surface between page and graph
-GRAPH = build_graph()                      # @st.cache_resource, built once
-
-def run_query(query: str, start_node: str, step_free: bool) -> JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
-    return GRAPH.invoke(initial_state(query, start_node, step_free), cfg)
-
-def resume(choice: Choice) -> JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
-    return GRAPH.invoke(Command(resume=choice), cfg)
-
-def run_scan(code: str, start_node: str, step_free: bool) -> JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}   # a new search thread
-    return GRAPH.invoke(initial_scan(code, start_node, step_free), cfg)
-
-def plan_route(basket: list[BasketItem]) -> JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
-    return GRAPH.invoke({"basket": basket, "mode": "multi"}, cfg)
+def _journey_run(request, response, run):
+    model = make_model(budget=MODEL_CALLS_PER_SESSION - used(request))   # cookie count
+    journey, thread = Journey(services(), model), f"req-{uuid4().hex}"   # ~4 ms to build
+    try:
+        outcome = run(journey, thread)
+        return page_view(services(), outcome.state, outcome.pending)
+    finally:
+        journey.forget(thread)                      # nothing outlives its request (EC-34)
+        set_cookie(BUDGET_COOKIE, used + model.calls)
 ```
 
-Three mechanics carry what the API used to:
+**Stateless, so it scales to zero and to many.** `services()` is built once per
+function instance and reused; a journey is built per request, around that
+visitor's model client, and its thread is deleted before the response is sent.
+A clarification is answered by sending the search back with the answers —
+`Journey.answer` re-runs it and resumes it round by round; `clarify` accepts only
+an option it offered, so a stale answer is simply asked again (EC-05). The page
+holds the position, the basket and the answers so far, the last two in the tab's
+session storage (EC-41).
 
-| Was | Is |
-|---|---|
-| `POST /journey` | `run_query(...)` — returns **results only**, never a route |
-| `POST /scan` | `run_scan(code)` — the same journey for one exact product (FR-03) |
-| `POST /journey/resume` | `resume(choice)` on the next page run, same `thread_id` |
-| `POST /route` | `plan_route(basket)` — a second graph run, from the basket |
-| `GET /journey/{id}` | `GRAPH.get_state(cfg)` — the checkpoint is the record (EC-41) |
-| SSE progress stream | `st.status` updated from the node names the graph yields |
+**The floor plates are the only markup the page inserts.** The SVG is drawn by
+our code from validated map data and carries no free text. Everything else —
+statements, questions, notes, directions, which can hold the shopper's or the
+model's words — is rendered by React as text, so nothing typed can become a
+link, an image or a script (AC-13).
 
-**What the page holds and what it does not.** `st.session_state` holds the
-search and route `thread_id`s, the basket draft, and the session's `Journey` —
-the checkpointer and the model client, so the model call budget is per visitor.
-Everything else is read back from the checkpoint (`Journey.current`), because
-Streamlit re-executes the script on every interaction and local state would
-drift from graph state (EC-36, EC-41).
+**Failures are an apology.** An unhandled error returns `500` with one sentence
+and is logged; a malformed request returns `422` without echoing it; the schema
+and docs pages are off. The page shows its own apology for either.
 
-**The floor plates are inline SVG through `st.markdown(…, unsafe_allow_html=True)`.**
-`st.html` drops inline SVG in Streamlit 1.65. The SVG is drawn by our code from
-validated map data and carries no free text; everything else the page shows —
-statements, notes, directions, which can hold the shopper's or the model's
-words — is markdown-escaped, so no link or image can be injected (AC-13).
-
-**Caching is load-bearing, not an optimisation.** The store, the BM25 index and
-the distance and predecessor matrices are built in `@st.cache_resource`
-builders in `ui/resources.py`. Without that, every click rebuilds ~314 nodes of
-all-pairs Dijkstra and NFR-05's five seconds are gone before the search starts.
-
-**The search box lives inside `st.form`**, so the graph is invoked on submit
-rather than on each keystroke.
-
-**The scan is `st.camera_input` behind a switch.** The widget starts the camera
-when it is drawn, so it is drawn only once the shopper turns on "Scan a
-barcode" — no permission prompt for anyone who never scans. It returns the same
-photo on every later run, so the page keeps a digest of the last photo it looked
-up and looks each photo up once (EC-54). The typed digits sit beside it in their
-own `st.form`, and both reach `Journey.run_scan`. Messages from a run that made
-no claim — too short, digits in the search box, a bad barcode — are shown as a
-notice; before this they were held in state and never drawn.
-
-**Thread lifetime.** A `thread_id` is minted per search and swept after
-`THREAD_TTL_MINUTES` (§14). LangGraph does not expire threads, so without the
-sweep every abandoned clarification leaks a checkpoint (EC-34).
+**Local runs.** `npm run build` then
+`LOCATOR_STATIC=out uv run uvicorn api.index:app` serves page and API from one
+process — what the browser tests do. `npm run dev` with the API on port 8000
+proxies `/api/*` to it.
 
 ---
 
@@ -741,8 +754,8 @@ makes a store folder well formed is a property of the format, not of this
 application. What belongs here is *when* they run, in what order, and what
 happens when one fails.
 
-`validation.py` runs them inside the `@st.cache_resource` builder that loads the
-store, which means they run **once per process, before the first search**, and a
+`validation.py` runs them when the API function first builds its services,
+which means they run **once per instance, before its first search**, and a
 failure raises rather than returning a half-loaded store.
 
 | Phase | Checks | Why this order |
@@ -780,7 +793,6 @@ AMBIGUITY_MARGIN    = 0.15    # §8.4
 MAX_CLARIFY_ROUNDS  = 2       # EC-35
 THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
 MODEL_TIMEOUT_S     = 6
-SCAN_MAX_SIDE_PX    = 2000    # EC-49 — a photo is shrunk to this before decoding
 ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
@@ -796,9 +808,9 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only
 ```
 
 Every number a reviewer might question lives here with the edge case it serves
-in the comment. `THREAD_TTL_MINUTES` drives the sweep that stops abandoned
-clarifications accumulating checkpoints forever — LangGraph does not expire
-threads on its own.
+in the comment. `THREAD_TTL_MINUTES` drives `Journey.sweep`, for a journey that lives
+across requests; the API never needs it, because it deletes each request's
+thread before answering (§11, EC-34).
 
 ---
 
@@ -808,7 +820,9 @@ threads on its own.
 |---|---|---|
 | Unit · classify | Every branch of §8.2 | Empty · 1 char · digits only · `"milk, bread"` · `"milk and bread"` · `"salt and vinegar crisps"` (the known-crude case) · `"2 x milk"` · 200 terms |
 | Unit · search | Ranking precedence | Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected |
-| Unit · barcode | §8.5 | Valid EAN-13, EAN-8, UPC-A · failed check digit · wrong length · a rendered barcode read back, rotated and blurred · blank, corrupt and QR-only photos read as nothing · two codes in one photo |
+| Unit · barcode | §8.5 | Valid EAN-13, EAN-8, UPC-A · failed check digit · swapped digits · wrong length · exact lookup |
+| Integration · API | §11 | Every call's shape · a clarification answered by resending · an answer not offered is asked again · no thread survives a request · apology on failure |
+| Browser · 390 px | §11, AC-15, AC-28 | The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text |
 | Unit · routing | Matrix and reconstruction | Same-node route returns `[u]` · known-distance pair · NO_PATH raises · step-free matrix differs where it should |
 | Unit · TSP | Open-path correctness | Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till |
 | Unit · grounding | §9 guardrails | Out-of-set SKU raises `GroundingError` · `null` dietary flag never satisfies a requirement |
@@ -835,7 +849,7 @@ because the node owns them.
 
 ```
 Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
-   │ "coke 500ml" · F0/A01 · submit (st.form)
+   │ "coke 500ml" · F0/A01 · submit → POST /api/search
    ├───────►│  run_query(q, start_node, step_free)
    │        ├──────────►│
    │        │           │ classify_query → shape="term"
@@ -849,9 +863,9 @@ Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
    │        │           │ needs_clarification? (top−2nd)/top ≥ 0.15 → no
    │ ┌ opt [margin < 0.15] ──────────────────────────────────────────────────┐
    │ │      │◄──────────┤ interrupt({options})
-   │ │◄─────┤ st.radio options
-   │ ├─────►│ picks one      ═══ NEW PAGE RUN ═══
-   │ │      ├──────────►│ resume(choice)
+   │ │◄─────┤ radio options  ═══ THE REQUEST ENDS ═══
+   │ ├─────►│ picks one → POST /api/search {query, answers:[choice]}
+   │ │      ├──────────►│ run again, then resume(choice)
    │ └────────────────────────────────────────────────────────────────────────┘
    │        │           ├──────────────────────────►│ check_availability([sku])
    │        │           │◄──────────────────────────┤ shelf_qty 14 · ranged TRUE
@@ -870,8 +884,8 @@ Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
 
 Three things this exists to show. Ranking calls **Stock before availability is
 checked**, because `ranged` and `in stock` are ranking signals (FR-06), not just
-output. The clarification is a **new page run**, not a continuation — Streamlit
-holds no request open. And `verify` sits between the composed answer and the
+output. The clarification is a **new request**, not a continuation — the
+server holds nothing open, so the page sends the search back with the answer. And `verify` sits between the composed answer and the
 page, so nothing unverified can render (NFR-02).
 
 ### 16.2 Multiple products

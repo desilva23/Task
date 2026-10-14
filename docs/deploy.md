@@ -1,61 +1,75 @@
-# Deploying to Streamlit Community Cloud
+# Deploying to Vercel
 
 For the owner. About ten minutes, done once. Everything here happens in your own accounts;
 the key never goes into the repository.
 
+One Vercel project serves both halves: the Next.js page as static files from the CDN, and the
+agent as one Python function under `/api` (C-03, C-07). `vercel.json` says how — you should not
+need to change any build setting.
+
 ## Before you start
 
 1. **Groq spend limit.** In the Groq console, set a spend limit on the account whose key the
-   app will use. The app caps model calls per visitor, but a public URL can have many visitors.
+   app will use. The app counts model calls per visitor in a cookie, but a visitor who clears
+   cookies resets that count — the spend limit is the guard that holds.
 2. **Groq tier.** On the free tier the app manages roughly 6–8 model-assisted searches a minute
    across *all* visitors (8,000 tokens a minute, measured). Past that, answers fall back to the
    plain wording — still correct. Upgrade the Groq account first if you expect more.
+3. **Vercel plan.** The Hobby plan is free for non-commercial personal use, which this proof of
+   concept is. It does not bill for overage; a project that exceeds its limits is paused.
 
 ## Deploy
 
-1. Go to **share.streamlit.io** and sign in with the GitHub account that owns
-   `desilva23/Task`.
-2. **Create app** → **Deploy a public app from GitHub**.
-3. Fill in:
-   - **Repository:** `desilva23/Task`
-   - **Branch:** `main`
-   - **Main file path:** `app.py`
-   - **App URL:** your choice
-4. Open **Advanced settings**:
-   - **Python version:** `3.12` (the default — keep it; the project is pinned to 3.12)
-   - **Secrets:** paste exactly one line, with your key between the quotes:
-     ```toml
-     GROQ_API_KEY = "gsk_your_key_here"
-     ```
-5. **Deploy.** The first build takes a few minutes; it installs from `uv.lock`.
+1. Go to **vercel.com**, sign in with GitHub, and choose **Add New… → Project**.
+2. **Import** `desilva23/Task`.
+3. On the configuration screen:
+   - **Framework Preset:** Next.js (detected from `vercel.json`)
+   - **Root Directory:** leave as `./`
+   - **Build and Output Settings:** leave the defaults
+   - **Environment Variables:** add one —
+     - **Key:** `GROQ_API_KEY`
+     - **Value:** your key (`gsk_…`)
+     - **Environments:** Production (add Preview too if you want branch previews to use the
+       model; without the key they use the plain wording)
+4. **Deploy.** The first build takes a few minutes: it builds the page with `npm`, and installs
+   the Python function's dependencies from `pyproject.toml` and `uv.lock` on Python 3.12.
+
+Vercel then deploys every push: `main` to production, every other branch to its own preview
+URL. Work on a branch, check its preview, and merge when the check passes.
 
 ## Check it
 
-- Search **Coca-Cola Classic**: you should see "In stock", floor 1, aisle 7, rack 3, shelf 2, a
-  route, and friendly wording. If you see *"Plain wording: the language model wasn't used"*, the
-  key is missing or wrong — fix it under the app's **Settings → Secrets**.
-- Send Claude the app URL: it runs the 390 px phone test against the live site. On Cloud the
-  app sits in a frame, so tests use `https://<app>.streamlit.app/~/+/`.
+1. Open `https://<your-project>.vercel.app/api/store` — you should see JSON listing three floors.
+2. Open the site on your phone, search `milk, bread, eggs`, add the available items, and plan
+   the route.
+3. Turn on **Scan a barcode** and allow the camera. Type `2040634867035` into the digits field
+   to check the lookup; the demo store's barcodes are synthetic, so a real product's barcode
+   correctly says it is not in this store's catalogue.
+4. From your machine, run the browser tests against the live site:
 
-## Options, no code change
+   ```bash
+   LOCATOR_URL=https://<your-project>.vercel.app uv run pytest tests/browser
+   ```
 
-Top-level secrets also become environment variables, so these can go in the Secrets field too:
+## Optional hardening
 
-| Line | Effect |
-|---|---|
-| `LOCATOR_STORE = "data/SBY-PORT-002"` | Serve the two-floor portability store instead of the demo store |
-| `LOCATOR_MODEL = "off"` | Run on the deterministic wording only — no Groq calls at all |
+- **Rate limit.** In the project's **Firewall**, add a rule that rate-limits `/api/*` per IP
+  address, if your plan offers it. It protects the Groq key better than the cookie does.
+- **Deployment Protection.** Previews are protected by Vercel authentication by default; leave
+  that on so only you can use branch previews.
 
-## Moving the app to another branch
+## Retiring the Streamlit app
 
-Streamlit cannot change a deployed app's branch in its settings. Note the app URL's
-subdomain and the Secrets, **delete the app**, then deploy again from the new branch with
-the same subdomain and the same Secrets — the subdomain is free again as soon as the app
-is deleted. Do not rename or delete the old branch first: the app is tied to it, and
-changing it before deleting the app can leave the app view-only.
+The Streamlit Community Cloud app follows `main`, and `main` no longer has a Streamlit page once
+this change is merged — its next redeploy fails. After the Vercel site works, delete it: open
+**share.streamlit.io**, find the app, **⋮ → Delete**. Do not delete the old branch
+`claude/planogram-store-navigation-czn7bh` while any app still deploys from it.
 
 ## If something goes wrong
 
-The page never shows a stack trace (by design). Use **Manage app** (bottom right of the live
-app) → **Logs** to see the error, and share the log lines with Claude — after checking they
-contain no key.
+- **The page loads but every search apologises.** Open the project's **Logs** in Vercel and
+  look at the `/api/index` function. A missing data folder or an import error shows there.
+- **Answers always say "Plain wording".** The key is missing from the environment the
+  deployment ran in, or the Groq budget is spent. Add the variable and **Redeploy**.
+- **The camera never starts.** The browser refused it — the site must be on `https://` (C-08),
+  and the shopper must allow the camera. The typed digits work either way.

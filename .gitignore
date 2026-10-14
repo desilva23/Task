@@ -11,3 +11,13 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .hypothesis/
+node_modules
+
+# The Next.js page — dependencies and build output
+node_modules/
+.next/
+out/
+public/zxing_reader.wasm
+*.tsbuildinfo
+.vercel/
+.env*.local

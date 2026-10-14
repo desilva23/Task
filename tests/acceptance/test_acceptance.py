@@ -13,8 +13,8 @@ from graph.journey import Journey
 from graph.model import NoModel, good_model
 from graph.services import Services
 from models.domain import Availability, NoRoute, Route
+from present.view import addable, group_results
 from tests.unit.test_routing import independent_shortest
-from ui.view import addable, group_results
 from validation import load_store
 
 DATA = Path(__file__).resolve().parents[2] / "data"

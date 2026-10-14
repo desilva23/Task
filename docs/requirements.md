@@ -63,11 +63,11 @@ store works with no code changes.
 |---|---|---|
 | C-01 | Agentic framework is **LangGraph** | confirmed |
 | C-02 | Implementation language is **Python** | confirmed |
-| C-03 | User interface is a single **Streamlit** page | confirmed |
+| C-03 | User interface is a single **Next.js** web page, calling the Python agent through an HTTP API served from the same deployment | confirmed — Streamlit until the owner's change of 2026-10-14 |
 | C-04 | All store data is **synthetic**, and each store's files declare it | confirmed |
 | C-05 | No integration with any live retailer system | confirmed |
 | C-06 | Language models are served through **GroqCloud** | confirmed |
-| C-07 | The application is deployed on **Streamlit Community Cloud** | confirmed |
+| C-07 | The application is deployed on **Vercel**: the page as static files, the agent as a Python function | confirmed — Streamlit Community Cloud until the owner's change of 2026-10-14 |
 | C-08 | The site is served over **HTTPS**. Camera access requires a secure context, so FR-03's camera does not work over plain HTTP, including on a local machine addressed by IP | confirmed |
 
 | ID | Assumption | Status | If it later proves wrong |
@@ -78,7 +78,7 @@ store works with no code changes.
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
-| A-07 | The shopper's mobile browser can grant camera access and take a still photo the system can read an EAN-13 from. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | Live decoding in the browser, which needs a custom component |
+| A-07 | The shopper's mobile browser can grant camera access and read an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | A still photo sent to the server and decoded there |
 
 ---
 

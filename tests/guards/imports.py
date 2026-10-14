@@ -7,7 +7,8 @@ time is not seen; the codebase has no reason to do that.
 import ast
 from pathlib import Path
 
-RUNTIME = ("langgraph", "langchain", "langchain_*", "streamlit", "groq", "openai", "anthropic")
+WEB = ("fastapi", "starlette", "uvicorn")
+RUNTIME = ("langgraph", "langchain", "langchain_*", *WEB, "groq", "openai", "anthropic")
 
 SKIP_DIRS = {"tests", "scripts", "docs", "specs", "data", "notes", "__pycache__"}
 
@@ -16,15 +17,15 @@ def _in_services(rel: Path) -> bool:
     return rel.parts[0] == "services"
 
 
-def _outside_ui(rel: Path) -> bool:
-    return rel.parts[0] != "ui" and rel != Path("app.py")
+def _outside_api(rel: Path) -> bool:
+    return rel.parts[0] != "api"
 
 
 # (rule name, which files it governs, forbidden module patterns)
 RULES = [
     ("services-no-runtime", _in_services, RUNTIME),
     ("services-not-graph", _in_services, ("graph",)),
-    ("streamlit-only-in-ui", _outside_ui, ("streamlit",)),
+    ("web-only-in-api", _outside_api, WEB),
 ]
 
 

@@ -16,8 +16,9 @@ and the edge cases, and it is written to be read after the specification.
 
 Three constraints shape everything below: **LangGraph** orchestrates the
 pipeline (C-01), the implementation is **Python** (C-02), and the interface is a
-single **Streamlit** page calling the compiled graph **in-process** (C-03).
-There is no HTTP layer anywhere in this design.
+single **Next.js** page calling the compiled graph through a small **HTTP API**
+(C-03), both deployed on Vercel (C-07). The API is **stateless**: nothing about a
+shopper survives between two requests on the server (§4.1).
 
 ### 1.1 What the harder requirements mean for the design
 
@@ -109,10 +110,11 @@ model rather than after it.
 ## 2. System layers
 
 ```
-PAGE            Streamlit, one page: search form · position picker · basket
-                3 floor plates with route overlay · directions list
-   │ in-process: graph.invoke(state, {"configurable": {"thread_id": …}})
-   │ no HTTP, no serialisation, no API surface
+PAGE            Next.js, one static page: search form · barcode scan · position
+                picker · basket · floor plates with route overlay · directions list
+   │ HTTPS, JSON: /api/store · /api/search · /api/scan · /api/route
+API             FastAPI, one Python function — stateless; each request is one or
+                more graph runs on a fresh thread, deleted before it returns
 ORCHESTRATION   LangGraph — 11 nodes, 3 of which call a model
                 classify_query · understand_query · resolve_items · clarify
                 check_availability · suggest_substitutes · resolve_locations
@@ -372,18 +374,20 @@ empty packet brought from home, and checking you have the right variant of
 something you are holding. Typed digits are the degraded path, for when the
 camera is declined, missing or cannot start (A-07, C-08).
 
-**A still photo, decoded on the server.** The page takes one photo with the
-browser camera, and the server reads the barcode from it. Live decoding while
-the shopper hovers needs a custom browser component and a secure context at
-every hop; a shutter tap is the honest proof-of-concept version. The photo is
-read in memory and discarded — it is never stored, logged or sent to the model.
+**Decoded live, in the browser.** The page reads frames from the camera and
+decodes them on the phone, with the same zxing decoder compiled to WebAssembly;
+the shopper holds the barcode up and no shutter is tapped. Only the digits are
+sent to the server — **no image ever leaves the phone**, so there is nothing to
+store, log or pass to a model. The camera stops as soon as a code is read.
 
 **A barcode is an identifier, not a search.** The decoded or typed digits are
 checked — length and GS1 check digit — and then looked up for an exact match in
 the catalogue. There is no ranking, no fuzzy retry and no nearest match: a
 barcode that is not in the catalogue says so (AC-28), because the nearest
 product to a wrong number is a wrong product. Only retail symbologies (EAN-13,
-EAN-8, UPC-A, UPC-E) are read; a QR code or a shipping label is not a product.
+EAN-8, UPC-A) are read; a QR code or a shipping label is not a product. The
+server checks the digits again whatever the page sent: the page is not trusted
+to have decoded honestly.
 
 **The same graph, entered at the same door.** A scan is a request with
 `action = scan`. `classify_query` checks the digits; a valid code goes straight
@@ -396,15 +400,15 @@ can match one by accident.
 
 ## 4. Interface and presentation
 
-One Streamlit page, used by a shopper standing in the store on their own phone
+One Next.js page, used by a shopper standing in the store on their own phone
 (A-06). The page is not a thin shell over the graph — four requirements land
 here and nowhere else.
 
 | Requirement | What the page does |
 |---|---|
-| FR-03 · barcode scan | A "Scan a barcode" switch under the search box. Only when it is on does the camera start, so no permission is asked until the shopper wants it; beneath the camera, a field for the digits does the same lookup |
+| FR-03 · barcode scan | A "Scan a barcode" switch under the search box. Only when it is on does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup |
 | FR-15 · start point | Two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
-| FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor, with transition markers where it changes floor |
+| FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick numbered with its product, rack and shelf, and each floor change written out — which way, by stairs or lift, to which floor |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
 | NFR-11 · phone width | Single column at 390 px, the floor plate scaled to width with no pinch-zoom, controls within thumb reach, no horizontal page scroll |
 
@@ -424,24 +428,34 @@ saw the ranking rules or the path — it would be inventing a reason that sounds
 right, not reporting the real one. An explanation nobody can check is worse
 than none, because it gets believed.
 
-### 4.1 Streamlit mechanics the design depends on
+### 4.1 Mechanics of a stateless API
 
-Streamlit re-executes the whole script on every interaction. Three consequences
-are design-level rather than implementation detail:
+The agent runs as a serverless function: any request may reach a fresh
+instance, and two requests from one shopper may reach different ones. Four
+consequences are design-level rather than implementation detail:
 
-1. **The expensive objects are built once.** Store graph, BM25 index and the
-   distance and predecessor matrices live in `@st.cache_resource`. Without that
-   every click rebuilds them and NFR-05's five seconds are spent before the
-   search starts.
-2. **The search box commits on submit**, inside `st.form`, so the agent runs
-   once per search rather than once per keystroke.
-3. **The clarification pause is served by the next page run.** FR-05's
-   `interrupt()` suspends the graph; the shopper's answer resumes the same
-   `thread_id` on the following run. No second request exists, because the page
-   calls the graph in-process.
-4. **A camera photo outlives the run that took it.** The widget hands back the
-   same photo on every later run, so the page remembers which photo it last
-   looked up and looks each one up once (EC-54).
+1. **The expensive objects are built once per instance**, when the function
+   starts: store, BM25 index, and the distance and predecessor matrices. Every
+   request on a warm instance reuses them; only a cold start pays for them,
+   and NFR-05 is measured warm and cold.
+2. **The search commits on submit**, so the agent runs once per search rather
+   than once per keystroke.
+3. **The clarification is carried by the page, not the server.** FR-05's
+   `interrupt()` still suspends the graph, but the request that asked the
+   question has ended by the time the shopper answers. The page sends the
+   search back with the answers; the server runs the graph again on a fresh
+   thread and resumes it with each round's answer in turn. Only an option the
+   graph itself offered is accepted (EC-05), and a thread is deleted before its
+   request returns, so an abandoned question leaves nothing behind (EC-34).
+4. **The basket and the shopper's position live in the page**, and a route is
+   planned from the SKUs the page sends. Availability and routability are
+   re-read from the store data on every request, so a stale page can ask for a
+   route but never receive one to an empty shelf (EC-17).
+
+The model-call budget per visitor (constitution: public-deployment guard) is
+counted in a cookie, because there is no server-side session. A visitor who
+clears cookies resets it, so it is a courtesy limit; the binding limits are the
+spend cap in the Groq console and a rate limit at Vercel's firewall.
 
 ---
 
@@ -474,7 +488,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 |---|---|---|
 | EC-01 | Empty or one-character query | Reject before any search; show category browse |
 | EC-02 | Misspelling — "paracetomol" | Weak BM25 scores → fuzzy stage → retry once only, to bound latency |
-| EC-03 | No match anywhere in the catalogue | "We don't recognise that" + nearest fuzzy suggestions. Never an empty screen |
+| EC-03 | No match anywhere in the catalogue, or a match on only part of the search — "face wash" against Shower Gel ("body wash") | "We don't recognise that" + suggestions: products named by more of the words first, then by the last word, then the popular. A product named by part of a search is never the answer. Never an empty screen |
 | EC-04 | In the catalogue but not ranged in this store | Say so explicitly, offer the nearest ranged alternative. Early graph exit, no route |
 | EC-05 | Ambiguous — "bread" returns 12 near-equal hits | `clarify` interrupt with the top options. Capped at two rounds, then show the ranked list |
 | EC-06 | Batch query with 200 pasted terms | Cap at 30 resolved items; return the rest unprocessed with a clear message |
@@ -526,15 +540,15 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 
 | ID | Scenario | Behaviour |
 |---|---|---|
-| EC-34 | Clarification abandoned, interrupt never resumed | Threads carry a TTL and are swept. Without this every abandoned search leaks a checkpoint — LangGraph does not expire threads on its own |
+| EC-34 | Clarification abandoned, interrupt never resumed | Nothing to clean up: every request runs on a fresh thread, deleted before the response is sent (§4.1). LangGraph does not expire threads on its own, so nothing may outlive its request |
 | EC-35 | Clarify loop never converges | Loop counter in state, capped at two rounds, then forced to return the ranked list |
-| EC-36 | Same `thread_id` from two tabs at once | Last write wins; the UI reloads graph state rather than trusting local state |
+| EC-36 | The same search from two tabs at once | Independent: no request shares a thread with another, and each tab holds its own answers and basket |
 | EC-37 | Model call times out or errors | Every model node has a deterministic fallback: keyword search, a static substitution table, a directions template. The journey always completes |
 | EC-38 | Model returns malformed structured output | Validate against the schema; fall back to keyword search. Strict mode makes this rare, not impossible — a reply cut off at the token cap still fails |
 | EC-39 | Model declines the request | Check the stop reason before reading content; fall through to the deterministic path |
 | EC-40 | Node raises mid-graph, partial state | The checkpoint holds the last good state; resume from the failed node rather than restarting |
 | EC-47 | `verify` finds a claim that does not match the service result | The composed answer is discarded, never corrected in place. The deterministic template is rendered from the service results instead and the discrepancy is recorded in `degraded`. A mismatch is a bug to surface, not a difference to split |
-| EC-41 | Page re-runs or is refreshed mid-journey | State lives in the checkpoint under `thread_id`; the page rebuilds from graph state rather than from Streamlit session state |
+| EC-41 | Page is refreshed mid-journey | The basket and start point survive in the tab's session storage; a pending clarification is simply asked again by re-running the search. Nothing is lost on the server, because nothing was kept there |
 
 ### 6.6 Data and startup
 
@@ -552,12 +566,12 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | ID | Scenario | Behaviour |
 |---|---|---|
 | EC-48 | Camera declined, revoked after a scan, absent, or blocked because the page is on plain HTTP (C-08) | The digits field beside the camera is the same lookup and keeps working; nothing about the search depends on the camera |
-| EC-49 | Photo with no readable barcode — damaged, creased, partly covered, blurred, too far away | "No barcode found in that photo", with what to try and the digits field. Never a guess at what it might have been |
+| EC-49 | No readable barcode in view — damaged, creased, partly covered, blurred, too far away | The camera keeps looking; after a few seconds with nothing read the page says what to try, and the digits field is always there. Never a guess at what it might have been |
 | EC-50 | A valid barcode that is not in this catalogue | Said plainly, with no nearest match and no suggestions (AC-28). It may be another shop's product or not a grocery product at all |
 | EC-51 | A barcode that is not a product's — a QR code, a shipping label | Not read: only retail symbologies are decoded, so it reports as no barcode found |
 | EC-52 | Mistyped digits — wrong length, or a failed check digit | "That isn't a valid barcode", before any lookup. A near-miss number is never matched to the closest real one |
-| EC-53 | Two different barcodes in one photo | Neither is chosen: the shopper is asked to scan one product at a time. The same code twice is one code |
-| EC-54 | The page re-runs with the same photo still held by the camera widget | Looked up once. A new photo, or new typed digits, is a new lookup |
+| EC-53 | Two different barcodes in one frame | Neither is chosen: the shopper is asked to scan one product at a time, and the camera keeps looking. The same code twice is one code |
+| EC-54 | The camera keeps seeing the same barcode after it is read | Looked up once: the camera stops at the first read. Scanning again, or typing digits, is a new lookup |
 
 ## 7. Onboarding a new store
 

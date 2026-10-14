@@ -24,7 +24,7 @@ class TestBoundaryRules:
             ("import langchain\n", "langchain"),
             ("from langchain_core.messages import HumanMessage\n", "langchain_core.messages"),
             ("from langchain_groq import ChatGroq\n", "langchain_groq"),
-            ("import streamlit as st\n", "streamlit"),
+            ("import fastapi\n", "fastapi"),
             ("import groq\n", "groq"),
             ("from openai import OpenAI\n", "openai"),
             ("import anthropic\n", "anthropic"),
@@ -37,8 +37,8 @@ class TestBoundaryRules:
         ]
 
     def test_import_inside_a_function_is_caught(self, tmp_path):
-        plant(tmp_path, "services/stock.py", "def f():\n    import streamlit\n")
-        assert find_violations(tmp_path) == ["services/stock.py:2 services-no-runtime: streamlit"]
+        plant(tmp_path, "services/stock.py", "def f():\n    import fastapi\n")
+        assert find_violations(tmp_path) == ["services/stock.py:2 services-no-runtime: fastapi"]
 
     def test_services_may_not_import_graph(self, tmp_path):
         plant(tmp_path, "services/routing.py", "from graph.state import JourneyState\n")
@@ -62,30 +62,31 @@ class TestBoundaryRules:
         plant(tmp_path, "graph/nodes/availability.py", "from services.stock import Stock\n")
         assert find_violations(tmp_path) == []
 
-    def test_streamlit_outside_ui_is_caught(self, tmp_path):
-        plant(tmp_path, "config.py", "import streamlit\n")
-        plant(tmp_path, "graph/build.py", "\n\nfrom streamlit import session_state\n")
+    def test_the_web_framework_outside_api_is_caught(self, tmp_path):
+        plant(tmp_path, "config.py", "import fastapi\n")
+        plant(tmp_path, "graph/build.py", "\n\nfrom starlette.requests import Request\n")
+        plant(tmp_path, "present/view.py", "import uvicorn\n")
         assert find_violations(tmp_path) == [
-            "config.py:1 streamlit-only-in-ui: streamlit",
-            "graph/build.py:3 streamlit-only-in-ui: streamlit",
+            "config.py:1 web-only-in-api: fastapi",
+            "graph/build.py:3 web-only-in-api: starlette.requests",
+            "present/view.py:1 web-only-in-api: uvicorn",
         ]
 
-    def test_streamlit_in_ui_and_app_is_allowed(self, tmp_path):
-        plant(tmp_path, "app.py", "import streamlit as st\n")
-        plant(tmp_path, "ui/results.py", "import streamlit as st\n")
+    def test_the_web_framework_in_api_is_allowed(self, tmp_path):
+        plant(tmp_path, "api/index.py", "from fastapi import FastAPI\n")
         assert find_violations(tmp_path) == []
 
     def test_one_line_per_offending_statement(self, tmp_path):
-        plant(tmp_path, "services/a.py", "import langgraph\nimport streamlit\n")
+        plant(tmp_path, "services/a.py", "import langgraph\nimport fastapi\n")
         assert find_violations(tmp_path) == [
             "services/a.py:1 services-no-runtime: langgraph",
-            "services/a.py:2 services-no-runtime: streamlit",
+            "services/a.py:2 services-no-runtime: fastapi",
         ]
 
     def test_tests_and_scripts_are_not_scanned(self, tmp_path):
-        plant(tmp_path, "tests/test_x.py", "import streamlit\n")
-        plant(tmp_path, "scripts/tool.py", "import streamlit\n")
-        plant(tmp_path, ".venv/lib/streamlit/x.py", "import streamlit\n")
+        plant(tmp_path, "tests/test_x.py", "import fastapi\n")
+        plant(tmp_path, "scripts/tool.py", "import fastapi\n")
+        plant(tmp_path, ".venv/lib/fastapi/x.py", "import fastapi\n")
         assert find_violations(tmp_path) == []
 
     def test_the_repository_obeys_every_rule(self):

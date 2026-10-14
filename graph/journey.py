@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.types import Command
 
-from config import MAX_QUERY_CHARS, THREAD_TTL_MINUTES
+from config import MAX_CLARIFY_ROUNDS, MAX_QUERY_CHARS, THREAD_TTL_MINUTES
 from graph.build import build_graph
 
 FRESH = {
@@ -80,6 +80,22 @@ class Journey:
             "start_node": start_node or self.services.engine.graph.entrance,
             "step_free": step_free,
         })  # fmt: skip
+
+    def answer(self, thread_id, query, answers: list[dict[str, str]], **kw) -> Outcome:
+        """A search and the shopper's answers, one per clarification round, in one call — how a
+        stateless API serves FR-05 (hld.md §4.1). The search runs again and is resumed round by
+        round; clarify accepts only an option it offered, so a stale answer is asked again."""
+        outcome = self.run_query(thread_id, query, **kw)
+        for choice in answers[:MAX_CLARIFY_ROUNDS]:
+            if not outcome.pending:
+                break
+            outcome = self.resume(thread_id, choice)
+        return outcome
+
+    def forget(self, thread_id: str) -> None:
+        """Drop a finished request's thread — nothing outlives its request (EC-34)."""
+        self.checkpointer.delete_thread(thread_id)
+        self._touched.pop(thread_id, None)
 
     def resume(self, thread_id, choice: dict[str, str]) -> Outcome:
         # wrapped: LangGraph reads a bare dict as answers keyed by interrupt ID

@@ -137,7 +137,7 @@ header = """
   <h1>Product Locator LLD</h1>
   <p class="standfirst">Module layout, graph state, node contracts, algorithms and thresholds for the in-store product finder. Read after the HLD; the data formats live in the Schema document.</p>
   <div class="meta">
-    <span><b>Stack</b> Python · LangGraph · Streamlit, in-process</span>
+    <span><b>Stack</b> Python · LangGraph · FastAPI · Next.js · Vercel</span>
     <span><b>Nodes</b> 11, of which 3 call a model</span>
     <span><b>No HTTP layer</b> the page calls the graph directly</span>
   </div>

@@ -31,3 +31,9 @@ description: "Task list for Phase 9 — barcode scan"
   (Phase 9 row, `zxing-cpp`). The two tests that kept FR-03 uncitable now prove the opposite.
 - Not proven here: the camera on the deployed site and on a real phone — after merge, on the
   public URL (C-08).
+
+## Superseded in part by Phase 10 (2026-10-14)
+
+Phase 10 moved decoding from the server (a still photo through `zxing-cpp`) to the phone (live
+frames through zxing-wasm), so `services/barcode.decode`, its photo tests and the `st.camera_input`
+page are gone. The exact lookup, the digit checks, V-21 and AC-28 stand as built here.
