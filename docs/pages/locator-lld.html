@@ -260,10 +260,9 @@ D, P = shortest_path(csr, method="D", directed=True, return_predecessors=True)</
     return "resolve_items"
 
 def after_resolve(s) -&gt; str:
-    if not s["resolved"] and not s["candidates"]: return END   # EC-03
     if s["clarify_rounds"] &lt; MAX_CLARIFY_ROUNDS and needs_clarification(s):
         return "clarify"                                       # EC-05
-    return "check_availability"
+    return "check_availability"     # EC-03: "not recognised" is said, then verified
 
 def after_availability(s) -&gt; str:
     return "suggest_substitutes" if any_out_of_stock(s) else "resolve_locations"
@@ -427,6 +426,7 @@ if choice.sku not in {p.sku for p in candidates}:
     raise GroundingError(choice.sku)                    # fall back, never surface</code></pre>
 <div class="prose">
   <p><b>The guardrail is code, not prose.</b> Two mechanisms, both enforced rather than requested. The schema has no field for a product name, so query understanding cannot invent one. And a substitute SKU that was not in the candidate list the service built is rejected outright — the model picks <i>among</i> safe options, it does not nominate them.</p>
+  <p><b>The understand schema is narrowed to the store.</b> <code>parsed_query_for(store)</code> replaces <code>department</code>, <code>aisle_category</code> and <code>exclude_allergens</code> with enums of that store's own names before the schema is sent. Found live: gpt-oss read "something for a headache" well but answered with the department "pharmacy" and the category "over the counter", which matched nothing. Groq's strict decoding and our validation both reject a name the store does not have; both fields accept any real department or category name, and the node files each into the field it belongs to, because a shopper's words do not say which it is. When the item phrase finds nothing but the model named a real category, that category's products are offered as a choice.</p>
   <p><code>dietary_compatible</code> treats a <code>null</code> flag as incompatible when the original product required it. An unknown value never satisfies a dietary requirement.</p>
 </div>
 <h3>The verify pass</h3>
@@ -530,7 +530,8 @@ def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
 </table>
 </div>
 <div class="prose">
-  <p><b>What the page holds and what it does not.</b> <code>st.session_state</code> holds exactly two things: the <code>thread_id</code> and the basket draft. Everything else is read back from the checkpoint, because Streamlit re-executes the script on every interaction and local state would drift from graph state (EC-36, EC-41).</p>
+  <p><b>What the page holds and what it does not.</b> <code>st.session_state</code> holds the search and route <code>thread_id</code>s, the basket draft, and the session's <code>Journey</code> — the checkpointer and the model client, so the model call budget is per visitor. Everything else is read back from the checkpoint (<code>Journey.current</code>), because Streamlit re-executes the script on every interaction and local state would drift from graph state (EC-36, EC-41).</p>
+  <p><b>The floor plates are inline SVG through <code>st.markdown(…, unsafe_allow_html=True)</code>.</b> <code>st.html</code> drops inline SVG in Streamlit 1.65. The SVG is drawn by our code from validated map data and carries no free text; everything else the page shows — statements, notes, directions, which can hold the shopper's or the model's words — is markdown-escaped, so no link or image can be injected (AC-13).</p>
   <p><b>Caching is load-bearing, not an optimisation.</b> The store, the BM25 index and the distance and predecessor matrices are built in <code>@st.cache_resource</code> builders in <code>ui/resources.py</code>. Without that, every click rebuilds ~314 nodes of all-pairs Dijkstra and NFR-05's five seconds are gone before the search starts.</p>
   <p><b>The search box lives inside <code>st.form</code></b>, so the graph is invoked on submit rather than on each keystroke.</p>
   <p><b>Thread lifetime.</b> A <code>thread_id</code> is minted per search and swept after <code>THREAD_TTL_MINUTES</code> (§14). LangGraph does not expire threads, so without the sweep every abandoned clarification leaks a checkpoint (EC-34).</p>

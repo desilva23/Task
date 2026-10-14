@@ -228,10 +228,9 @@ def after_classify(s) -> str:
     return "resolve_items"
 
 def after_resolve(s) -> str:
-    if not s["resolved"] and not s["candidates"]: return END   # EC-03
     if s["clarify_rounds"] < MAX_CLARIFY_ROUNDS and needs_clarification(s):
         return "clarify"                                       # EC-05
-    return "check_availability"
+    return "check_availability"     # EC-03: "not recognised" is said, then verified
 
 def after_availability(s) -> str:
     return "suggest_substitutes" if any_out_of_stock(s) else "resolve_locations"
@@ -484,6 +483,17 @@ cannot invent one. And a substitute SKU that was not in the candidate list the
 service built is rejected outright — the model picks *among* safe options, it
 does not nominate them.
 
+**The understand schema is narrowed to the store.** `parsed_query_for(store)`
+replaces `department`, `aisle_category` and `exclude_allergens` with enums of
+that store's own names before the schema is sent. Found live: gpt-oss read
+"something for a headache" well but answered with the department "pharmacy"
+and the category "over the counter", which matched nothing. Groq's strict
+decoding and our validation both reject a name the store does not have; both
+fields accept any real department or category name, and the node files each
+into the field it belongs to, because a shopper's words do not say which it is.
+When the item phrase finds nothing but the model named a real category, that
+category's products are offered as a choice.
+
 `dietary_compatible` treats a `null` flag as incompatible when the original
 product required it. An unknown value never satisfies a dietary requirement.
 
@@ -620,10 +630,18 @@ Three mechanics carry what the API used to:
 | `GET /journey/{id}` | `GRAPH.get_state(cfg)` — the checkpoint is the record (EC-41) |
 | SSE progress stream | `st.status` updated from the node names the graph yields |
 
-**What the page holds and what it does not.** `st.session_state` holds exactly
-two things: the `thread_id` and the basket draft. Everything else is read back
-from the checkpoint, because Streamlit re-executes the script on every
-interaction and local state would drift from graph state (EC-36, EC-41).
+**What the page holds and what it does not.** `st.session_state` holds the
+search and route `thread_id`s, the basket draft, and the session's `Journey` —
+the checkpointer and the model client, so the model call budget is per visitor.
+Everything else is read back from the checkpoint (`Journey.current`), because
+Streamlit re-executes the script on every interaction and local state would
+drift from graph state (EC-36, EC-41).
+
+**The floor plates are inline SVG through `st.markdown(…, unsafe_allow_html=True)`.**
+`st.html` drops inline SVG in Streamlit 1.65. The SVG is drawn by our code from
+validated map data and carries no free text; everything else the page shows —
+statements, notes, directions, which can hold the shopper's or the model's
+words — is markdown-escaped, so no link or image can be injected (AC-13).
 
 **Caching is load-bearing, not an optimisation.** The store, the BM25 index and
 the distance and predecessor matrices are built in `@st.cache_resource`
