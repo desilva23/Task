@@ -6,7 +6,11 @@ exactly where it is — floor, aisle, rack and shelf — and the shortest walkin
 to it across floors. A proof of concept on synthetic data, with Sainsbury's as the
 reference retailer; no real retailer system is involved.
 
-**Live:** https://weurhd8vy4j68dmbhcbkd6.streamlit.app (Streamlit Community Cloud)
+**Live:** https://weurhd8vy4j68dmbhcbkd6.streamlit.app (the Streamlit version, until the Next.js
+version is deployed on Vercel — [`docs/deploy.md`](docs/deploy.md))
+
+A Next.js page talks to a small stateless Python API (FastAPI); both deploy as one Vercel
+project. The barcode is read on the phone, from the live camera; only the digits reach the server.
 
 ## How it works
 
@@ -35,7 +39,7 @@ order. The rules for building against them are in
 
 ## How it was built
 
-Ten phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
+Eleven phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
 phase's spec, plan, tasks and gate record is in `specs/`.
 
 | Phase | Built | Spec |
@@ -49,7 +53,8 @@ phase's spec, plan, tasks and gate record is in `specs/`.
 | 6 | GroqCloud | [`specs/007-groq`](specs/007-groq) |
 | 7 | The Streamlit page | [`specs/008-page`](specs/008-page) |
 | 8 | Second store, performance, hostile input, deployment | [`specs/009-portability-deploy`](specs/009-portability-deploy) |
-| 9 | Barcode scan — camera photo or typed digits | [`specs/010-barcode-scan`](specs/010-barcode-scan) |
+| 9 | Barcode scan — camera or typed digits, exact lookup | [`specs/010-barcode-scan`](specs/010-barcode-scan) |
+| 10 | Next.js page, stateless API, Vercel | [`specs/011-nextjs-vercel`](specs/011-nextjs-vercel) |
 
 [`docs/traceability.md`](docs/traceability.md) lists every requirement,
 acceptance criterion, edge case and validation rule with the tests that prove it.
@@ -57,14 +62,18 @@ All 28 acceptance criteria are covered.
 
 ## Running it
 
-Needs [uv](https://docs.astral.sh/uv/); it fetches Python 3.12 itself.
+Needs [uv](https://docs.astral.sh/uv/) (it fetches Python 3.12 itself) and Node 20.9 or later.
 
 ```bash
-uv sync --locked              # the environment, from uv.lock
-uv run streamlit run app.py   # the page
-scripts/check.sh              # lint, format check, every test
+uv sync --locked && npm ci    # both environments, from uv.lock and package-lock.json
+npm run build                 # the page, as static files in out/
+LOCATOR_STATIC=out uv run uvicorn api.index:app   # page and API on http://127.0.0.1:8000
+scripts/check.sh              # lint, format check, the page build, every test
 uv run pytest -m live         # live GroqCloud tests — needs the key, run on demand
 ```
+
+While changing the page, run the API with `uv run uvicorn api.index:app --port 8000` and the
+page with `npm run dev`; it proxies `/api/*` to the API.
 
 For the model, put `GROQ_API_KEY = "…"` in `.streamlit/secrets.toml`, which is
 gitignored. Without it the page runs on the deterministic wording.

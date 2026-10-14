@@ -1,18 +1,18 @@
 """AC-13, NFR-06 — every hostile input of requirements.md §7, plus markup, path and query probes.
 
-Each must leave no error page, no file path, no traceback and no secret on the page, render no
-live link or image, and run only the graph's fixed nodes with the model asked only its three
-tasks.
+Each must leave no error, no file path, no traceback and no secret in what the API returns, and
+run only the graph's fixed nodes with the model asked only its three tasks. That nothing the
+shopper typed can become live markup on the page is proven in the browser (tests/browser).
 """
 
-import re
 from functools import cache
 from pathlib import Path
 
 import pytest
-from streamlit.testing.v1 import AppTest
+from fastapi.testclient import TestClient
 
 import config
+from api import index
 from graph.build import NODES
 from graph.journey import FRESH, Journey
 from graph.model import good_model
@@ -20,7 +20,6 @@ from graph.services import Services
 from validation import load_store
 
 REPO = Path(__file__).resolve().parents[2]
-APP = str(REPO / "app.py")
 
 HOSTILE = {
     "one character": "m",
@@ -44,7 +43,6 @@ HOSTILE = {
     "null byte": "milk\x00bread",
 }
 LEAKS = ("/Users/", "Traceback", 'File "', '.py"', "gsk_", "site-packages", "secrets.toml\n")
-LIVE_LINK = re.compile(r"(?<!\\)\[[^\]]*(?<!\\)\]\(")  # an unescaped markdown link or image
 
 
 @cache
@@ -53,27 +51,18 @@ def services():
 
 
 @pytest.fixture
-def page(monkeypatch):
+def api(monkeypatch):
     monkeypatch.setenv("LOCATOR_MODEL", "off")
-    at = AppTest.from_file(APP, default_timeout=30)
-    at.run()
-    return at
-
-
-def shown(at) -> list[str]:
-    return [str(e.value) for e in (*at.markdown, *at.caption, *at.info, *at.warning, *at.error,
-                                   *at.subheader)]  # fmt: skip
+    return TestClient(index.app, raise_server_exceptions=False)
 
 
 @pytest.mark.parametrize("text", list(HOSTILE.values()), ids=list(HOSTILE))
-def test_ac_13_the_page_survives_every_hostile_input(page, text):
-    page.text_input(key="query").input(text[: config.MAX_QUERY_CHARS])
-    page.button(key="search").click().run()
-    assert not page.exception, page.exception
-    for value in shown(page):
-        assert not any(leak in value for leak in LEAKS), value
-        assert not LIVE_LINK.search(value), value
-        assert "<script" not in value.lower()
+def test_ac_13_the_api_survives_every_hostile_input(api, text):
+    for path, body in (("/api/search", {"query": text}), ("/api/scan", {"code": text[:64]}),
+                       ("/api/route", {"skus": [text[:64]]})):  # fmt: skip
+        r = api.post(path, json={**body, "start": text[:64]})
+        assert r.status_code == 200, (path, r.text)
+        assert not any(leak in r.text for leak in LEAKS), r.text
 
 
 @pytest.mark.parametrize("text", list(HOSTILE.values()), ids=list(HOSTILE))
@@ -112,22 +101,21 @@ def test_ac_13_an_extremely_long_query_is_cut_and_says_so():
     assert any("first" in line and str(config.MAX_QUERY_CHARS) in line for line in s["results"])
 
 
-def test_ac_13_an_internal_failure_shows_an_apology_not_a_trace(page, monkeypatch):
-    from graph.journey import Journey as RealJourney
-
+def test_ac_13_an_internal_failure_shows_an_apology_not_a_trace(api, monkeypatch):
     def broken(self, *args, **kwargs):
         raise RuntimeError("/Users/someone/secret/path.py exploded")
 
-    monkeypatch.setattr(RealJourney, "run_query", broken)
-    page.text_input(key="query").input("milk")
-    page.button(key="search").click().run()
-    assert not page.exception
-    text = " ".join(shown(page))
-    assert "Something went wrong" in text and "/Users/" not in text
+    monkeypatch.setattr(index.Journey, "run_query", broken)
+    r = api.post("/api/search", json={"query": "milk"})
+    assert r.status_code == 500
+    assert "Something went wrong" in r.text and "/Users/" not in r.text
 
 
-def test_ac_13_streamlit_error_details_are_off_in_config():
-    import tomllib
+def test_ac_13_a_malformed_request_is_refused_without_echoing_it(api):
+    r = api.post("/api/search", json={"query": "x" * 30_000, "answers": "{{7*7}}"})
+    assert r.status_code == 422 and "x" * 100 not in r.text and "7*7" not in r.text
 
-    cfg = tomllib.loads((REPO / ".streamlit" / "config.toml").read_text())
-    assert cfg["client"]["showErrorDetails"] == "none"
+
+def test_ac_13_no_schema_or_docs_pages_are_served(api):
+    for path in ("/docs", "/redoc", "/openapi.json"):
+        assert api.get(path).status_code == 404

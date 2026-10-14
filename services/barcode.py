@@ -1,18 +1,9 @@
-"""Barcodes — the digits checked and a photo decoded (lld.md §8.5, FR-03).
+"""Barcodes — the digits checked (lld.md §8.5, FR-03).
 
-No lookup and no page here: a barcode is an identifier, so what to do with one is the
-catalogue's question, and how the photo was taken is the page's.
+Decoding happens on the phone, in the page; the server receives digits only and checks them
+again here, because the page is not trusted to have decoded honestly. No lookup here either: a
+barcode is an identifier, so what to do with one is the catalogue's question.
 """
-
-import io
-
-import zxingcpp
-from PIL import Image, ImageOps, UnidentifiedImageError
-
-from config import SCAN_MAX_SIDE_PX
-
-F = zxingcpp.BarcodeFormat
-RETAIL = (F.EAN13, F.EAN8, F.UPCA)  # product symbologies only — not a QR code or a label (EC-51)
 
 
 def check_digit_ok(digits: str) -> bool:
@@ -29,15 +20,3 @@ def normalise(digits: str) -> str | None:
     if not d.isdigit() or len(d) not in (8, 12, 13) or not check_digit_ok(d):
         return None
     return "0" + d if len(d) == 12 else d  # UPC-A is EAN-13 with a leading zero
-
-
-def decode(photo: bytes) -> list[str]:
-    """Every distinct product code in a photo, in the order read. Anything unreadable — a corrupt
-    or empty file, a blurred frame — is an empty list, never an exception (EC-49)."""
-    try:
-        img = ImageOps.exif_transpose(Image.open(io.BytesIO(photo))).convert("L")
-    except (UnidentifiedImageError, OSError, ValueError):
-        return []
-    img.thumbnail((SCAN_MAX_SIDE_PX, SCAN_MAX_SIDE_PX))
-    found = zxingcpp.read_barcodes(img, formats=RETAIL)
-    return list(dict.fromkeys(c for c in (normalise(b.text) for b in found) if c))

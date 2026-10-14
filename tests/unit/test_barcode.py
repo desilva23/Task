@@ -1,13 +1,11 @@
-"""FR-03 — reading a barcode: the digits checked, and a photo decoded (lld.md §8.5)."""
+"""FR-03 — a barcode's digits checked, and looked up exactly (lld.md §8.5). Decoding a camera
+frame happens in the page and is proven in the browser tests."""
 
 from functools import cache
 from pathlib import Path
 
-import zxingcpp
-
-from services.barcode import check_digit_ok, decode, normalise
+from services.barcode import check_digit_ok, normalise
 from services.catalogue import Catalogue
-from tests.photos import blank, snapshot
 from validation import load_store
 
 DEMO = Path(__file__).resolve().parents[2] / "data" / "SBY-DEMO-001"
@@ -50,42 +48,6 @@ class TestDigits:
         i = next(k for k in range(12) if code[k] != code[k + 1] and (k + 1) < 12)
         swapped = code[:i] + code[i + 1] + code[i] + code[i + 2 :]
         assert normalise(swapped) is None
-
-
-class TestPhotos:
-    def test_fr_03_a_photo_of_a_barcode_reads_back_its_code(self):
-        code = barcode_of(COKE)
-        assert decode(snapshot(code)) == [code]
-
-    def test_fr_03_a_tilted_soft_photo_still_reads(self):
-        code = barcode_of(COKE)
-        assert decode(snapshot(code, tilt=8, blur=1.2)) == [code]
-
-    def test_fr_03_a_photo_taken_sideways_reads(self):
-        code = barcode_of(COKE)
-        assert decode(snapshot(code, size=(720, 1280), tilt=90)) == [code]
-
-    def test_ec_49_a_huge_photo_is_shrunk_and_still_reads(self):
-        code = barcode_of(COKE)
-        assert decode(snapshot(code, size=(6000, 4000), scale=12)) == [code]
-
-    def test_ec_49_no_barcode_reads_as_nothing_never_an_error(self):
-        for photo in (blank(), b"", b"not an image", b"\xff\xd8\xff\xe0" + b"\x00" * 64):
-            assert decode(photo) == []
-
-    def test_ec_49_a_blurred_barcode_is_never_read_as_another_code(self):
-        code = barcode_of(COKE)
-        for radius in (3, 6, 12):
-            assert set(decode(snapshot(code, blur=radius))) <= {code}
-
-    def test_ec_51_a_qr_code_is_not_a_product_barcode(self):
-        qr = snapshot(barcode_of(COKE), fmt=zxingcpp.BarcodeFormat.QRCode, scale=8)
-        assert decode(qr) == []
-
-    def test_ec_53_two_codes_are_both_reported_and_one_code_twice_is_one(self):
-        a, b = barcode_of(COKE), barcode_of("Diet Coke")
-        assert sorted(decode(snapshot(a, b, size=(1400, 600), scale=2))) == sorted([a, b])
-        assert decode(snapshot(a, a, size=(1400, 600), scale=2)) == [a]
 
 
 class TestLookup:

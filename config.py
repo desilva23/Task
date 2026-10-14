@@ -13,9 +13,6 @@ SUGGESTION_THRESHOLD = 60  # nearest names offered when nothing matches (EC-03)
 AMBIGUITY_MIN_HITS = 3
 AMBIGUITY_MARGIN = 0.15  # §8.4
 
-# barcode scan — lld.md §8.5
-SCAN_MAX_SIDE_PX = 2000  # EC-49 — a photo is shrunk to this before decoding
-
 # graph — lld.md §5, §6
 MAX_CLARIFY_ROUNDS = 2  # EC-35
 THREAD_TTL_MINUTES = 30  # EC-34 — abandoned interrupts

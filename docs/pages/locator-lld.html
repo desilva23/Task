@@ -67,22 +67,23 @@
   <h1>Product Locator LLD</h1>
   <p class="standfirst">Module layout, graph state, node contracts, algorithms and thresholds for the in-store product finder. Read after the HLD; the data formats live in the Schema document.</p>
   <div class="meta">
-    <span><b>Stack</b> Python · LangGraph · Streamlit, in-process</span>
+    <span><b>Stack</b> Python · LangGraph · FastAPI · Next.js · Vercel</span>
     <span><b>Nodes</b> 11, of which 3 call a model</span>
     <span><b>No HTTP layer</b> the page calls the graph directly</span>
   </div>
 </header>
 
 <h2><span class="sec">1</span> &nbsp;Module layout</h2>
-<pre><code>app.py                    Streamlit entry point — the only executable
-config.py                 every threshold and cap, one place (§14)
-ui/
-  search.py               the st.form search box and the position picker
-  scan.py                 the barcode scan: camera photo, typed digits (FR-03, §8.5)
-  results.py              grouped results and the basket gate action
+<pre><code>app/  components/  lib/   the Next.js page — a static export served from the CDN (§11)
+  lib/api.ts              the four calls the page makes, and the JSON they return
+  lib/scan.ts             barcode decoding on the phone — zxing-wasm, retail formats (§8.5)
+  components/Scanner.tsx  the camera behind a switch; typed digits beside it (FR-03)
+api/
+  index.py                FastAPI — the HTTP API, one Vercel Python function (§11)
+present/
+  view.py                 what the page shows, as plain data: groups, route, notices
   floorplate.py           one SVG plate per floor, route overlay, markers
-  directions.py           the ordered directions list — the accessible route
-  resources.py            @st.cache_resource builders: store, index, matrices
+config.py                 every threshold and cap, one place (§14)
 graph/
   build.py                StateGraph assembly, checkpointer, compile
   state.py                JourneyState TypedDict + reducers
@@ -98,7 +99,7 @@ services/
   storegraph.py           StoreGraph — nodes, edges, adjacency
   basket.py               Basket — SKUs added across searches; routability re-checked per call
   multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
-  barcode.py              check digits and decoding a photo — no lookup, no page (§8.5)
+  barcode.py              check digits — no decoding, no lookup (§8.5)
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -109,10 +110,11 @@ data/
                           planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
 datagen/                  seeded generator for the synthetic demo store (schema.md §8)
 tests/
-  unit/  integration/  fixtures/</code></pre>
+  unit/  integration/  acceptance/  browser/  fixtures/
+vercel.json               /api/* to the Python function; what its bundle leaves out</code></pre>
 <div class="prose">
-  <p><b>Two rules the layout enforces.</b> <code>graph/nodes/<i></code> may import from <code>services/</i></code>, never the reverse, and <code>services/*</code> never imports <code>langchain</code> or <code>langgraph</code> — which keeps the deterministic core testable without a graph runtime and without a model, and is what makes the fallbacks in §6 honest rather than aspirational. And nothing below <code>ui/</code> imports <code>streamlit</code>: the page is the only module that knows it is a page, so putting a service in front of the same graph later changes nothing underneath it.</p>
-  <p>There is no <code>api/</code> package and no separate frontend. <code>app.py</code> calls the compiled graph in the same process (C-03), so no module in this tree imports a web framework.</p>
+  <p><b>Two rules the layout enforces.</b> <code>graph/nodes/<i></code> may import from <code>services/</i></code>, never the reverse, and <code>services/*</code> never imports <code>langchain</code> or <code>langgraph</code> — which keeps the deterministic core testable without a graph runtime and without a model, and is what makes the fallbacks in §6 honest rather than aspirational. And nothing outside <code>api/</code> imports <code>fastapi</code>, <code>starlette</code> or <code>uvicorn</code>: the API is the only module that knows it is a web service, so the graph and the services run the same under a test, a script or the function.</p>
+  <p>The page is a separate program in TypeScript. It holds no fact: every statement, direction and floor plate it shows arrived from the API already verified, and it renders all of it as text except the plates (§11).</p>
 </div>
 <h2><span class="sec">2</span> &nbsp;Identifier scheme</h2>
 <div class="prose">
@@ -410,9 +412,7 @@ def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
   <p><b>The test runs on text-match order, not the precedence ranking.</b> Which product the shopper <i>named</i> is a question of text alone. Ranked by precedence, a search for "Diet Coke" — sold out — would put Coca-Cola Zero first and silently answer with it, hiding both the sold-out state and where Diet Coke usually is (EC-13); "Pepsi Max" would quietly become a Coke (EC-04). So the clear text winner is the answer even when sold out or not carried, reported as such with alternatives, and the precedence ranking orders the options and alternatives (FR-06, AC-19).</p>
 </div>
 <h3>8.5 &nbsp;Barcode lookup</h3>
-<pre><code>RETAIL = (BarcodeFormat.EAN13, BarcodeFormat.EAN8, BarcodeFormat.UPCA)  # EC-51
-
-def normalise(digits: str) -&gt; str | None:
+<pre><code>def normalise(digits: str) -&gt; str | None:
     d = "".join(digits.split())
     if not d.isdigit() or len(d) not in (8, 12, 13): return None
     if not check_digit_ok(d):                        return None      # EC-52
@@ -421,15 +421,10 @@ def normalise(digits: str) -&gt; str | None:
 def check_digit_ok(d: str) -&gt; bool:                  # GS1: weights 3,1,3,… from the right
     body = map(int, reversed(d[:-1]))
     total = sum(n * (3 if i % 2 == 0 else 1) for i, n in enumerate(body))
-    return (10 - total % 10) % 10 == int(d[-1])
-
-def decode(photo: bytes) -&gt; list[str]:
-    img = ImageOps.exif_transpose(Image.open(BytesIO(photo))).convert("L")
-    img.thumbnail((SCAN_MAX_SIDE_PX, SCAN_MAX_SIDE_PX))
-    found = zxingcpp.read_barcodes(img, formats=RETAIL)
-    return list(dict.fromkeys(c for c in (normalise(b.text) for b in found) if c))</code></pre>
+    return (10 - total % 10) % 10 == int(d[-1])</code></pre>
 <div class="prose">
-  <p><code>decode</code> returns every distinct product code in the photo; the page looks one up only when there is exactly one (EC-53). An unreadable, corrupt or empty photo is an empty list, never an exception. zxing-cpp ships as a wheel with its own decoder, so the deployment needs no system package. <code>Catalogue.by_barcode</code> is a dictionary built once from <code>products.csv</code>; V-21 guarantees each code is valid and unique, so a code finds one product or none.</p>
+  <p><b>Decoding is on the phone.</b> <code>lib/scan.ts</code> draws a camera frame to a canvas every 250 ms (at most 1280 px on the long side) and reads it with zxing-wasm — zxing-cpp compiled to WebAssembly, the WASM file served from our own origin — for <code>EAN13</code>, <code>EAN8</code> and <code>UPCA</code> only (EC-51). One distinct code stops the camera and is sent to <code>/api/scan</code> (EC-54); two or more are never chosen between (EC-53); after six seconds with nothing read the page says what to try (EC-49). The server trusts none of it: the digits are checked by <code>normalise</code> again.</p>
+  <p><code>Catalogue.by_barcode</code> is a dictionary built once from <code>products.csv</code>; V-21 guarantees each code is valid and unique, so a code finds one product or none.</p>
 </div>
 <h2><span class="sec">9</span> &nbsp;Structured output models</h2>
 <pre><code>class ParsedQuery(BaseModel):
@@ -525,51 +520,38 @@ if choice.sku not in {p.sku for p in candidates}:
 <div class="prose">
   <p><b>Open-path 2-opt, not the textbook version.</b> Standard 2-opt optimises a closed tour and its gain calculation includes the edge back to the origin. Each floor leg here is an <i>open</i> path with a fixed start and a free end, so the wrap-around term must be dropped from <code>delta</code>. Using the closed-tour formula produces routes that look subtly wrong — usually a last stop that doubles back — and it is an easy mistake to ship.</p>
 </div>
-<h2><span class="sec">11</span> &nbsp;The Streamlit interface</h2>
+<h2><span class="sec">11</span> &nbsp;The page and the API</h2>
 <div class="prose">
-  <p>There is no HTTP layer (C-03). The page calls the compiled graph in the same process, so what would have been a request contract is a function signature.</p>
-</div>
-<pre><code># app.py — the whole surface between page and graph
-GRAPH = build_graph()                      # @st.cache_resource, built once
-
-def run_query(query: str, start_node: str, step_free: bool) -&gt; JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
-    return GRAPH.invoke(initial_state(query, start_node, step_free), cfg)
-
-def resume(choice: Choice) -&gt; JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
-    return GRAPH.invoke(Command(resume=choice), cfg)
-
-def run_scan(code: str, start_node: str, step_free: bool) -&gt; JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}   # a new search thread
-    return GRAPH.invoke(initial_scan(code, start_node, step_free), cfg)
-
-def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
-    cfg = {"configurable": {"thread_id": st.session_state.thread_id}}
-    return GRAPH.invoke({"basket": basket, "mode": "multi"}, cfg)</code></pre>
-<div class="prose">
-  <p>Three mechanics carry what the API used to:</p>
+  <p>The page is a Next.js static export; the agent is one Python function. Between them, four calls (C-03):</p>
 </div>
 <div class="tablewrap">
 <table>
-  <thead><tr><th>Was</th><th>Is</th></tr></thead>
+  <thead><tr><th>Call</th><th>Body</th><th>Does</th></tr></thead>
   <tbody>
-    <tr><td><code>POST /journey</code></td><td><code>run_query(...)</code> — returns <b>results only</b>, never a route</td></tr>
-    <tr><td><code>POST /scan</code></td><td><code>run_scan(code)</code> — the same journey for one exact product (FR-03)</td></tr>
-    <tr><td><code>POST /journey/resume</code></td><td><code>resume(choice)</code> on the next page run, same <code>thread_id</code></td></tr>
-    <tr><td><code>POST /route</code></td><td><code>plan_route(basket)</code> — a second graph run, from the basket</td></tr>
-    <tr><td><code>GET /journey/{id}</code></td><td><code>GRAPH.get_state(cfg)</code> — the checkpoint is the record (EC-41)</td></tr>
-    <tr><td>SSE progress stream</td><td><code>st.status</code> updated from the node names the graph yields</td></tr>
+    <tr><td><code>GET /api/store</code></td><td>—</td><td>Floors and the spots on each, for the position picker (FR-15)</td></tr>
+    <tr><td><code>POST /api/search</code></td><td><code>query</code>, <code>answers[]</code>, <code>start</code>, <code>step_free</code></td><td><code>Journey.answer</code> — the search, resumed with each round's answer (FR-05)</td></tr>
+    <tr><td><code>POST /api/scan</code></td><td><code>code</code>, <code>start</code>, <code>step_free</code></td><td><code>Journey.run_scan</code> — one exact product (FR-03)</td></tr>
+    <tr><td><code>POST /api/route</code></td><td><code>skus[]</code>, <code>start</code>, <code>step_free</code></td><td><code>Journey.plan_route</code> — the basket, routed (FR-16, FR-23)</td></tr>
   </tbody>
 </table>
 </div>
 <div class="prose">
-  <p><b>What the page holds and what it does not.</b> <code>st.session_state</code> holds the search and route <code>thread_id</code>s, the basket draft, and the session's <code>Journey</code> — the checkpointer and the model client, so the model call budget is per visitor. Everything else is read back from the checkpoint (<code>Journey.current</code>), because Streamlit re-executes the script on every interaction and local state would drift from graph state (EC-36, EC-41).</p>
-  <p><b>The floor plates are inline SVG through <code>st.markdown(…, unsafe_allow_html=True)</code>.</b> <code>st.html</code> drops inline SVG in Streamlit 1.65. The SVG is drawn by our code from validated map data and carries no free text; everything else the page shows — statements, notes, directions, which can hold the shopper's or the model's words — is markdown-escaped, so no link or image can be injected (AC-13).</p>
-  <p><b>Caching is load-bearing, not an optimisation.</b> The store, the BM25 index and the distance and predecessor matrices are built in <code>@st.cache_resource</code> builders in <code>ui/resources.py</code>. Without that, every click rebuilds ~314 nodes of all-pairs Dijkstra and NFR-05's five seconds are gone before the search starts.</p>
-  <p><b>The search box lives inside <code>st.form</code></b>, so the graph is invoked on submit rather than on each keystroke.</p>
-  <p><b>The scan is <code>st.camera_input</code> behind a switch.</b> The widget starts the camera when it is drawn, so it is drawn only once the shopper turns on "Scan a barcode" — no permission prompt for anyone who never scans. It returns the same photo on every later run, so the page keeps a digest of the last photo it looked up and looks each photo up once (EC-54). The typed digits sit beside it in their own <code>st.form</code>, and both reach <code>Journey.run_scan</code>. Messages from a run that made no claim — too short, digits in the search box, a bad barcode — are shown as a notice; before this they were held in state and never drawn.</p>
-  <p><b>Thread lifetime.</b> A <code>thread_id</code> is minted per search and swept after <code>THREAD_TTL_MINUTES</code> (§14). LangGraph does not expire threads, so without the sweep every abandoned clarification leaks a checkpoint (EC-34).</p>
+  <p>Each returns the same shape, built by <code>present.view.page_view</code> from a verified state: <code>pending</code> (the questions, if the run paused), <code>notice</code> (why a run made no claim), <code>available</code> / <code>unavailable</code> rows, <code>notes</code>, <code>addable</code> and <code>offer_add</code> (the basket gate, FR-22), <code>route</code> (directions, exclusions, the floor plates as SVG) and <code>degraded</code>.</p>
+</div>
+<pre><code>def _journey_run(request, response, run):
+    model = make_model(budget=MODEL_CALLS_PER_SESSION - used(request))   # cookie count
+    journey, thread = Journey(services(), model), f"req-{uuid4().hex}"   # ~4 ms to build
+    try:
+        outcome = run(journey, thread)
+        return page_view(services(), outcome.state, outcome.pending)
+    finally:
+        journey.forget(thread)                      # nothing outlives its request (EC-34)
+        set_cookie(BUDGET_COOKIE, used + model.calls)</code></pre>
+<div class="prose">
+  <p><b>Stateless, so it scales to zero and to many.</b> <code>services()</code> is built once per function instance and reused; a journey is built per request, around that visitor's model client, and its thread is deleted before the response is sent. A clarification is answered by sending the search back with the answers — <code>Journey.answer</code> re-runs it and resumes it round by round; <code>clarify</code> accepts only an option it offered, so a stale answer is simply asked again (EC-05). The page holds the position, the basket and the answers so far, the last two in the tab's session storage (EC-41).</p>
+  <p><b>The floor plates are the only markup the page inserts.</b> The SVG is drawn by our code from validated map data and carries no free text. Everything else — statements, questions, notes, directions, which can hold the shopper's or the model's words — is rendered by React as text, so nothing typed can become a link, an image or a script (AC-13).</p>
+  <p><b>Failures are an apology.</b> An unhandled error returns <code>500</code> with one sentence and is logged; a malformed request returns <code>422</code> without echoing it; the schema and docs pages are off. The page shows its own apology for either.</p>
+  <p><b>Local runs.</b> <code>npm run build</code> then <code>LOCATOR_STATIC=out uv run uvicorn api.index:app</code> serves page and API from one process — what the browser tests do. <code>npm run dev</code> with the API on port 8000 proxies <code>/api/*</code> to it.</p>
 </div>
 <h2><span class="sec">12</span> &nbsp;Error taxonomy</h2>
 <div class="tablewrap">
@@ -593,7 +575,7 @@ def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
 <h2><span class="sec">13</span> &nbsp;Startup validation</h2>
 <div class="prose">
   <p><b>The rules live in <code>schema.md</code> §7</b> — forty-three refusals numbered V-01 to V-74 with gaps between blocks, and five warnings, W-01 to W-05. They supersede the eleven checks this section used to list. They are schema territory: what makes a store folder well formed is a property of the format, not of this application. What belongs here is <i>when</i> they run, in what order, and what happens when one fails.</p>
-  <p><code>validation.py</code> runs them inside the <code>@st.cache_resource</code> builder that loads the store, which means they run <b>once per process, before the first search</b>, and a failure raises rather than returning a half-loaded store.</p>
+  <p><code>validation.py</code> runs them when the API function first builds its services, which means they run <b>once per instance, before its first search</b>, and a failure raises rather than returning a half-loaded store.</p>
 </div>
 <div class="tablewrap">
 <table>
@@ -626,7 +608,6 @@ AMBIGUITY_MARGIN    = 0.15    # §8.4
 MAX_CLARIFY_ROUNDS  = 2       # EC-35
 THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
 MODEL_TIMEOUT_S     = 6
-SCAN_MAX_SIDE_PX    = 2000    # EC-49 — a photo is shrunk to this before decoding
 ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
@@ -640,7 +621,7 @@ MODEL_MAX_TOKENS    = 1024    # per call; reasoning tokens count against it
 MODEL_REASONING_EFFORT = "low" # gpt-oss reasoning, kept short
 MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only</code></pre>
 <div class="prose">
-  <p>Every number a reviewer might question lives here with the edge case it serves in the comment. <code>THREAD_TTL_MINUTES</code> drives the sweep that stops abandoned clarifications accumulating checkpoints forever — LangGraph does not expire threads on its own.</p>
+  <p>Every number a reviewer might question lives here with the edge case it serves in the comment. <code>THREAD_TTL_MINUTES</code> drives <code>Journey.sweep</code>, for a journey that lives across requests; the API never needs it, because it deletes each request's thread before answering (§11, EC-34).</p>
 </div>
 <h2><span class="sec">15</span> &nbsp;Test plan</h2>
 <div class="tablewrap">
@@ -649,7 +630,9 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only<
   <tbody>
     <tr><td>Unit · classify</td><td>Every branch of §8.2</td><td>Empty · 1 char · digits only · <code>"milk, bread"</code> · <code>"milk and bread"</code> · <code>"salt and vinegar crisps"</code> (the known-crude case) · <code>"2 x milk"</code> · 200 terms</td></tr>
     <tr><td>Unit · search</td><td>Ranking precedence</td><td>Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected</td></tr>
-    <tr><td>Unit · barcode</td><td>§8.5</td><td>Valid EAN-13, EAN-8, UPC-A · failed check digit · wrong length · a rendered barcode read back, rotated and blurred · blank, corrupt and QR-only photos read as nothing · two codes in one photo</td></tr>
+    <tr><td>Unit · barcode</td><td>§8.5</td><td>Valid EAN-13, EAN-8, UPC-A · failed check digit · swapped digits · wrong length · exact lookup</td></tr>
+    <tr><td>Integration · API</td><td>§11</td><td>Every call's shape · a clarification answered by resending · an answer not offered is asked again · no thread survives a request · apology on failure</td></tr>
+    <tr><td>Browser · 390 px</td><td>§11, AC-15, AC-28</td><td>The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text</td></tr>
     <tr><td>Unit · routing</td><td>Matrix and reconstruction</td><td>Same-node route returns <code>[u]</code> · known-distance pair · NO_PATH raises · step-free matrix differs where it should</td></tr>
     <tr><td>Unit · TSP</td><td>Open-path correctness</td><td>Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till</td></tr>
     <tr><td>Unit · grounding</td><td>§9 guardrails</td><td>Out-of-set SKU raises <code>GroundingError</code> · <code>null</code> dietary flag never satisfies a requirement</td></tr>
@@ -669,7 +652,7 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only<
 </div>
 <h3>16.1 &nbsp;Single product</h3>
 <pre><code>Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
-   │ "coke 500ml" · F0/A01 · submit (st.form)
+   │ "coke 500ml" · F0/A01 · submit → POST /api/search
    ├───────►│  run_query(q, start_node, step_free)
    │        ├──────────►│
    │        │           │ classify_query → shape="term"
@@ -683,9 +666,9 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only<
    │        │           │ needs_clarification? (top−2nd)/top ≥ 0.15 → no
    │ ┌ opt [margin &lt; 0.15] ──────────────────────────────────────────────────┐
    │ │      │◄──────────┤ interrupt({options})
-   │ │◄─────┤ st.radio options
-   │ ├─────►│ picks one      ═══ NEW PAGE RUN ═══
-   │ │      ├──────────►│ resume(choice)
+   │ │◄─────┤ radio options  ═══ THE REQUEST ENDS ═══
+   │ ├─────►│ picks one → POST /api/search {query, answers:[choice]}
+   │ │      ├──────────►│ run again, then resume(choice)
    │ └────────────────────────────────────────────────────────────────────────┘
    │        │           ├──────────────────────────►│ check_availability([sku])
    │        │           │◄──────────────────────────┤ shelf_qty 14 · ranged TRUE
@@ -701,7 +684,7 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only<
    │        │◄──────────┤ JourneyState, verified=True
    │◄───────┤ result card + floor plate + directions</code></pre>
 <div class="prose">
-  <p>Three things this exists to show. Ranking calls <b>Stock before availability is checked</b>, because <code>ranged</code> and <code>in stock</code> are ranking signals (FR-06), not just output. The clarification is a <b>new page run</b>, not a continuation — Streamlit holds no request open. And <code>verify</code> sits between the composed answer and the page, so nothing unverified can render (NFR-02).</p>
+  <p>Three things this exists to show. Ranking calls <b>Stock before availability is checked</b>, because <code>ranged</code> and <code>in stock</code> are ranking signals (FR-06), not just output. The clarification is a <b>new request</b>, not a continuation — the server holds nothing open, so the page sends the search back with the answer. And <code>verify</code> sits between the composed answer and the page, so nothing unverified can render (NFR-02).</p>
 </div>
 <h3>16.2 &nbsp;Multiple products</h3>
 <pre><code>Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
