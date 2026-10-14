@@ -15,7 +15,7 @@ description: "Task list for Phase 10 — Next.js page on Vercel"
 - [X] T009a Vercel project `find-it-in-store` created and deployed from `feature/nextjs`
 - [X] T009b #4 and #5 merged to `main` on the owner's word (2026-10-14); production follows `main`
 - [X] T009c Owner added `GROQ_API_KEY` in Vercel (2026-10-15); live: "something for a headache" → Medicines options in ~1 s, browser suite 8/8 with the model on
-- [ ] T009d Owner: delete the Streamlit app
+- [X] T009d Owner deleted the Streamlit app (2026-10-15)
 
 ## Gate record (2026-10-14)
 

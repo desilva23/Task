@@ -171,10 +171,10 @@ preview URL behind Vercel login. `GROQ_API_KEY` is set in the project's environm
 (owner, 2026-10-15): the model is live — sentences resolve, directions are reworded and verified. Test the live site with
 `LOCATOR_URL=https://find-it-in-store.vercel.app uv run pytest tests/browser` — `docs/deploy.md`.
 
-**Retired:** the Streamlit Community Cloud app (https://weurhd8vy4j68dmbhcbkd6.streamlit.app)
-followed `main`, which has had no Streamlit page since 2026-10-14; the owner deletes it at
-share.streamlit.io. The branch `claude/planogram-store-navigation-czn7bh` is kept until then —
-Streamlit loses control of an app whose branch disappears.
+**Retired:** the Streamlit Community Cloud app (weurhd8vy4j68dmbhcbkd6.streamlit.app) was deleted
+by the owner on 2026-10-15. The branch `claude/planogram-store-navigation-czn7bh` is no longer
+needed by any app; the only thing on it not on `main` is the Streamlit-generated Codespaces
+`.devcontainer` (Python 3.11, `streamlit run app.py`), which no longer applies.
 
 ## Published pages
 
