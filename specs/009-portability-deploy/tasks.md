@@ -10,7 +10,7 @@ description: "Task list for Phase 8 — portability, performance, hostile input,
 - [X] T004 `tests/acceptance/test_performance.py` and a live timing test (AC-12)
 - [X] T005 `tests/acceptance/test_hostile.py` (AC-13); `MAX_QUERY_CHARS`; markdown escaping; page apology; error details off
 - [X] T006 Deployed-URL mode for the browser test; `docs/deploy.md`
-- [ ] T007 Owner deploys to Streamlit Community Cloud; run the browser test and a smoke journey on the public URL
+- [X] T007 Owner deploys to Streamlit Community Cloud; run the browser test and a smoke journey on the public URL
 
 ## Gate record (2026-10-14)
 
@@ -29,3 +29,15 @@ description: "Task list for Phase 8 — portability, performance, hostile input,
   now 125/140); `MAX_QUERY_CHARS` 1000 in `lld.md` §14; the Phase 4 EC-06 test follows the
   amended spec (the length cap now applies before the 30-item cap).
 - Open for the owner: deploy (`docs/deploy.md`), Groq tier and spend limit.
+
+## Deployment record (2026-10-14)
+
+- Deployed by the owner to Streamlit Community Cloud: https://weurhd8vy4j68dmbhcbkd6.streamlit.app
+  (branch `claude/planogram-store-navigation-czn7bh`, `app.py`, Python 3.12, key in Cloud
+  secrets only).
+- Live smoke journeys with GroqCloud: "Coca-Cola Classic" → in stock, floor 1 aisle 7 rack 3
+  shelf 2, verified route with model wording; "I need something for a headache please" → the
+  Medicines options, 2.3 s.
+- AC-15 on the public site: `LOCATOR_URL=…/~/+/ uv run pytest tests/browser` passed at 390 px;
+  the Cloud wrapper page does not scroll sideways either.
+- Still the owner's: Groq tier and spend limit.

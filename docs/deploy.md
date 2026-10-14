@@ -34,7 +34,8 @@ the key never goes into the repository.
 - Search **Coca-Cola Classic**: you should see "In stock", floor 1, aisle 7, rack 3, shelf 2, a
   route, and friendly wording. If you see *"Plain wording: the language model wasn't used"*, the
   key is missing or wrong — fix it under the app's **Settings → Secrets**.
-- Send Claude the app URL: it runs the 390 px phone test against the live site.
+- Send Claude the app URL: it runs the 390 px phone test against the live site. On Cloud the
+  app sits in a frame, so tests use `https://<app>.streamlit.app/~/+/`.
 
 ## Options, no code change
 
