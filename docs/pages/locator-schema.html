@@ -563,6 +563,7 @@ E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true</code></pr
     <tr><td class="m">V-04</td><td>Every boolean cell is <code>true</code>, <code>false</code>, or — for <code>diet_*</code> and <code>allergens_contains</code> only — empty</td><td><code>TRUE</code>, <code>1</code>, <code>yes</code>, <code>N/A</code> being coerced to a guess</td></tr>
     <tr><td class="m">V-05</td><td>Pipe-delimited cells have no empty segments and no leading or trailing `\</td><td>`</td><td>`coke\</td><td>\</td><td>cola`, a trailing delimiter</td></tr>
     <tr><td class="m">V-06</td><td>Every required cell is non-empty; every forbidden cell is empty</td><td>—</td></tr>
+    <tr><td class="m">V-07</td><td>Every typed cell parses as its type — integers, decimals, ISO dates and timestamps; <code>node_type</code> and <code>kind</code> take a listed value; <code>edge_id</code> matches <code>E{n:04}</code></td><td><code>14 units</code> in <code>shelf_qty</code>; a misspelt node type silently matching no rule</td></tr>
   </tbody>
 </table>
 </div>
@@ -695,8 +696,8 @@ E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true</code></pr
     <tr><td><code>products.csv</code></td><td>180</td><td>180</td></tr>
     <tr><td><code>stock.csv</code></td><td>180</td><td>180</td></tr>
     <tr><td><code>planogram.csv</code></td><td>~250</td><td>~250</td></tr>
-    <tr><td><code>map_nodes.csv</code></td><td><b>314</b></td><td><b>143</b></td></tr>
-    <tr><td><code>map_edges.csv</code></td><td><b>352 rows → 704 arcs</b></td><td><b>160 rows → 320 arcs</b></td></tr>
+    <tr><td><code>map_nodes.csv</code></td><td><b>314</b></td><td><b>125</b></td></tr>
+    <tr><td><code>map_edges.csv</code></td><td><b>352 rows → 704 arcs</b></td><td><b>140 rows → 280 arcs</b></td></tr>
   </tbody>
 </table>
 </div>
@@ -722,6 +723,7 @@ E0139,F0-CORE-REAR,F1-CORE-REAR,stairs,11.0,0.0,true,false,false,true</code></pr
 </div>
 <div class="prose">
   <p>Edge rows: 180 rack-to-rack (5 per aisle × 36) + 72 rack-to-aisle-end + 66 corridor segments between adjacent aisle ends + 12 junction links + 8 vertical (2 lifts × 2 spans, 2 stairs × 2 spans — no escalators, FR-14) + 1 entrance + 6 till + 7 counter, cabinet and bin links = <b>352 rows</b>. Every row in the demo store is bidirectional, so expanding each into two arcs gives <b>704 directed arcs</b>.</p>
+  <p>The portability store is shaped differently on purpose, not just shorter: two floors, 15 aisles (8 + 7) of <b>5</b> racks rather than 6, several categories sharing each aisle so a rack holds several products on different shelves, four tills, and both locked cabinets on floor 1. Its catalogue and stock files are the demo store's, unchanged — only the map and the planogram move.</p>
   <p>The aisle, rack and till counts are <b>authoring choices</b>, not derived facts. Changing them touches only the two map files and the <code>node_id</code> values in <code>planogram.csv</code> — which is what FR-25 and AC-09 test.</p>
 </div>
 <h2><span class="sec">9</span> &nbsp;What the schema deliberately does not carry</h2>

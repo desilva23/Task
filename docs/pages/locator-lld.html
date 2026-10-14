@@ -95,6 +95,8 @@ services/
   stock.py                Stock — batched position lookup
   routing.py              RouteEngine — matrices, path reconstruction, TSP
   storegraph.py           StoreGraph — nodes, edges, adjacency
+  basket.py               Basket — SKUs added across searches; routability re-checked per call
+  multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -103,6 +105,7 @@ validation.py             startup checks (§13)
 data/
   SBY-DEMO-001/           store.csv  products.csv  stock.csv
                           planogram.csv  map_nodes.csv  map_edges.csv  (schema.md §1)
+datagen/                  seeded generator for the synthetic demo store (schema.md §8)
 tests/
   unit/  integration/  fixtures/</code></pre>
 <div class="prose">
@@ -267,10 +270,14 @@ def after_availability(s) -&gt; str:
 
 def after_locations(s) -&gt; str:
     routable = [i for i in s["basket"] if i.routable]
-    if not routable:                                return END          # EC-15
+    if not routable:                                return "verify"     # EC-15 — results only
     if len(routable) == 1 or s["mode"] == "single":  return "route_single"  # EC-28
     return "route_multi"</code></pre>
 <div class="prose">
+  <p><b>Every run that makes a claim ends through <code>verify</code></b> — a search that returns results without a route included. Its availability and location statements are claims too, and NFR-02 covers every claim, not only directions.</p>
+  <p><b>A route-planning run enters at <code>resolve_locations</code>.</b> <code>plan_route</code> starts the graph there with the basket, so routability is re-checked from current stock on every run (EC-17) and the basket is <i>replaced</i>, not merged — an item the shopper removed on the page cannot reappear.</p>
+  <p><b>State holds identifiers and plain values only</b> — SKUs, node IDs, numbers and text, never product or placement objects. Nodes read facts from the services each time, so a checkpoint is safe to serialise and cannot carry a stale fact.</p>
+  <p><b>One adapter stands between the nodes and any model.</b> <code>ModelClient.complete</code> returns the model's raw output and the node validates it against the schema itself (<code>extra="forbid"</code>), so a response carrying a product name or a SKU is rejected by our code whatever the provider does (AC-18). A fake client drives every test; GroqCloud implements the same adapter in Phase 6.</p>
   <p><code>describe_route → verify → END</code> is a plain edge, not a conditional one, and <code>verify</code> has no outgoing branch that skips it. That is deliberate: a conditional edge is a decision someone can get wrong, and there must be no path from a composed answer to the page that does not pass the gate.</p>
 </div>
 <h2><span class="sec">7</span> &nbsp;Service interfaces</h2>
@@ -289,6 +296,40 @@ class Stock:
     def positions(self, skus: list[str]) -&gt; dict[str, StockPosition]: ...  # BATCHED</code></pre>
 <div class="prose">
   <p>Both multi-item lookups are list-in / map-out from the start. At POC scale the body is a comprehension; against a real stock service the signature is the difference between one request and sixty, and changing it later means changing every caller.</p>
+</div>
+<h3>7.1 &nbsp;Class model</h3>
+<div class="prose">
+  <p>Five service classes own collections of value types. Two foreign-key joins carry the whole design.</p>
+</div>
+<pre><code>   Catalogue          Planogram          Stock          StoreGraph      RouteEngine
+   by_sku()           for_sku()          positions()    validate()     distance()
+   search()           for_skus()         + as_of        subgraph()     path()
+   by_category()      + version                             ▲          ◄── reads
+       │ 1..*             │ 1..*             │ 1..*          │ 1..*
+       ▼                  ▼                  ▼               ▼       ▼ 1..*
+  ┌─────────┐      ┌───────────┐     ┌──────────────┐    ┌──────┐ ┌──────┐
+  │ Product │◄─sku─│ Placement │─node│ StockPosition│    │ Node │ │ Edge │
+  │  PK sku │ 0..* │  THE JOIN │ _id │              │    │  PK  │ │      │
+  └────┬────┘      └─────┬─────┘  1  └──────┬───────┘    └──▲───┘ └──────┘
+       │ 1                │                 │                │
+       ▼                  └────── node_id ──┼────────────────┘
+  ┌──────────────────────────┐              │
+  │ Dietary                  │     sku, same domain
+  │ gluten_free: bool | None │◄─────────────┘
+  │ None = unchecked         │
+  └──────────────────────────┘</code></pre>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>Join</th><th>Cardinality</th><th>Why it matters</th></tr></thead>
+  <tbody>
+    <tr><td><code>Placement.sku</code> → <code>Product.sku</code></td><td>**0..\* placements per product**</td><td>A SKU sits on its home rack <i>and</i> a promo end cap. Also permits zero — catalogued but not placed (EC-19)</td></tr>
+    <tr><td><code>Placement.node_id</code> → <code>Node.node_id</code></td><td>exactly 1</td><td>Every placement is somewhere walkable. Checked at load</td></tr>
+  </tbody>
+</table>
+</div>
+<div class="prose">
+  <p>The one-to-many on the first is the structural reason <code>Placement</code> is a separate type rather than fields on <code>Product</code>. Collapsing them breaks FR-11.</p>
+  <p><code>Dietary</code>'s <code>bool | None</code> fields are the type-level expression of <i>empty is not FALSE</i>: <code>None</code> means unchecked and never satisfies a filter.</p>
 </div>
 <h2><span class="sec">8</span> &nbsp;Search internals</h2>
 <h3>8.1 &nbsp;Index construction</h3>
@@ -312,7 +353,7 @@ QTY    = re.compile(r"^(\d+)\s*(?:x|×)?\s+(.+)$", re.I)
 NL_CUE = re.compile(r"\b(for|with|need|want|make|making|something|what|how|recipe)\b", re.I)
 
 def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
-    q = " ".join(raw.split())
+    q = tidy(raw)          # collapse spaces per line — keep newlines, they separate items
     if len(q) &lt; MIN_QUERY_CHARS:  return "too_short", []
     if DIGITS.match(q):           return "digits", []          # not a product request
     parts = [p.strip() for p in SPLIT.split(q) if p.strip()]
@@ -322,7 +363,21 @@ def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
         return "nl", []
     return "term", [parse_qty(q)]</code></pre>
 <div class="prose">
-  <p><b>Order matters, and one rule is deliberately crude.</b> <code>" and "</code> splits before the natural-language test, so <code>"milk and bread"</code> is a batch of two rather than a sentence. The cost: a product with "and" in its name splits wrongly — "salt and vinegar crisps" becomes two terms. The mitigation is cheap: if a split part fails to resolve, retry the unsplit string once before reporting it unresolved. Worth stating, because a reviewer will find this example.</p>
+  <p><b>Order matters, and one rule needs a guard.</b> <code>" and "</code> splits before the natural-language test, so <code>"milk and bread"</code> is a batch of two rather than a sentence. Split blindly, a product with "and" in its name breaks: "salt and vinegar crisps" becomes "salt" and "vinegar crisps" — and both resolve, to table salt and the crisps, so a retry-on-failure never fires. The guard runs <b>before</b> the split: when the query divides only on "and", it stays one term if a single product's name contains every one of its words. "Salt &amp; Vinegar Crisps" and "Sweet &amp; Sour Sauce" stay whole; "milk and bread" still splits, because no product is named after both.</p>
+</div>
+<h3>8.2a &nbsp;Fuzzy retry and categories</h3>
+<div class="prose">
+  <p>When the best BM25 score is below <code>FUZZY_TRIGGER_SCORE</code>, search retries once:</p>
+</div>
+<div class="prose">
+<ol>
+  <li>Correct each query word to the nearest word in the catalogue's own vocabulary (<code>rapidfuzz</code> ratio ≥ <code>FUZZY_THRESHOLD</code>) and rerun BM25 — "paracetomol" becomes "paracetamol", and ranking still explains itself.</li>
+  <li>If that finds nothing, match the query against whole product names with <code>WRatio</code> ≥ <code>FUZZY_THRESHOLD</code> — which catches run-together words such as "cocacola".</li>
+</ol>
+</div>
+<div class="prose">
+  <p>A term equal to a department or category name that no product is named after ("dairy", "frozen") returns the <b>category</b> rather than an arbitrary SKU (EC-09). "Bread" and "milk" are product names too, so they search as products and come back ambiguous (EC-05).</p>
+  <p>A sentence-shaped query searched by keywords — the fallback when the model is unavailable (EC-37) — is <b>never marked resolved</b>. Keyword-matching a sentence is a guess, so its best matches are offered as a choice instead.</p>
 </div>
 <h3>8.3 &nbsp;Ranking</h3>
 <pre><code>def rank(cands: list[Scored], term: str, stock: dict) -&gt; list[Scored]:
@@ -335,6 +390,7 @@ def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
         not c.product.own_brand,
     ))</code></pre>
 <div class="prose">
+  <p>Each rule has a name — <i>carried here</i>, <i>in stock</i>, <i>size asked for</i>, <i>text match</i>, <i>popularity</i>, <i>own brand</i> — and <code>explain</code> reports, for every result after the first, the first rule that separates it from the one above (NFR-09, AC-26).</p>
   <p>A lexicographic tuple sort, not a weighted sum. Weighted sums need tuning and cannot be explained — "why did this rank third" has no short answer. A tuple sort is a precedence list a buyer can read, and it cannot be accidentally mis-tuned into putting an unstocked product first.</p>
 </div>
 <h3>8.4 &nbsp;Ambiguity test</h3>
@@ -345,6 +401,7 @@ def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
     return (top - second) / top &lt; AMBIGUITY_MARGIN     # 0.15</code></pre>
 <div class="prose">
   <p>A <i>relative</i> margin, because BM25 scores are unnormalised and vary with query length — an absolute threshold would fire inconsistently between a one-word and a three-word query.</p>
+  <p><b>The test runs on text-match order, not the precedence ranking.</b> Which product the shopper <i>named</i> is a question of text alone. Ranked by precedence, a search for "Diet Coke" — sold out — would put Coca-Cola Zero first and silently answer with it, hiding both the sold-out state and where Diet Coke usually is (EC-13); "Pepsi Max" would quietly become a Coke (EC-04). So the clear text winner is the answer even when sold out or not carried, reported as such with alternatives, and the precedence ranking orders the options and alternatives (FR-06, AC-19).</p>
 </div>
 <h2><span class="sec">9</span> &nbsp;Structured output models</h2>
 <pre><code>class ParsedQuery(BaseModel):
@@ -402,23 +459,24 @@ if choice.sku not in {p.sku for p in candidates}:
   <p>When a SKU has several placements (EC-20) the nearest wins — which is why <code>distance</code> being O(1) matters: evaluating four candidate locations is four array reads.</p>
 </div>
 <h3>Multi — floor-clustered, open path per floor, closed at the tills</h3>
-<pre><code>def route_multi(start, items, end_node, step_free):
-    chilled, ambient = partition(items, lambda i: i.location_type == "CHILLER")
-    groups = group_by_floor(ambient)                   # {level: [Placement]}
-    order  = sorted(groups, reverse=True)              # highest floor first
-    legs, cursor = [], start
-
+<pre><code>def route_multi(start, stops, step_free):
+    order  = sorted({s.level for s in stops}, reverse=True)   # highest floor first
+    seq, cursor = [], start
     for level in order:
-        entry = nearest_core(cursor, level, step_free) # arrive at the cheaper core
-        seq   = nn_then_2opt(entry, groups[level], step_free)
-        legs += [engine.path(cursor, entry, step_free)] + stitch(seq)
-        cursor = seq[-1].node_id if seq else entry
-
-    for p in chilled_last(chilled):                    # EC-33
-        legs.append(engine.path(cursor, p.node_id, step_free)); cursor = p.node_id
-
-    legs.append(engine.path(cursor, end_node, step_free))   # FR-11, the tills
-    return Route(nodes=dedupe_joins(legs), ...)</code></pre>
+        entry = nearest_core(cursor, level, step_free)        # arrive at the cheaper core
+        here  = [s for s in stops if s.level == level]
+        ambient, chilled = partition(here, lambda s: s.location_type != "CHILLER")
+        floor = nn_then_2opt(entry, ambient, step_free)
+        floor += nn_then_2opt(last(floor, entry), chilled, step_free)   # EC-33
+        seq += floor
+        cursor = seq[-1].node_id
+    till = nearest_till(cursor, step_free)                    # FR-18
+    nodes = stitch(start, seq, till)                          # shortest path between neighbours
+    return MultiRoute(nodes=nodes, stops=seq, till=till, ...)</code></pre>
+<div class="prose">
+  <p><b>Chilled stops come last within their own floor's pass</b>, not after every floor. Appending them after all floors would send a shopper back upstairs whenever a chiller sat above the ground floor, breaking FR-17's one pass per floor. In the demo store every chiller is on floor 0 — the final pass — so chilled items are still the last things picked before the tills.</p>
+  <p>A SKU held in several places takes the placement on a floor the basket already visits, nearest the start, so a second placement never adds a floor.</p>
+</div>
 <h3>nn_then_2opt — open path, fixed start</h3>
 <pre><code>def nn_then_2opt(entry, stops, step_free):
     seq, pool, cur = [], list(stops), entry
@@ -498,7 +556,7 @@ def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
 </div>
 <h2><span class="sec">13</span> &nbsp;Startup validation</h2>
 <div class="prose">
-  <p><b>The rules live in <code>schema.md</code> §7</b> — forty-seven checks, V-01 to V-47, which supersede the eleven this section used to list. They are schema territory: what makes a store folder well formed is a property of the format, not of this application. What belongs here is <i>when</i> they run, in what order, and what happens when one fails.</p>
+  <p><b>The rules live in <code>schema.md</code> §7</b> — forty-three refusals numbered V-01 to V-74 with gaps between blocks, and five warnings, W-01 to W-05. They supersede the eleven checks this section used to list. They are schema territory: what makes a store folder well formed is a property of the format, not of this application. What belongs here is <i>when</i> they run, in what order, and what happens when one fails.</p>
   <p><code>validation.py</code> runs them inside the <code>@st.cache_resource</code> builder that loads the store, which means they run <b>once per process, before the first search</b>, and a failure raises rather than returning a half-loaded store.</p>
 </div>
 <div class="tablewrap">
@@ -519,12 +577,14 @@ def plan_route(basket: list[BasketItem]) -&gt; JourneyState:
 </div>
 <h2><span class="sec">14</span> &nbsp;Configuration</h2>
 <pre><code>MIN_QUERY_CHARS     = 2       # EC-01
+MAX_QUERY_CHARS     = 1000    # NFR-06 — over-long input is cut, and the cut is said
 MAX_BATCH_TERMS     = 30      # EC-06
-NL_WORD_THRESHOLD   = 4
+NL_WORD_THRESHOLD   = 3       # set live in Phase 6 — four-word requests reach the model
 BM25_K1, BM25_B     = 1.2, 0.5
 SEARCH_LIMIT        = 10
-FUZZY_THRESHOLD     = 80      # rapidfuzz ratio
+FUZZY_THRESHOLD     = 75      # rapidfuzz ratio — set on the query set, Phase 4
 FUZZY_TRIGGER_SCORE = 2.0     # BM25 below this triggers the fuzzy retry
+SUGGESTION_THRESHOLD = 60     # nearest names offered when nothing matches — EC-03
 AMBIGUITY_MIN_HITS  = 3
 AMBIGUITY_MARGIN    = 0.15    # §8.4
 MAX_CLARIFY_ROUNDS  = 2       # EC-35
@@ -540,6 +600,7 @@ MODEL_UNDERSTAND    = "openai/gpt-oss-20b"
 MODEL_SUBSTITUTE    = "openai/gpt-oss-120b"
 MODEL_DESCRIBE      = "openai/gpt-oss-20b"
 MODEL_MAX_TOKENS    = 1024    # per call; reasoning tokens count against it
+MODEL_REASONING_EFFORT = "low" # gpt-oss reasoning, kept short
 MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only</code></pre>
 <div class="prose">
   <p>Every number a reviewer might question lives here with the edge case it serves in the comment. <code>THREAD_TTL_MINUTES</code> drives the sweep that stops abandoned clarifications accumulating checkpoints forever — LangGraph does not expire threads on its own.</p>
@@ -563,6 +624,112 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only<
 </div>
 <div class="prose">
   <p><b>The test that matters most</b> is the fallback suite. It is the only thing that proves the claim the whole design rests on — that a model failure degrades fluency and never correctness. Forcing each of the three model nodes to fail and asserting the journey still returns a correct location and a correct route is what turns that from an assertion into a fact.</p>
+</div>
+<h2><span class="sec">16</span> &nbsp;Sequences</h2>
+<div class="prose">
+  <p>Lifelines throughout: Shopper · Page · Graph · Catalogue · Stock · Planogram · RouteEngine. Model calls and the verify gate are shown as activations on Graph, because the node owns them.</p>
+</div>
+<h3>16.1 &nbsp;Single product</h3>
+<pre><code>Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
+   │ "coke 500ml" · F0/A01 · submit (st.form)
+   ├───────►│  run_query(q, start_node, step_free)
+   │        ├──────────►│
+   │        │           │ classify_query → shape="term"
+   │        │           ├────────────────►│  search(term, filter, 10)
+   │        │           │                 │ BM25 → candidates
+   │        │           │                 ├────────►│ positions([candidates])
+   │        │           │                 │◄────────┤ ranged + shelf_qty
+   │        │           │                 │ rank: ranged → in stock →
+   │        │           │                 │       variant → bm25 → popularity
+   │        │           │◄────────────────┤  ranked candidates
+   │        │           │ needs_clarification? (top−2nd)/top ≥ 0.15 → no
+   │ ┌ opt [margin &lt; 0.15] ──────────────────────────────────────────────────┐
+   │ │      │◄──────────┤ interrupt({options})
+   │ │◄─────┤ st.radio options
+   │ ├─────►│ picks one      ═══ NEW PAGE RUN ═══
+   │ │      ├──────────►│ resume(choice)
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├──────────────────────────►│ check_availability([sku])
+   │        │           │◄──────────────────────────┤ shelf_qty 14 · ranged TRUE
+   │        │           ├─────────────────────────────────────►│ for_skus([sku])
+   │        │           │◄─────────────────────────────────────┤ F1-A07-R03·S02·HOME
+   │        │           │ route_single — nearest of the placements
+   │        │           ├──────────────────────────────────────────────►│
+   │        │           │   distance(start, node) + path(start, node)
+   │        │           │◄──────────────────────────────────────────────┤
+   │        │           │   45.0 m · 12 hops · O(1) matrix read, no search
+   │        │           │ ▓ describe_route [model · gpt-oss-20b]
+   │        │           │ ▒ verify — 5 checks against service state → verified
+   │        │◄──────────┤ JourneyState, verified=True
+   │◄───────┤ result card + floor plate + directions</code></pre>
+<div class="prose">
+  <p>Three things this exists to show. Ranking calls <b>Stock before availability is checked</b>, because <code>ranged</code> and <code>in stock</code> are ranking signals (FR-06), not just output. The clarification is a <b>new page run</b>, not a continuation — Streamlit holds no request open. And <code>verify</code> sits between the composed answer and the page, so nothing unverified can render (NFR-02).</p>
+</div>
+<h3>16.2 &nbsp;Multiple products</h3>
+<pre><code>Shopper   Page        Graph          Catalogue   Stock    Planogram  Routing
+   │ "milk, bread, eggs, chicken thighs" · F0/A01 · submit
+   ├───────►│  run_query(...)
+   │        ├──────────►│
+   │        │           │ classify_query → shape="batch", 4 terms
+   │ ┌ loop [per term, concurrent] ───────────────────────────────────────────┐
+   │ │      │           ├────────────────►│ search(term, filter, 10)
+   │ │      │           │                 ├────────►│ positions(…)
+   │ │      │           │                 │◄────────┤
+   │ │      │           │◄────────────────┤ ranked candidates
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           │ milk ✓ · eggs ✓ · chicken ✓ · bread → 12 near-equal
+   │ ┌ opt [bread ambiguous] ─────────────────────────────────────────────────┐
+   │ │      │◄──────────┤ interrupt({bread options})
+   │ │◄─────┤           │
+   │ ├─────►│ picks "Hovis Wholemeal 800g"   ═══ NEW PAGE RUN ═══
+   │ │      ├──────────►│ resume(choice) — other three stay resolved
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├══════════════════════════►│ check_availability([4 SKUs])
+   │        │           │◄══════════════════════════┤   ◄── ONE call, not four
+   │        │           │ milk 14 · bread 6 · eggs 21 · chicken 0
+   │ ┌ opt [any out of stock] ────────────────────────────────────────────────┐
+   │ │      │           ├────────────────►│ by_category + dietary filter
+   │ │      │           │◄────────────────┤ safe candidates only
+   │ │      │           │ ▓ suggest_substitutes [model · gpt-oss-120b]
+   │ │      │           │   reject any SKU outside the candidate set
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├═════════════════════════════════════►│ for_skus([4])
+   │        │           │◄═════════════════════════════════════┤  ◄── ONE call
+   │        │           │ after_locations — basket still empty → END
+   │        │◄──────────┤ results ONLY. 3 available, 1 out of stock. NO ROUTE.
+   │◄───────┤ grouped list, in-stock first + "Add 3 available to basket"
+   │
+   │ ╔═══ BASKET GATE — FR-21 to FR-24 ═══════════════════════════════════════╗
+   │ ║ shopper adds the 3 available items, then asks to plan a route          ║
+   │ ╚════════════════════════════════════════════════════════════════════════╝
+   ├───────►│  ═══ NEW PAGE RUN ═══
+   │        ├──────────►│ plan_route(basket)
+   │        │           │ route_multi — group by floor, order F1 then F0,
+   │        │           │               chilled deferred to the last pass
+   │ ┌ loop [per floor, highest first] ───────────────────────────────────────┐
+   │ │      │           ├──────────────────────────────────────────────►│
+   │ │      │           │   nearest_core → nn_then_2opt over the matrix
+   │ │      │           │◄──────────────────────────────────────────────┤
+   │ └────────────────────────────────────────────────────────────────────────┘
+   │        │           ├──────────────────────────────────────────────►│
+   │        │           │   path(cursor, F0-TILL-01)
+   │        │           │◄──────────────────────────────────────────────┤
+   │        │           │   ordered node path · 2 floors · 68 m · ends at tills
+   │        │           │ ▓ describe_route [model · gpt-oss-20b]
+   │        │           │ ▒ verify — 5 checks → verified
+   │        │◄──────────┤ route + directions
+   │◄───────┤ route drawn across the floor plates, tabs F0 / F1</code></pre>
+<div class="prose">
+  <p>Legend: <code>▓</code> a model call, <code>▒</code> the verify gate, <code>═══►</code> a batched call.</p>
+  <p>Four things this exists to show:</p>
+</div>
+<div class="prose">
+<ol>
+  <li><b>Two batched calls, not eight.</b> <code>check_availability</code> and <code>for_skus</code> each take a list. Against a real stock service that is one request instead of sixty, and designing the signature that way from the start avoids an N+1 rewrite.</li>
+  <li><b>The clarification keeps the resolved terms.</b> Only <code>bread</code> asks; milk, eggs and chicken stay resolved across the interrupt.</li>
+  <li><b>The first run returns no route.</b> <code>after_locations</code> finds the basket empty and ends, so the basket gate is structural rather than a UI convention — a route is never planned to an empty shelf.</li>
+  <li><b>Three page runs</b> for one journey — search, resume, route. Each is a fresh top-to-bottom execution reading state from the checkpoint.</li>
+</ol>
 </div>
 
 <footer>

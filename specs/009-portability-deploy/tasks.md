@@ -41,3 +41,4 @@ description: "Task list for Phase 8 — portability, performance, hostile input,
 - AC-15 on the public site: `LOCATOR_URL=…/~/+/ uv run pytest tests/browser` passed at 390 px;
   the Cloud wrapper page does not scroll sideways either.
 - Still the owner's: Groq tier and spend limit.
+- **Gate approved by the owner, 2026-10-14.**
