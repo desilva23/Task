@@ -181,8 +181,9 @@ The Docs are hand-built and not in git. When a markdown document changes, its
 Doc needs the same change by hand.
 
 **`locator-lld.html` and `locator-schema.html` are generated from their
-markdown**, not hand-edited — rerun the render script rather than patching the
-HTML. The requirements and HLD pages are still hand-maintained, which is how
+markdown**, not hand-edited — run `uv run python scripts/render_lld_page.py` or
+`scripts/render_schema_page.py` from the repo root rather than patching the HTML (the schema
+script carries the hand-drawn rack figure over by itself). The requirements and HLD pages are still hand-maintained, which is how
 the LLD page came to sit two versions behind its markdown.
 
 ## Deferred — remind the owner

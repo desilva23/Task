@@ -213,7 +213,7 @@ is a refusal (V-10).
 | `key` | `value` | Example |
 |---|---|---|
 | `store_id` | text, must equal the folder name | `SBY-DEMO-001` |
-| `store_name` | text, shown in the UI | `Sainsbury's Demo Superstore` |
+| `store_name` | text, shown in the UI | `Demo Superstore` |
 | `data_provenance` | `synthetic` — the only accepted value | `synthetic` |
 | `planogram_version` | ISO date; bumped by a range change | `2026-10-01` |
 | `stock_as_of` | ISO 8601 UTC timestamp | `2026-10-09T08:40:00Z` |
@@ -395,7 +395,7 @@ a promotional end cap at the same aisle's north end.
 # store.csv
 key,value
 store_id,SBY-DEMO-001
-store_name,Sainsbury's Demo Superstore
+store_name,Demo Superstore
 data_provenance,synthetic
 planogram_version,2026-10-01
 stock_as_of,2026-10-09T08:40:00Z
