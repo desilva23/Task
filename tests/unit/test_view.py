@@ -136,3 +136,28 @@ class TestView:
         ]
         assert [r.sku for r in groups.unavailable] == [sku("Diet Coke")]
         assert addable(groups) == [sku("Bananas"), sku("Baked Beans"), sku("Dental Floss")]
+
+
+def test_fr_20_ac_15_no_label_on_any_plate_touches_another_thing():
+    """Owner's report (2026-10-14): words on the map ran into each other. Every product routed
+    on its own from two different starts, and baskets over every floor, must place every label
+    in clear space — no shelf, box, pin or other label under it, nothing off the edge."""
+    from present import floorplate
+
+    floorplate.CROWDED.clear()
+    svc = services()
+    j = Journey(svc, NoModel())
+    ranged = [p.sku for p in svc.catalogue._products.values()
+              if svc.stock.availability(p.sku).value == "in_stock"]  # fmt: skip
+    for start in ("F0-ENTRANCE", "F1-A07-S"):
+        for k in ranged:
+            route = j.plan_route(f"r-{start}-{k}", [k], start_node=start).state["route"]
+            if route and route["kind"] != "none":
+                floor_plates(svc, route)
+    for start in ("F0-ENTRANCE", "F2-A05-N"):
+        for i in range(0, len(ranged), 8):
+            route = j.plan_route(f"b-{start}-{i}", ranged[i : i + 8], start_node=start).state[
+                "route"
+            ]
+            floor_plates(svc, route)
+    assert floorplate.CROWDED == []
