@@ -359,6 +359,21 @@ penalised, and product names are all short, so the standard value over-penalises
 the ones that happen to carry synonyms. Both constants belong on the eval set,
 not in a reviewer's opinion.
 
+**Named products first.** The category and the size are in the index so that a
+query naming nothing still finds something, but they are weak evidence. After
+BM25, the candidates are narrowed to the best non-empty tier:
+
+1. products whose name, brand or synonyms contain **every** query word;
+2. products whose name, brand or synonyms contain **some** query word;
+3. everything BM25 found.
+
+Found live on 2026-10-14: "eggs" offered two yogurts, because their category is
+"Eggs & Yogurt"; "tea" offered coffee, "kitchen roll" facial tissues, "ice cream"
+antiseptic cream, "coca cola" Pepsi. An audit over every name, word and synonym
+in the catalogue found 94 of 569 queries offering something not named; after the
+tiers, the only ones left are brand matches (Diet Coke for "coca"). The audit is
+a unit test, so a new product cannot bring the problem back.
+
 ### 8.2 Query classification
 
 ```python
@@ -423,14 +438,22 @@ def rank(cands: list[Scored], term: str, stock: dict) -> list[Scored]:
         not stock[c.sku].ranged,          # ranged first — a hard gate
         stock[c.sku].shelf_qty == 0,      # in stock before out of stock
         not variant_match(c.product, term),
-        -c.bm25,
+        not c.near_best,                  # within the §8.4 margin of the best text score
         -c.product.popularity,
+        -c.bm25,                          # a closer text match only breaks popularity ties
         not c.product.own_brand,
     ))
 ```
 
+**Near-equal text is equal text.** A raw BM25 score separates "Follow On Milk"
+from "Semi Skimmed Milk" by a few hundredths, from nothing but the length of
+their descriptions, and as a ranking rule above popularity it put infant formula
+first for "milk". Text matches within `AMBIGUITY_MARGIN` of the best — the same
+margin §8.4 uses to call results near-equal — rank as equal, and popularity
+decides between them.
+
 Each rule has a name — *carried here*, *in stock*, *size asked for*, *text
-match*, *popularity*, *own brand* — and `explain` reports, for every result after
+match*, *popularity*, *closer text match*, *own brand* — and `explain` reports, for every result after
 the first, the first rule that separates it from the one above (NFR-09, AC-26).
 
 A lexicographic tuple sort, not a weighted sum. Weighted sums need tuning and

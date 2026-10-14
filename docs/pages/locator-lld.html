@@ -352,6 +352,17 @@ def normalise(text: str) -&gt; list[str]:
 index = BM25Okapi([normalise(searchable_text(p)) for p in products], k1=1.2, b=0.5)</code></pre>
 <div class="prose">
   <p><code>b=0.5</code> rather than the usual 0.75: <code>b</code> controls how hard a long document is penalised, and product names are all short, so the standard value over-penalises the ones that happen to carry synonyms. Both constants belong on the eval set, not in a reviewer's opinion.</p>
+  <p><b>Named products first.</b> The category and the size are in the index so that a query naming nothing still finds something, but they are weak evidence. After BM25, the candidates are narrowed to the best non-empty tier:</p>
+</div>
+<div class="prose">
+<ol>
+  <li>products whose name, brand or synonyms contain <b>every</b> query word;</li>
+  <li>products whose name, brand or synonyms contain <b>some</b> query word;</li>
+  <li>everything BM25 found.</li>
+</ol>
+</div>
+<div class="prose">
+  <p>Found live on 2026-10-14: "eggs" offered two yogurts, because their category is "Eggs &amp; Yogurt"; "tea" offered coffee, "kitchen roll" facial tissues, "ice cream" antiseptic cream, "coca cola" Pepsi. An audit over every name, word and synonym in the catalogue found 94 of 569 queries offering something not named; after the tiers, the only ones left are brand matches (Diet Coke for "coca"). The audit is a unit test, so a new product cannot bring the problem back.</p>
 </div>
 <h3>8.2 &nbsp;Query classification</h3>
 <pre><code>SPLIT  = re.compile(r"[,;\n]|\s+and\s+|\s*\+\s*", re.I)
@@ -393,12 +404,14 @@ def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
         not stock[c.sku].ranged,          # ranged first — a hard gate
         stock[c.sku].shelf_qty == 0,      # in stock before out of stock
         not variant_match(c.product, term),
-        -c.bm25,
+        not c.near_best,                  # within the §8.4 margin of the best text score
         -c.product.popularity,
+        -c.bm25,                          # a closer text match only breaks popularity ties
         not c.product.own_brand,
     ))</code></pre>
 <div class="prose">
-  <p>Each rule has a name — <i>carried here</i>, <i>in stock</i>, <i>size asked for</i>, <i>text match</i>, <i>popularity</i>, <i>own brand</i> — and <code>explain</code> reports, for every result after the first, the first rule that separates it from the one above (NFR-09, AC-26).</p>
+  <p><b>Near-equal text is equal text.</b> A raw BM25 score separates "Follow On Milk" from "Semi Skimmed Milk" by a few hundredths, from nothing but the length of their descriptions, and as a ranking rule above popularity it put infant formula first for "milk". Text matches within <code>AMBIGUITY_MARGIN</code> of the best — the same margin §8.4 uses to call results near-equal — rank as equal, and popularity decides between them.</p>
+  <p>Each rule has a name — <i>carried here</i>, <i>in stock</i>, <i>size asked for</i>, <i>text match</i>, <i>popularity</i>, <i>closer text match</i>, <i>own brand</i> — and <code>explain</code> reports, for every result after the first, the first rule that separates it from the one above (NFR-09, AC-26).</p>
   <p>A lexicographic tuple sort, not a weighted sum. Weighted sums need tuning and cannot be explained — "why did this rank third" has no short answer. A tuple sort is a precedence list a buyer can read, and it cannot be accidentally mis-tuned into putting an unstocked product first.</p>
 </div>
 <h3>8.4 &nbsp;Ambiguity test</h3>
