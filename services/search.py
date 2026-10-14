@@ -149,6 +149,9 @@ class SearchIndex:
         self.named_by = {  # the words that name a product: never its category or its size
             p.sku: set(normalise(" ".join([p.name, p.brand, *p.synonyms]))) for p in self.products
         }
+        self.described_by = {  # … and the words a shopper may add to pick one: its size
+            p.sku: self.named_by[p.sku] | set(normalise(p.size)) for p in self.products
+        }
         self.categories: dict[str, tuple[str, str]] = {}
         for p in self.products:
             for field_name in ("department", "aisle_category"):
@@ -217,9 +220,33 @@ class SearchIndex:
         if not found or found[0].method == "name":
             return found
         wanted = set(words)
-        whole = [c for c in found if wanted <= self.named_by[c.sku]]
+        whole = [c for c in found if self.names_all(c, wanted)]
         some = [c for c in found if wanted & self.named_by[c.sku]]
         return whole or some or found
+
+    def names_all(self, c: Scored, words: set[str]) -> bool:
+        """The search names this product — at least one word is its name, brand or a synonym —
+        and every other word is accounted for, its size included ("semi skimmed milk 2 pint").
+        A misspelt word counts when it is within the fuzzy threshold of one of the product's
+        own ("tomatoe ketchup"). The fuzzy name match compared whole names, so it counts."""
+        if c.method == "name":
+            return True
+        mine = self.described_by[c.sku]
+        return bool(words & self.named_by[c.sku]) and all(
+            w in mine or any(fuzz.ratio(w, m) >= FUZZY_THRESHOLD for m in mine) for w in words
+        )
+
+    def nearest(
+        self, found: list[Scored], words: set[str], text: str, n: int = 3
+    ) -> tuple[str, ...]:
+        """Suggestions for a search only partly named: products named by more of its words
+        first, then those named by its last word — usually the thing itself ("green apples",
+        "fresh milk") — then the popular ones."""
+        last = (normalise(text) or [""])[-1]
+        order = sorted(found, key=lambda c: (-len(words & self.named_by[c.sku]),
+                                             last not in self.named_by[c.sku],
+                                             -c.product.popularity, c.sku))  # fmt: skip
+        return tuple(dict.fromkeys(c.product.name for c in order))[:n]
 
     def category_of(self, text: str) -> tuple[str, str] | None:
         """EC-09: a department or category that no product is named after."""
@@ -353,6 +380,11 @@ def resolve(
     found, corrected = index.search(term.text, filt)
     if not found:
         return TermResult(term, "unresolved", suggestions=tuple(index.suggestions(term.text)))
+    words = set(normalise(corrected or term.text))
+    if not sentence and filt is None and not index.names_all(found[0], words):
+        # Part of the search names a product, the rest names nothing here: "face wash" is not
+        # Shower Gel ("body wash"). Offer it as a suggestion, never as the answer (EC-03).
+        return TermResult(term, "unresolved", suggestions=index.nearest(found, words, term.text))
     ranked = rank(found, term, stock)
     # Which product was asked for is a question of text alone: a sold-out or unranged product
     # the shopper named is still the answer, reported as such (EC-04, EC-13). The precedence

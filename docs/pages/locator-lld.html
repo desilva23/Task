@@ -363,6 +363,7 @@ index = BM25Okapi([normalise(searchable_text(p)) for p in products], k1=1.2, b=0
 </div>
 <div class="prose">
   <p>Found live on 2026-10-14: "eggs" offered two yogurts, because their category is "Eggs &amp; Yogurt"; "tea" offered coffee, "kitchen roll" facial tissues, "ice cream" antiseptic cream, "coca cola" Pepsi. An audit over every name, word and synonym in the catalogue found 94 of 569 queries offering something not named; after the tiers, the only ones left are brand matches (Diet Coke for "coca"). The audit is a unit test, so a new product cannot bring the problem back.</p>
+  <p><b>A partial name is a suggestion, not an answer.</b> A term resolves only when the top candidate is named by at least one of the search's words and accounts for all of them — its name, brand, synonyms or size, a misspelling within <code>FUZZY_THRESHOLD</code> included (<code>names_all</code>). Otherwise the term is unresolved and the candidates become suggestions (EC-03). Found live: "face wash" answered with Shower Gel, whose synonym "body wash" shares one word. Sentences are exempt — they are never auto-resolved anyway — and so is a search the model has already narrowed with a filter.</p>
 </div>
 <h3>8.2 &nbsp;Query classification</h3>
 <pre><code>SPLIT  = re.compile(r"[,;\n]|\s+and\s+|\s*\+\s*", re.I)

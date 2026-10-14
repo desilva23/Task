@@ -374,6 +374,15 @@ in the catalogue found 94 of 569 queries offering something not named; after the
 tiers, the only ones left are brand matches (Diet Coke for "coca"). The audit is
 a unit test, so a new product cannot bring the problem back.
 
+**A partial name is a suggestion, not an answer.** A term resolves only when the
+top candidate is named by at least one of the search's words and accounts for
+all of them — its name, brand, synonyms or size, a misspelling within
+`FUZZY_THRESHOLD` included (`names_all`). Otherwise the term is unresolved and
+the candidates become suggestions (EC-03). Found live: "face wash" answered with
+Shower Gel, whose synonym "body wash" shares one word. Sentences are exempt —
+they are never auto-resolved anyway — and so is a search the model has already
+narrowed with a filter.
+
 ### 8.2 Query classification
 
 ```python

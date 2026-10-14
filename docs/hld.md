@@ -488,7 +488,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 |---|---|---|
 | EC-01 | Empty or one-character query | Reject before any search; show category browse |
 | EC-02 | Misspelling — "paracetomol" | Weak BM25 scores → fuzzy stage → retry once only, to bound latency |
-| EC-03 | No match anywhere in the catalogue | "We don't recognise that" + nearest fuzzy suggestions. Never an empty screen |
+| EC-03 | No match anywhere in the catalogue, or a match on only part of the search — "face wash" against Shower Gel ("body wash") | "We don't recognise that" + suggestions: products named by more of the words first, then by the last word, then the popular. A product named by part of a search is never the answer. Never an empty screen |
 | EC-04 | In the catalogue but not ranged in this store | Say so explicitly, offer the nearest ranged alternative. Early graph exit, no route |
 | EC-05 | Ambiguous — "bread" returns 12 near-equal hits | `clarify` interrupt with the top options. Capped at two rounds, then show the ranked list |
 | EC-06 | Batch query with 200 pasted terms | Cap at 30 resolved items; return the rest unprocessed with a clear message |

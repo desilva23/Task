@@ -243,3 +243,37 @@ def test_fr_01_a_product_is_offered_only_when_its_name_synonym_or_brand_says_so(
             if stray:
                 wrong[q] = stray
     assert wrong == {}
+
+
+def test_ec_03_face_wash_is_not_answered_with_shower_gel():
+    """Found live (2026-10-14): "face wash" resolved to Shower Gel, whose synonym "body wash"
+    shares one word of the two. A product named by part of a search is a suggestion, never the
+    answer."""
+    store, index = demo()
+    (term,) = search_query("face wash", index, store.stock).terms
+    assert term.status == "unresolved" and "Shower Gel" in term.suggestions
+
+
+@pytest.mark.parametrize(
+    "raw, name, size",
+    [("semi skimmed milk 2 pint", "Semi Skimmed Milk", "2 pint"),
+     ("everyday shampoo 400ml", "Everyday Shampoo", "400ml")],
+)  # fmt: skip
+def test_fr_01_a_size_word_counts_as_naming_the_product(raw, name, size):
+    store, index = demo()
+    (term,) = search_query(raw, index, store.stock).terms
+    chosen = store.products[term.chosen] if term.chosen else term.candidates[0].product
+    assert (chosen.name, chosen.size) == (name, size)
+
+
+def test_fr_01_every_name_and_synonym_still_finds_its_product():
+    """Typed exactly, every product name and synonym either answers with a product it names in
+    full, or asks among such products — never "not found"."""
+    store, index = demo()
+    lost = []
+    for p in index.products:
+        for q in {p.name, *p.synonyms}:
+            (term,) = search_query(q, index, store.stock).terms
+            if term.status in ("unresolved",):
+                lost.append(q)
+    assert lost == []

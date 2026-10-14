@@ -159,8 +159,9 @@ def test_c_04_ac_13_no_store_line_and_typed_markup_stays_text(server):
         body = page.locator("body").inner_text()
         assert "synthetic" not in body.lower() and "Demo Superstore" not in body
         search(page, "<img src=x onerror=alert(1)><script>alert(2)</script>")
-        page.get_by_text("Which did you mean?").wait_for(timeout=20000)  # the term is shown back …
-        assert "<img src=x" in page.locator("legend").first.inner_text()  # … as text, not markup
+        shown = page.get_by_text("<img src=x").first  # the search is shown back …
+        shown.wait_for(timeout=20000)
+        assert "<script>" in shown.inner_text()  # … as text, not markup
         assert page.locator("main img, main script").count() == 0
         assert page.dialogs == []
 
