@@ -210,9 +210,15 @@ figure itself). Hand-maintained pages are how they drifted two versions behind �
 The owner said "later" to these. Remind them at every phase gate until each is done or
 dropped; add new ones the same turn they are deferred.
 
-- Nothing open. (Republishing the pages and Docs, deferred 2026-10-13, was done 2026-10-14:
-  all five pages republished from their sources and the four Docs brought up to date,
-  diagrams included.)
+- **The LLD Doc** (https://claude.ai/code/artifact/96a1afa2-2ca7-4f5b-a10d-ce432489f37b) — deferred
+  2026-10-15 ("for now skip about documents"). It still describes the Streamlit build: §1
+  module layout, §11 "The Streamlit interface", JourneyState without `action`/`barcode`,
+  the old `after_classify`, `rank` without `near_best`, no §8.5 barcode lookup, no named-first
+  tiers or partial-name rule, no §11a stock alerts, no `LOW_STOCK_UNITS`, §13's
+  `@st.cache_resource` sentence, a test plan without the barcode, API and browser rows; its
+  runtime-classes and full-sequence diagrams may still show Streamlit. `docs/lld.md` and the
+  published LLD page are current — copy from them. The other three Docs and all five pages
+  were brought up to date the same day.
 
 ## The build — complete
 
