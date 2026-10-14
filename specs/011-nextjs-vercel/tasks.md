@@ -13,7 +13,8 @@ description: "Task list for Phase 10 — Next.js page on Vercel"
 - [X] T007 `vercel.json`, `docs/deploy.md`, CI with Node, `scripts/check.sh` builds the page
 - [X] T008 `lld.md` §1, §8.5, §11, §13, §14, §15, §16; constitution 1.4.0; CLAUDE.md, README
 - [X] T009a Vercel project `find-it-in-store` created and deployed from `feature/nextjs`
-- [ ] T009b Owner: add `GROQ_API_KEY`, redeploy; merge #4 and #5; retire the Streamlit app
+- [X] T009b #4 and #5 merged to `main` on the owner's word (2026-10-14); production follows `main`
+- [ ] T009c Owner: add `GROQ_API_KEY` in Vercel and redeploy; delete the Streamlit app
 
 ## Gate record (2026-10-14)
 

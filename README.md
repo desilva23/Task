@@ -6,8 +6,8 @@ exactly where it is — floor, aisle, rack and shelf — and the shortest walkin
 to it across floors. A proof of concept on synthetic data, with Sainsbury's as the
 reference retailer; no real retailer system is involved.
 
-**Live:** https://weurhd8vy4j68dmbhcbkd6.streamlit.app (the Streamlit version, until the Next.js
-version is deployed on Vercel — [`docs/deploy.md`](docs/deploy.md))
+**Live:** https://find-it-in-store.vercel.app (Vercel — deployed from `main` on every push;
+[`docs/deploy.md`](docs/deploy.md))
 
 A Next.js page talks to a small stateless Python API (FastAPI); both deploy as one Vercel
 project. The barcode is read on the phone, from the live camera; only the digits reach the server.
