@@ -150,8 +150,11 @@ gluten free" about products nobody checked.
 
 ## The deployed app
 
-https://weurhd8vy4j68dmbhcbkd6.streamlit.app — Streamlit Community Cloud, from branch
-`claude/planogram-store-navigation-czn7bh`; a push to that branch redeploys it. The app runs
+https://weurhd8vy4j68dmbhcbkd6.streamlit.app — Streamlit Community Cloud, following
+`main` (the repository's default branch since 2026-10-14). A push to `main` redeploys it, so
+work happens on a branch and reaches `main` when it passes the check. The original branch
+`claude/planogram-store-navigation-czn7bh` is kept; do not delete it while any app still
+deploys from it (Streamlit loses control of an app whose branch disappears). The app runs
 inside a frame: test it at `…/~/+/` (`LOCATOR_URL=… uv run pytest tests/browser`).
 
 ## Published pages
@@ -211,4 +214,4 @@ gate after each phase for the owner's review.
 | 8 | Portability store, performance, hostile input, deployment | AC-09, AC-12, AC-13 |
 
 **Open, the owner's to decide:** the Groq tier and a spend limit in the Groq console
-(the app is public); whether the app should deploy from `main` rather than this branch.
+(the app is public).
