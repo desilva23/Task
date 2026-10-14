@@ -162,8 +162,12 @@ gluten free" about products nobody checked.
 `claude/planogram-store-navigation-czn7bh` is kept; do not delete it while any app still
 deploys from it (Streamlit loses control of an app whose branch disappears).
 
-**After Phase 10 merges:** Vercel, following `main` for production and giving every other branch
-a preview URL — `docs/deploy.md`. Merging removes the Streamlit page from `main`, so set up the
+**Vercel:** https://find-it-in-store.vercel.app — project `find-it-in-store` (team
+`desilva23s-projects`), linked to this repository, created 2026-10-14. Its first deployment was
+built from `feature/nextjs` and holds the production address until `main` carries the same code;
+after that it follows `main` for production and gives every other branch a protected preview
+URL — `docs/deploy.md`. `GROQ_API_KEY` is the owner's to add in the project's environment
+variables; without it the site runs on the plain wording. Merging removes the Streamlit page from `main`, so set up the
 Vercel project first, check the branch preview, merge, then delete the Streamlit app. Test a
 deployed site with `LOCATOR_URL=https://… uv run pytest tests/browser`.
 
