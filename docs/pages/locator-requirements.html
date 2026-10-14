@@ -62,8 +62,9 @@
   <h1>Product Finder Requirements</h1>
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
-    <span><b>Requirements</b> 24 functional · 11 non-functional</span>
-    <span><b>Constraints</b> 7</span>
+    <span><b>Requirements</b> 26 functional · 11 non-functional</span>
+    <span><b>Constraints</b> 9</span>
+    <span><b>Acceptance criteria</b> 29</span>
   </div>
 </header>
 
@@ -71,41 +72,11 @@
 <div class="prose">
   <p>Shoppers in a large multi-floor store lose time hunting for products and cannot tell from the shelf whether an item is stocked at that branch. This system takes one or more typed product requests and returns, for each, whether it is available, exactly where it sits, and the shortest walking route to reach it — including floor changes.</p>
   <p>It is built as an agentic system in which language models interpret and phrase, and deterministic tools supply every fact. It must work on any store by replacing the store data, with no code changes.</p>
+  <p><b>In scope:</b> typed requests (single, several at once, natural language); barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory; location to floor, aisle, rack and shelf; shortest route from any start point, across floors; one combined route for several products; step-free routing; a single-page user interface; an email to the store manager when a product runs low or runs out.</p>
+  <p><b>Out of scope:</b> voice input; live shopper positioning (beacons, Wi-Fi, QR); integration with any real inventory, planogram or mapping system; payments, loyalty and recommendations; shelf-compliance detection from photographs; recognising a product from a photograph — the camera reads a barcode and nothing else; more than one store running concurrently; colleague workflows — order picking, replenishment, shelf-edge tasks.</p>
+  <p><b>Inputs:</b> one store folder holding four kinds of data — the <b>store map</b> (walkable points, paths between them, and the stairs and lifts connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
+  <p><b>Done when:</b> a shopper's request returns the correct availability, the correct location and a provably shortest route — including from a start point other than the entrance, and across floors; every fact in every answer has been checked against the store data before it is shown; and a second, differently shaped store works with no code changes.</p>
 </div>
-
-<h4>In scope</h4>
-<ul>
-  <li>Typed product requests — single, several at once, or natural language</li>
-  <li>Product matching against a store catalogue</li>
-  <li>Availability from a mock inventory file</li>
-  <li>Product location to floor, aisle, rack and shelf</li>
-  <li>Shortest route from any start point in the store, across floors</li>
-  <li>One combined route for several products</li>
-  <li>Step-free routing</li>
-  <li>A single-page user interface</li>
-</ul>
-
-<h4>Out of scope</h4>
-<ul>
-  <li>Voice input</li>
-  <li>Live shopper positioning — beacons, Wi-Fi, QR markers</li>
-  <li>Integration with any real inventory, planogram or mapping system</li>
-  <li>Payments, loyalty and recommendations</li>
-  <li>Shelf-compliance detection from photographs</li>
-  <li>More than one store running concurrently</li>
-  <li>Colleague workflows — order picking, replenishment, shelf-edge tasks</li>
-</ul>
-
-<h4>Inputs</h4>
-<div class="prose">
-  <p>One store folder holding four kinds of data: the <b>store map</b> (walkable points, paths between them, and the stairs and lifts connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
-</div>
-
-<h4>Done when</h4>
-<div class="prose">
-  <p>A shopper's request returns the correct availability, the correct location and a provably shortest route — including from a start point other than the entrance, and across floors; every fact in every answer has been checked against the store data before it is shown; and a second, differently shaped store works with no code changes.</p>
-</div>
-
 <h2><span class="sec">2</span> &nbsp;Users</h2>
 <div class="tablewrap">
 <table>
@@ -113,122 +84,126 @@
   <tbody>
     <tr><td><b>Shopper</b></td><td>Find one or several products quickly; know before walking whether it is worth the trip</td><td>Yes</td></tr>
     <tr><td><b>Store colleague</b></td><td>—</td><td>No</td></tr>
+    <tr><td><b>Store manager</b></td><td>Hear when a product is about to run out, and when it has, without watching a screen</td><td>Yes — email alerts only (FR-26)</td></tr>
     <tr><td><b>Store data owner</b></td><td>Onboard a new store by supplying its data files</td><td>Yes</td></tr>
   </tbody>
 </table>
 </div>
-
 <h2><span class="sec">3</span> &nbsp;Constraints and assumptions</h2>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Constraint</th><th>Source</th></tr></thead>
   <tbody>
-    <tr><td class="id">C-01</td><td>Agentic framework is <b>LangGraph</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-02</td><td>Implementation language is <b>Python</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-03</td><td>User interface is a single <b>Streamlit</b> page</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-04</td><td>All store data is <b>synthetic</b>, and each store's files declare it</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-05</td><td>No integration with any live retailer system</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-06</td><td>Language models are served through <b>GroqCloud</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">C-07</td><td>The application is deployed on <b>Streamlit Community Cloud</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td>C-01</td><td>Agentic framework is <b>LangGraph</b></td><td>confirmed</td></tr>
+    <tr><td>C-02</td><td>Implementation language is <b>Python</b></td><td>confirmed</td></tr>
+    <tr><td>C-03</td><td>User interface is a single <b>Next.js</b> web page, calling the Python agent through an HTTP API served from the same deployment</td><td>confirmed — Streamlit until the owner's change of 2026-10-14</td></tr>
+    <tr><td>C-04</td><td>All store data is <b>synthetic</b>, and each store's files declare it</td><td>confirmed</td></tr>
+    <tr><td>C-05</td><td>No integration with any live retailer system</td><td>confirmed</td></tr>
+    <tr><td>C-06</td><td>Language models are served through <b>GroqCloud</b></td><td>confirmed</td></tr>
+    <tr><td>C-07</td><td>The application is deployed on <b>Vercel</b>: the page as static files, the agent as a Python function</td><td>confirmed — Streamlit Community Cloud until the owner's change of 2026-10-14</td></tr>
+    <tr><td>C-08</td><td>The site is served over <b>HTTPS</b>. Camera access requires a secure context, so FR-03's camera does not work over plain HTTP, including on a local machine addressed by IP</td><td>confirmed</td></tr>
+    <tr><td>C-09</td><td>Stock alerts are sent by email through <b>AgentMail</b></td><td>confirmed — owner's choice, 2026-10-14</td></tr>
   </tbody>
 </table>
 </div>
-
-<h4>Assumptions</h4>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Assumption</th><th>Status</th><th>If it later proves wrong</th></tr></thead>
   <tbody>
-    <tr><td class="id">A-01</td><td>Stock data is treated as current and correct; staleness is not modelled</td><td><span class="tag t-ok">confirmed</span></td><td>Availability needs a freshness indicator and an "unknown" state</td></tr>
-    <tr><td class="id">A-02</td><td>A product present in the planogram with non-zero stock counts as available</td><td><span class="tag t-ok">confirmed</span></td><td>—</td></tr>
-    <tr><td class="id">A-03</td><td>Demo store has <b>three floors</b>; the portability test store has two</td><td><span class="tag t-ok">confirmed</span></td><td>Floor count changes, and FR-17's ordering becomes more or less visible</td></tr>
-    <tr><td class="id">A-04</td><td>Catalogue of roughly 150–200 products is representative enough to demonstrate</td><td><span class="tag t-ok">confirmed</span></td><td>Search ranking needs re-tuning at real catalogue scale</td></tr>
-    <tr><td class="id">A-05</td><td>"Optimal" means shortest walking distance, not shortest time</td><td><span class="tag t-ok">confirmed</span></td><td>Edge weights become durations; floor transitions re-weighted</td></tr>
-    <tr><td class="id">A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td><span class="tag t-ok">confirmed</span></td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
+    <tr><td>A-01</td><td>Stock data is treated as current and correct; staleness is not modelled</td><td>confirmed</td><td>Availability needs a freshness indicator and an "unknown" state</td></tr>
+    <tr><td>A-02</td><td>A product present in the planogram with non-zero stock counts as available</td><td>confirmed</td><td>—</td></tr>
+    <tr><td>A-03</td><td>Demo store has <b>three floors</b>; the portability test store has two</td><td>confirmed</td><td>Floor count changes, and FR-17's ordering becomes more or less visible</td></tr>
+    <tr><td>A-04</td><td>Catalogue of roughly 150–200 products is representative enough to demonstrate</td><td>confirmed</td><td>Search ranking needs re-tuning at real catalogue scale</td></tr>
+    <tr><td>A-05</td><td>"Optimal" means shortest walking distance, not shortest time</td><td>confirmed</td><td>Edge weights become durations; floor transitions re-weighted</td></tr>
+    <tr><td>A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td>confirmed</td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
+    <tr><td>A-07</td><td>The shopper's mobile browser can grant camera access and read an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing</td><td>confirmed</td><td>A still photo sent to the server and decoded there</td></tr>
+    <tr><td>A-08</td><td>Stock changes arrive as a new version of the store's stock file. Alerts compare each version with the one before it</td><td>confirmed</td><td>A live stock feed: the same comparison runs on each update instead of each file version</td></tr>
   </tbody>
 </table>
 </div>
-
 <h2><span class="sec">4</span> &nbsp;Functional requirements</h2>
-
 <h3>4.1 &nbsp;Search and request handling</h3>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td class="id">FR-01</td><td>A shopper can find a product by typing its name</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-02</td><td>A shopper can request <b>several products in one search</b>, separated by commas, semicolons, new lines or the word "and", without first building a basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-04</td><td>A request phrased in natural language resolves to real catalogue products — never to an invented one</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-05</td><td>Where more than one product could match, the system <b>asks the shopper to choose</b> rather than selecting one</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-06</td><td>Results are ordered so that products stocked at this store rank above products that are not</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-01</td><td>A shopper can find a product by typing its name</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-02</td><td>A shopper can request <b>several products in one search</b>, separated by commas, semicolons, new lines or the word "and", without first building a basket</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-03</td><td>A shopper can find a product by <b>scanning its barcode with the phone camera</b>. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits</td><td>confirmed — withdrawn during review, reinstated by the owner 2026-10-14</td></tr>
+    <tr><td class="id">FR-04</td><td>A request phrased in natural language resolves to real catalogue products — never to an invented one</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-05</td><td>Where more than one product could match, the system <b>asks the shopper to choose</b> rather than selecting one</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-06</td><td>Results are ordered so that products stocked at this store rank above products that are not</td><td>confirmed</td></tr>
   </tbody>
 </table>
 </div>
-
 <h3>4.2 &nbsp;Availability</h3>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td class="id">FR-07</td><td>The system states whether each requested product is available</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-08</td><td>"Not stocked at this branch" is distinguished from "stocked but sold out" — they are different answers to the shopper</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-09</td><td>An unavailable product offers in-stock alternatives from the same category</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-07</td><td>The system states whether each requested product is available</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-08</td><td>"Not stocked at this branch" is distinguished from "stocked but sold out" — they are different answers to the shopper</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-09</td><td>An unavailable product offers in-stock alternatives from the same category</td><td>confirmed</td></tr>
   </tbody>
 </table>
 </div>
-
 <h3>4.3 &nbsp;Location</h3>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td class="id">FR-10</td><td>Location is given as <b>floor, aisle, rack and shelf</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-11</td><td>A product held in more than one place shows all of them; routing uses the nearest</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-12</td><td>A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-10</td><td>Location is given as <b>floor, aisle, rack and shelf</b></td><td>confirmed</td></tr>
+    <tr><td class="id">FR-11</td><td>A product held in more than one place shows all of them; routing uses the nearest</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-12</td><td>A product with no self-service location — service counter, locked cabinet — is identified as such rather than given a shelf</td><td>confirmed</td></tr>
   </tbody>
 </table>
 </div>
-
 <h3>4.4 &nbsp;Routing</h3>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td class="id">FR-13</td><td>The system gives the <b>shortest walking route</b> from the shopper's position to the product</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-14</td><td>A route may cross floors, using the <b>stairs and lifts</b> recorded in the store map</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-15</td><td>The shopper sets their start point by selecting a floor and aisle; the entrance is only the default</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-16</td><td>For several products the system gives <b>one combined route</b> visiting all of them, and lists any that are unavailable</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-17</td><td>A combined route visits the floors in a fixed order, with one picking pass per floor</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-18</td><td>A combined route ends at a checkout</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-19</td><td>The shopper can request a <b>step-free route</b>, which crosses floors by lift and uses no stairs. Where no step-free path exists it says so rather than returning one with stairs in it</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-20</td><td>A route is presented both as step-by-step directions and drawn on a floor map</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-13</td><td>The system gives the <b>shortest walking route</b> from the shopper's position to the product</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-14</td><td>A route may cross floors, using the <b>stairs and lifts</b> recorded in the store map</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-15</td><td>The shopper sets their start point by selecting a floor and aisle; the entrance is only the default</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-16</td><td>For several products the system gives <b>one combined route</b> visiting all of them, and lists any that are unavailable</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-17</td><td>A combined route visits the floors in a fixed order, with one picking pass per floor</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-18</td><td>A combined route ends at a checkout</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-19</td><td>The shopper can request a <b>step-free route</b>, which crosses floors by lift and uses no stairs. Where no step-free path exists it says so rather than returning one with stairs in it</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-20</td><td>A route is presented both as step-by-step directions and drawn on a floor map</td><td>confirmed</td></tr>
   </tbody>
 </table>
 </div>
-
 <h3>4.5 &nbsp;Basket</h3>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td class="id">FR-21</td><td>Results of a multi-product search are <b>grouped by availability, in-stock first</b></td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-22</td><td>A <b>single action moves only the available items</b> into the basket</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-23</td><td>The basket accumulates items across separate searches, and is what gets routed</td><td><span class="tag t-ok">confirmed</span></td></tr>
-    <tr><td class="id">FR-24</td><td>An unavailable item may be added to the basket individually, but is marked as not routable and left out of the route</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-21</td><td>Results of a multi-product search are <b>grouped by availability, in-stock first</b></td><td>confirmed</td></tr>
+    <tr><td class="id">FR-22</td><td>A <b>single action moves only the available items</b> into the basket</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-23</td><td>The basket accumulates items across separate searches, and is what gets routed</td><td>confirmed</td></tr>
+    <tr><td class="id">FR-24</td><td>An unavailable item may be added to the basket individually, but is marked as not routable and left out of the route</td><td>confirmed</td></tr>
   </tbody>
 </table>
 </div>
-
 <h3>4.6 &nbsp;Portability</h3>
 <div class="tablewrap">
 <table>
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
-    <tr><td class="id">FR-25</td><td>A <b>different store works by replacing its data files only</b> — no code changes, including a store with a different number of floors</td><td><span class="tag t-ok">confirmed</span></td></tr>
+    <tr><td class="id">FR-25</td><td>A <b>different store works by replacing its data files only</b> — no code changes, including a store with a different number of floors</td><td>confirmed</td></tr>
   </tbody>
 </table>
 </div>
-
+<h3>4.7 &nbsp;Stock alerts</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td class="id">FR-26</td><td>The <b>store manager is emailed</b> when a product stocked at the branch falls to a <b>very low</b> shelf quantity, and again when it <b>runs out</b>. Each product is reported once per change, not again while it stays low or out</td><td>confirmed — owner, 2026-10-14</td></tr>
+  </tbody>
+</table>
+</div>
 <h2><span class="sec">5</span> &nbsp;Non-functional requirements</h2>
 <div class="tablewrap">
 <table>
@@ -248,7 +223,6 @@
   </tbody>
 </table>
 </div>
-
 <h2><span class="sec">6</span> &nbsp;Acceptance criteria</h2>
 <div class="prose">
   <p>Each row is a test that can pass or fail. A requirement with no row here is not finished being written.</p>
@@ -284,74 +258,28 @@
     <tr><td class="id">AC-25</td><td>NFR-03</td><td>Across every response in the test suite, each mention of gluten free, nut free, vegan or halal corresponds to a product whose recorded attribute is <code>true</code>; a product with an empty attribute is shown as unknown and never described as having or lacking the property</td></tr>
     <tr><td class="id">AC-26</td><td>NFR-09</td><td>With every model call disabled, each ranked result's position is explained by the first ranking rule separating it from its neighbour, and each route's stop order is reproduced from its node path alone</td></tr>
     <tr><td class="id">AC-27</td><td>NFR-10</td><td>Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07</td></tr>
+    <tr><td class="id">AC-28</td><td>FR-03</td><td>A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match</td></tr>
+    <tr><td class="id">AC-29</td><td>FR-26</td><td>A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once</td></tr>
   </tbody>
 </table>
 </div>
-
 <h2><span class="sec">7</span> &nbsp;Situations the system must handle</h2>
 <div class="prose">
   <p>Required behaviours, not solutions. Each becomes a test case.</p>
+  <p><b>Input</b> — empty, one character, extremely long · misspelled ("paracetomol", "yoghurt") · non-English text, emoji, punctuation only · many items at once, duplicated items, quantities ("2 x milk") · text that is not a product request · text written to subvert the system's instructions.</p>
+  <p><b>Barcode scan</b> — camera permission declined, or revoked after one successful scan · a browser with no camera · a damaged, creased or partly obscured barcode that will not decode · a barcode decoded correctly but absent from this catalogue · a barcode from something that is not a grocery product at all · mistyped digits · the page opened over plain HTTP, where the camera cannot start.</p>
+  <p><b>Matching</b> — synonyms and colloquial names ("coke", "nappies", "kitchen roll") · several sizes or variants of the same product · a generic word that is a category rather than a product ("milk", "dairy") · a product held in two places at once · a product in the catalogue but absent from the planogram · a product in the catalogue but not stocked at this branch.</p>
+  <p><b>Start point</b> — the entrance; any other aisle; an unrecognised location · standing on a staircase or in a lift lobby · already standing at the product.</p>
+  <p><b>Routing</b> — same floor; different floor; every floor · a connector out of out of service · step-free requested where no step-free path exists · a single item submitted as a multi-product request · chilled and frozen items that should be collected last.</p>
+  <p><b>Several products</b> — spread across all floors · one unavailable; all unavailable · one ambiguous while the others resolve cleanly · a list long enough to need a cap.</p>
+  <p><b>Data and system failures</b> — store map with an unreachable point, a missing point, or duplicate identifiers · planogram referring to a product or a location that does not exist · a model returning malformed output, or declining the request · a tool failing or timing out · a wrong aisle or a wrong distance caught before the shopper sees it · a shopper abandoning a choice prompt and never returning.</p>
 </div>
-
-<h4>Input</h4>
-<ul>
-  <li>Empty, one character, or extremely long</li>
-  <li>Misspelled — "paracetomol", "yoghurt"</li>
-  <li>Non-English text, emoji, punctuation only</li>
-  <li>Many items at once; duplicated items; quantities ("2 x milk")</li>
-  <li>Text that is not a product request at all</li>
-  <li>Text written to subvert the system's instructions</li>
-</ul>
-
-<h4>Matching</h4>
-<ul>
-  <li>Synonyms and colloquial names — "coke", "nappies", "kitchen roll"</li>
-  <li>Several sizes or variants of the same product</li>
-  <li>A generic word that is a category rather than a product — "milk", "dairy"</li>
-  <li>A product held in two places at once</li>
-  <li>A product in the catalogue but absent from the planogram</li>
-  <li>A product in the catalogue but not stocked at this branch</li>
-</ul>
-
-<h4>Start point</h4>
-<ul>
-  <li>The entrance; any other aisle; an unrecognised location</li>
-  <li>Standing on a staircase or in a lift lobby</li>
-  <li>Already standing at the product</li>
-</ul>
-
-<h4>Routing</h4>
-<ul>
-  <li>Same floor; different floor; every floor</li>
-  <li>A connector out of service</li>
-  <li>Step-free requested where no step-free path exists</li>
-  <li>A single item submitted as a multi-product request</li>
-  <li>Chilled and frozen items that should be collected last</li>
-</ul>
-
-<h4>Several products</h4>
-<ul>
-  <li>Spread across all floors</li>
-  <li>One unavailable; all unavailable</li>
-  <li>One ambiguous while the others resolve cleanly</li>
-  <li>A list long enough to need a cap</li>
-</ul>
-
-<h4>Data and system failures</h4>
-<ul>
-  <li>Store map with an unreachable point, a missing point, or duplicate identifiers</li>
-  <li>Planogram referring to a product or a location that does not exist</li>
-  <li>A model returning malformed output, or declining the request</li>
-  <li>A tool failing or timing out</li>
-  <li>A wrong aisle or a wrong distance caught before the shopper sees it</li>
-  <li>A shopper abandoning a choice prompt and never returning</li>
-</ul>
-
 <h2><span class="sec">8</span> &nbsp;Glossary</h2>
 <div class="tablewrap">
 <table>
+  <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
   <tbody>
-    <tr><td><b>SKU</b></td><td>The store's unique code for one exact product, including size and variant</td></tr>
+    <tr><td class="id"><b>SKU</b></td><td>The store's unique code for one exact product, including size and variant</td></tr>
     <tr><td><b>Planogram</b></td><td>The shelf-level layout plan: which product sits on which shelf. It records where a product is <i>supposed</i> to be, which is not the same as where it is</td></tr>
     <tr><td><b>Bay / rack</b></td><td>One section of a shelving unit within an aisle. "Rack" is used throughout this document</td></tr>
     <tr><td><b>Facing</b></td><td>One product's frontage on a shelf. A product may hold several adjacent facings</td></tr>
@@ -363,7 +291,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 24 functional · 11 non-functional · 7 constraints · 27 acceptance criteria · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 26 functional · 11 non-functional · 9 constraints · 29 acceptance criteria · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>

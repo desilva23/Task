@@ -197,10 +197,10 @@ A shopper standing in the Bakery on Floor 1 types
 what happens.
 
 ```
-SHOPPER    PAGE        GRAPH                    SERVICES        CSV
+SHOPPER    PAGE        API · GRAPH              SERVICES        CSV
    │ types  │            │                         │             │
    1───────▶│            │                         │             │
-   │        2───────────▶│  invoke(thread_id)      │             │
+   │        2───────────▶│  POST /api/search       │             │
    │        │            3  classify_query         │             │
    │        │            │  → batch, 4 terms       │             │
    │        │            4  resolve_items ────────▶5 catalogue──▶6
@@ -208,15 +208,15 @@ SHOPPER    PAGE        GRAPH                    SERVICES        CSV
    │        │            7  one term ambiguous → interrupt()     │
    │   ◀────8  "bread: sourdough / white / wholemeal?"           │
    9───────▶│  taps one  │                         │             │
-   │        10──────────▶│  resume(thread_id) — the other three  │
-   │        │            │  terms are still resolved             │
+   │        10──────────▶│  POST /api/search + the answer: the   │
+   │        │            │  run is repeated and resumed with it  │
    │        │            11 check_availability ───▶12 stock ────▶│
    │        │            │  → 3 in stock · crayons out of stock  │
    │        │            13 suggest_substitutes ──▶ candidates   │
    │        │            14 resolve_locations ────▶15 planogram─▶│
    │   ◀────16 results grouped: 3 available, 1 out + alternatives│
    17──────▶│  "add 3 available to basket" → "plan route"        │
-   │        18──────────▶│  second run, basket is the input      │
+   │        18──────────▶│  POST /api/route — the basket's SKUs  │
    │        │            19 route_multi ──────────▶20 routing    │
    │        │            │  floors clustered, 2-opt per floor    │
    │        │            21 describe_route (model phrases it)    │
@@ -226,7 +226,8 @@ SHOPPER    PAGE        GRAPH                    SERVICES        CSV
 
 Three things in that sequence are the design, not decoration. The interrupt at
 step 7 keeps the other three terms resolved, so a clarification costs one tap
-and not a retyped search. The basket gate at step 17 is why no route is ever
+and not a retyped search — the page sends the search back with the answer and
+the server, which kept nothing, repeats the run and resumes it (§4.1). The basket gate at step 17 is why no route is ever
 planned to the empty crayon shelf. And step 22 stands between every answer and
 the shopper.
 
@@ -362,8 +363,8 @@ ask a colleague, but it is flagged not routable and excluded from the path, with
 the exclusion stated rather than silent.
 
 Consequence for the sequence: the first graph run returns **results only**.
-Routing is a second run, invoked from the basket on a later page interaction —
-not a second request, because there are no requests.
+Routing is a second request, `/api/route`, sent from the basket the page holds;
+availability is read afresh then, so the route cannot reach an empty shelf.
 
 ---
 
@@ -494,7 +495,7 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | **Verified before display** (NFR-02) | `verify` is the last node; a claim that does not match the service result is discarded and the deterministic template is rendered instead | AC-10 |
 | **Dietary safety** (NFR-03) | Substitute candidates are filtered on recorded attributes *before* the model sees them. A `null` attribute reads as unknown and excludes the candidate | AC-17 |
 | **Reliability** (NFR-04) | Each of the three model nodes has a named deterministic fallback; `degraded` records which fired. No model sits on the path that returns a location or a distance | AC-11 |
-| **Speed** (NFR-05) | All-pairs shortest paths are precomputed at startup, so routing is a matrix lookup. BM25 index and distance matrices are cached across page runs | AC-12 |
+| **Speed** (NFR-05) | All-pairs shortest paths are precomputed at startup, so routing is a matrix lookup. BM25 index and distance matrices are built once per function instance and reused by every request on it | AC-12 |
 | **Input safety** (NFR-06) | Shopper text is passed as data, never concatenated into instructions. Tool arguments are typed and validated. Catalogue text is treated as untrusted — it is editable outside the retailer | AC-13 |
 | **Data integrity** (NFR-07) | The store folder is validated at load: orphan SKUs, placements pointing at missing map points, disconnected components and non-positive edge weights all refuse startup | AC-14 |
 | **Portability** (NFR-08) | Nothing store-specific exists above the data layer. A second store with a different floor count is a replaced set of data files | AC-09 |

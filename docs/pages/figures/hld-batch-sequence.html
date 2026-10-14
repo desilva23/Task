@@ -1,0 +1,65 @@
+<figure>
+  <div class="scroller">
+  <svg viewBox="0 0 800 545" role="img" aria-label="Sequence diagram for the query milk comma bread comma eggs. The page posts the search to the API, which runs the compiled graph. The graph classifies the query as a three-term list, resolves all three terms concurrently in the search subsystem, finds bread ambiguous and raises an interrupt to the page, which sends the search back with the shopper's choice so the API re-runs and resumes it, then makes one batched availability call and one batched location call before computing a single multi-floor route ending at the checkout.">
+    <defs><marker id="h3" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="7.5" markerHeight="6.5" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Mono, monospace" font-size="10.5">
+      <g font-family="IBM Plex Sans Condensed, sans-serif" font-size="11.5" font-weight="600" text-anchor="middle" fill="currentColor">
+        <text x="62" y="20">SHOPPER</text><text x="206" y="20">PAGE</text><text x="356" y="20">GRAPH</text>
+        <text x="506" y="20">SEARCH</text><text x="634" y="20">STOCK</text><text x="748" y="20">ROUTING</text>
+      </g>
+      <g stroke="currentColor" stroke-width="1" opacity="0.3" stroke-dasharray="3 4">
+        <line x1="62" y1="30" x2="62" y2="528"/><line x1="206" y1="30" x2="206" y2="528"/>
+        <line x1="356" y1="30" x2="356" y2="528"/><line x1="506" y1="30" x2="506" y2="528"/>
+        <line x1="634" y1="30" x2="634" y2="528"/><line x1="748" y1="30" x2="748" y2="528"/>
+      </g>
+      <g fill="currentColor">
+        <line x1="62" y1="54" x2="198" y2="54" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="66" y="48" font-size="10">"milk, bread, eggs" + floor 0 / aisle 1</text>
+
+        <line x1="206" y1="86" x2="348" y2="86" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="210" y="80" font-size="10">POST /api/search — one graph run, thread deleted after</text>
+
+        <rect x="360" y="104" width="196" height="30" rx="2" fill="color-mix(in srgb, var(--fn) 12%, transparent)" stroke="var(--fn)" stroke-width="1.3"/>
+        <text x="368" y="116" font-size="10">classify_query →</text>
+        <text x="368" y="128" font-size="10">delimited list, 3 terms</text>
+
+        <line x1="356" y1="156" x2="498" y2="156" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="360" y="150" font-size="10">resolve_items([3 terms]) — concurrent</text>
+        <line x1="506" y1="184" x2="364" y2="184" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="178" font-size="10">milk ✓ · eggs ✓ · bread → 12 hits</text>
+
+        <line x1="348" y1="214" x2="70" y2="214" stroke="var(--pause)" stroke-width="1.8" stroke-dasharray="5 3" marker-end="url(#h3)"/>
+        <text x="78" y="208" font-size="10" fill="var(--pause)">interrupt() — "which bread?"</text>
+        <line x1="62" y1="244" x2="348" y2="244" stroke="var(--pause)" stroke-width="1.8" marker-end="url(#h3)"/>
+        <text x="70" y="238" font-size="10" fill="var(--pause)">POST /api/search + answer → re-run, resume</text>
+
+        <line x1="356" y1="278" x2="626" y2="278" stroke="currentColor" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="360" y="272" font-size="10">check_availability([3 SKUs]) — ONE call, not three</text>
+        <line x1="634" y1="306" x2="364" y2="306" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="300" font-size="10">milk 14 · bread 6 · eggs 0</text>
+
+        <rect x="360" y="324" width="222" height="30" rx="2" fill="color-mix(in srgb, var(--llm) 12%, transparent)" stroke="var(--llm)" stroke-width="1.3"/>
+        <text x="368" y="336" font-size="10">suggest_substitutes(eggs) —</text>
+        <text x="368" y="348" font-size="10">dietary-filtered candidates only</text>
+
+        <line x1="356" y1="376" x2="498" y2="376" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="360" y="370" font-size="10">resolve_locations([SKUs]) — also batched</text>
+        <line x1="506" y1="404" x2="364" y2="404" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="398" font-size="10">F0·A4·R2 · F1·A7·R1 · F1·A2·R5</text>
+
+        <line x1="348" y1="434" x2="70" y2="434" stroke="currentColor" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="78" y="428" font-size="10">results grouped: 2 available + 1 out of stock with a substitute — NO route yet</text>
+
+        <line x1="62" y1="462" x2="348" y2="462" stroke="var(--fn)" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="70" y="456" font-size="10" fill="var(--fn)">"add available to basket" → plan route</text>
+
+        <line x1="356" y1="490" x2="740" y2="490" stroke="currentColor" stroke-width="2" marker-end="url(#h3)"/>
+        <text x="360" y="484" font-size="10">route_multi(start, basket racks, → checkout)</text>
+        <line x1="748" y1="512" x2="364" y2="512" stroke="currentColor" stroke-width="1.5" marker-end="url(#h3)"/>
+        <text x="368" y="506" font-size="10">ordered path · 2 floors · 68 m · ends at tills</text>
+      </g>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>One search, three products, one availability call — then the basket gate.</b> The bold arrows are the batched calls; designing those signatures as lists from the start is what avoids an N+1 rewrite against a real stock service. The violet pair is the clarification pause and resume, which happens mid-graph without losing the terms already resolved. Note the first graph run returns <i>results only</i> — routing is a second run, invoked from the basket on a later page interaction.</figcaption>
+</figure>

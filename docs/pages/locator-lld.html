@@ -69,7 +69,7 @@
   <div class="meta">
     <span><b>Stack</b> Python · LangGraph · FastAPI · Next.js · Vercel</span>
     <span><b>Nodes</b> 11, of which 3 call a model</span>
-    <span><b>No HTTP layer</b> the page calls the graph directly</span>
+    <span><b>Interface</b> a Next.js page over a stateless API</span>
   </div>
 </header>
 
@@ -100,6 +100,10 @@ services/
   basket.py               Basket — SKUs added across searches; routability re-checked per call
   multistop.py            route_multi — floor order, open-path 2-opt, ends at a till (§10)
   barcode.py              check digits — no decoding, no lookup (§8.5)
+  stock_alerts.py         which products crossed into low or out, and their emails (§11a)
+notify/
+  run.py                  the stock alert job: compare versions, send (GitHub Actions)
+  mail.py                 AgentMail sender, and a printing one for dry runs
 models/
   domain.py               Product, Placement, StockPosition, Location, Route
   llm.py                  ParsedQuery, SubstituteChoice (structured outputs)
@@ -567,6 +571,18 @@ if choice.sku not in {p.sku for p in candidates}:
   <p><b>Failures are an apology.</b> An unhandled error returns <code>500</code> with one sentence and is logged; a malformed request returns <code>422</code> without echoing it; the schema and docs pages are off. The page shows its own apology for either.</p>
   <p><b>Local runs.</b> <code>npm run build</code> then <code>LOCATOR_STATIC=out uv run uvicorn api.index:app</code> serves page and API from one process — what the browser tests do. <code>npm run dev</code> with the API on port 8000 proxies <code>/api/*</code> to it.</p>
 </div>
+<h2>11a. Stock alerts</h2>
+<pre><code>def state(pos) -&gt; str | None:              # None · "low" · "out"; unstocked here → None
+    if pos is None or not pos.ranged: return None
+    if pos.shelf_qty == 0:            return "out"
+    return "low" if pos.shelf_qty &lt;= LOW_STOCK_UNITS else None
+
+def changes(before, after) -&gt; list[Alert]: # only what got worse: none→low, none→out, low→out
+    return [Alert(...) for sku in after.stock
+            if state(after) and LEVEL[state(after)] &gt; LEVEL[state(before)]]</code></pre>
+<div class="prose">
+  <p><code>emails</code> turns the alerts into at most two emails — low, then out — each listing product, SKU, units left and every place it is kept. <code>notify.run</code> loads the store, reads the previous <code>stock.csv</code> with <code>git show &lt;before&gt;:&lt;store&gt;/stock.csv</code>, swaps it into a temporary copy of the folder so the same validator loads it, and sends through AgentMail with the idempotency key <code>&lt;store&gt;-&lt;commit&gt;-&lt;mode&gt;-&lt;kind&gt;</code>. Settings (<code>AGENTMAIL_API_KEY</code>, <code>AGENTMAIL_INBOX_ID</code>, <code>STORE_MANAGER_EMAIL</code>) come from the environment; with any missing the job exits 2 without sending, and <code>--dry-run</code> prints instead. The <code>agentmail</code> SDK is in its own dependency group (<code>alerts</code>), imported only for a real send, so neither the site's function nor the tests carry it. <code>.github/workflows/stock-alerts.yml</code> runs the job on pushes to <code>main</code> that change the live store's stock, and by hand with <code>current</code>.</p>
+</div>
 <h2><span class="sec">12</span> &nbsp;Error taxonomy</h2>
 <div class="tablewrap">
 <table>
@@ -623,6 +639,7 @@ MAX_CLARIFY_ROUNDS  = 2       # EC-35
 THREAD_TTL_MINUTES  = 30      # EC-34 — abandoned interrupts
 MODEL_TIMEOUT_S     = 6
 ROUND_TOLERANCE_M   = 0.5     # §9 verify — rounding slack on a distance claim
+LOW_STOCK_UNITS     = 5       # FR-26 — "very low": this many on the shelf or fewer, not zero
 NO_PATH             = -9999   # scipy sentinel
 EPSILON             = 1e-9
 

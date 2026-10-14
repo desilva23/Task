@@ -1,0 +1,87 @@
+<figure>
+  <div class="scroller">
+  <svg viewBox="0 0 780 470" role="img" aria-label="Decision tree for classifying a search query. Empty or very short queries are rejected with category suggestions. Digit-only queries are not searched; the shopper is pointed to the barcode scan. Queries containing commas, semicolons, newlines or the word and are split into separate terms and each is resolved independently. Long natural-language queries go to the model for a structured filter. Everything else goes straight to BM25. All paths converge on ranking, then a confidence check that either returns results or raises a clarify interrupt.">
+    <defs><marker id="h2" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="7" orient="auto"><polygon points="0,0 10,4 0,8" fill="currentColor"/></marker></defs>
+    <g font-family="IBM Plex Mono, monospace" font-size="11.5">
+
+      <rect x="296" y="12" width="188" height="34" rx="3" fill="none" stroke="currentColor" stroke-width="2"/>
+      <text x="390" y="34" text-anchor="middle" fill="currentColor">raw query string</text>
+      <line x1="390" y1="46" x2="390" y2="70" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="60" y1="70" x2="720" y2="70" stroke="currentColor" stroke-width="1.5"/>
+
+      <g>
+        <line x1="60" y1="70" x2="60" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="14" y="102" width="130" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="79" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">empty / &lt;2 chars</text>
+        <text x="79" y="135" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">reject,</text>
+        <text x="79" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">offer categories</text>
+      </g>
+      <g>
+        <line x1="208" y1="70" x2="208" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="156" y="102" width="130" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="221" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">8–13 digits</text>
+        <text x="221" y="135" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">digits only</text>
+        <text x="221" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">use the scan</text>
+      </g>
+      <g>
+        <line x1="390" y1="70" x2="390" y2="98" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+        <rect x="312" y="102" width="156" height="52" rx="3" fill="color-mix(in srgb, var(--fn) 14%, transparent)" stroke="var(--fn)" stroke-width="2"/>
+        <text x="390" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">, ; newline " and "</text>
+        <text x="390" y="135" text-anchor="middle" fill="currentColor" font-size="10">SPLIT → N terms</text>
+        <text x="390" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">resolve each in parallel</text>
+      </g>
+      <g>
+        <line x1="562" y1="70" x2="562" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="492" y="102" width="140" height="52" rx="3" fill="color-mix(in srgb, var(--llm) 14%, transparent)" stroke="var(--llm)" stroke-width="1.8"/>
+        <text x="562" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">&gt;4 words, verbs</text>
+        <text x="562" y="135" text-anchor="middle" fill="currentColor" opacity="0.8" font-size="10">model → typed filter</text>
+        <text x="562" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">may also yield a list</text>
+      </g>
+      <g>
+        <line x1="720" y1="70" x2="720" y2="98" stroke="currentColor" stroke-width="1.5" marker-end="url(#h2)"/>
+        <rect x="652" y="102" width="118" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="1.3"/>
+        <text x="711" y="120" text-anchor="middle" fill="currentColor" font-size="10.5">1–3 words</text>
+        <text x="711" y="135" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">straight to</text>
+        <text x="711" y="147" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">BM25</text>
+      </g>
+
+      <polyline points="221,154 221,180 390,180" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+      <polyline points="562,154 562,180 390,180" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+      <polyline points="711,154 711,194 390,194" fill="none" stroke="currentColor" stroke-width="1.3" opacity="0.6"/>
+      <line x1="390" y1="154" x2="390" y2="214" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+
+      <rect x="286" y="218" width="208" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="390" y="234" text-anchor="middle" fill="currentColor">BM25 over catalogue</text>
+      <text x="390" y="249" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">name · brand · size · synonyms</text>
+
+      <polyline points="494,237 580,237 580,284 494,284" fill="none" stroke="currentColor" stroke-width="1.3" marker-end="url(#h2)"/>
+      <text x="590" y="258" font-size="10" fill="currentColor" opacity="0.72">all scores weak</text>
+      <text x="590" y="271" font-size="10" fill="currentColor" opacity="0.72">→ fuzzy, retry once</text>
+
+      <line x1="390" y1="256" x2="390" y2="288" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+      <rect x="286" y="292" width="208" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="390" y="308" text-anchor="middle" fill="currentColor">retail re-rank</text>
+      <text x="390" y="323" text-anchor="middle" fill="currentColor" opacity="0.7" font-size="10">ranged → in stock → relevance</text>
+
+      <line x1="390" y1="330" x2="390" y2="362" stroke="currentColor" stroke-width="2" marker-end="url(#h2)"/>
+      <polygon points="390,362 486,396 390,430 294,396" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="390" y="393" text-anchor="middle" fill="currentColor" font-size="10.5">top score clear</text>
+      <text x="390" y="406" text-anchor="middle" fill="currentColor" font-size="10.5">of the rest?</text>
+
+      <line x1="294" y1="396" x2="196" y2="396" stroke="currentColor" stroke-width="1.8" marker-end="url(#h2)"/>
+      <text x="245" y="388" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.72">no</text>
+      <rect x="40" y="376" width="150" height="40" rx="3" fill="color-mix(in srgb, var(--pause) 14%, transparent)" stroke="var(--pause)" stroke-width="1.8"/>
+      <text x="115" y="392" text-anchor="middle" fill="currentColor" font-size="10.5">clarify</text>
+      <text x="115" y="406" text-anchor="middle" fill="currentColor" opacity="0.75" font-size="10">interrupt(), max 2×</text>
+
+      <line x1="486" y1="396" x2="584" y2="396" stroke="currentColor" stroke-width="1.8" marker-end="url(#h2)"/>
+      <text x="535" y="388" text-anchor="middle" font-size="10" fill="currentColor" opacity="0.72">yes</text>
+      <rect x="590" y="376" width="150" height="40" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <text x="665" y="400" text-anchor="middle" fill="currentColor">return results</text>
+
+      <text x="390" y="458" text-anchor="middle" font-size="10.5" fill="currentColor" opacity="0.6">a batch query runs this whole tree once per term, concurrently</text>
+    </g>
+  </svg>
+  </div>
+  <figcaption><b>Query shape is decided before any searching.</b> The bold path is the batch case: a delimiter splits the input and each term runs the tree independently and concurrently, so "milk, bread, eggs" is three resolutions and one combined result — no basket needed.</figcaption>
+</figure>
