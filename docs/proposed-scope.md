@@ -1,5 +1,7 @@
 # Proposed Scope — One-Week Proof of Concept
 
+> **Historical — written before the build (2026-10-08), kept for its reasoning.** It plans a six-day build with FastAPI and Claude models; the build used a Streamlit page in-process (no API), GroqCloud, and nine gated phases. The current design is [`requirements.md`](requirements.md), [`hld.md`](hld.md), [`lld.md`](lld.md) and [`schema.md`](schema.md); what was built is in `specs/` and the code.
+
 **Deadline:** Friday. **Team:** one person. **Therefore:** one store, synthetic
 data, no integrations.
 

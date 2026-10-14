@@ -1,5 +1,7 @@
 # Solution Sketch — Data Model, Routing and API
 
+> **Historical — written before the build (2026-10-08), kept for its reasoning.** Its data model (bays, per-position stock bands, an HTTP API) was superseded by `schema.md` and the in-process page. The current design is [`requirements.md`](requirements.md), [`hld.md`](hld.md), [`lld.md`](lld.md) and [`schema.md`](schema.md); what was built is in `specs/` and the code.
+
 The technical design. Two audiences in one document: the **POC** being built
 this week, and the **real build** it would grow into. Where they differ, the
 POC choice is called out.

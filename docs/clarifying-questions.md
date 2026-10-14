@@ -1,5 +1,7 @@
 # Clarifying Questions for the Stakeholder
 
+> **Historical — written before the build (2026-10-08), kept for its reasoning.** The questions have been answered; the answers are the constraints and assumptions in `requirements.md`. The current design is [`requirements.md`](requirements.md), [`hld.md`](hld.md), [`lld.md`](lld.md) and [`schema.md`](schema.md); what was built is in `specs/` and the code.
+
 Ordered by how much the answer changes the design. Each one says *why* it
 matters, so you can explain yourself if asked.
 

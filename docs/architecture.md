@@ -1,5 +1,7 @@
 # Architecture
 
+> **Historical — written before the build (2026-10-08), kept for its reasoning.** It describes nine nodes, a FastAPI layer and escalators; the build has eleven nodes, no API layer, and stairs and lifts only. The current design is [`requirements.md`](requirements.md), [`hld.md`](hld.md), [`lld.md`](lld.md) and [`schema.md`](schema.md); what was built is in `specs/` and the code.
+
 Rendered diagrams: **https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C**
 (private — share from the page's Share menu before sending it to anyone else)
 

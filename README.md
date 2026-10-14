@@ -1,107 +1,85 @@
 # Planogram-Based Product Locator
 
-Design pack for an in-store product search, location and navigation use case,
-with Sainsbury's as the reference retailer.
+A shopper types one or more products and gets, for each, whether it is in stock,
+exactly where it is — floor, aisle, rack and shelf — and the shortest walking route
+to it across floors. A proof of concept on synthetic data, with Sainsbury's as the
+reference retailer; no real retailer system is involved.
 
-**Scope: a one-week proof of concept, built by one person, on synthetic data.**
-Not a programme. The design is right-sized for that, and
-[`docs/proposed-scope.md`](docs/proposed-scope.md) is explicit about what is in,
-what is out, and what is being assumed.
+**Live:** https://weurhd8vy4j68dmbhcbkd6.streamlit.app (Streamlit Community Cloud)
 
-**The four documents** (Requirements and Schema are standalone; the HLD still
-carries a requirements register and the LLD still carries the API contracts):
+## How it works
 
-| Document | Status |
-|---|---|
-| [`docs/requirements.md`](docs/requirements.md) · [rendered](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | **v1 — standalone.** What the system must do, acceptance criteria, open questions |
-| [`docs/hld.md`](docs/hld.md) · [rendered](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | Needs §1 requirements removed — they now live in requirements.md |
-| [`docs/lld.md`](docs/lld.md) · [rendered](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | §2 and §3 now point at `schema.md`. Still needs §11's API contracts removed |
-| [`docs/schema.md`](docs/schema.md) | **v1 — standalone.** The six store CSVs, every column, the identifier scheme, referential rules and load-time validation |
+LangGraph runs eleven steps on fixed edges. Eight are plain code: search (BM25
+with a fuzzy retry), stock, locations, routing (all-pairs Dijkstra, a fixed floor
+order, open-path 2-opt), and a verify gate. Three call a GroqCloud model, to read a
+sentence, choose a safe substitute and word the directions, and each has a
+deterministic fallback.
 
-**Other rendered pages:**
-· [High-level design](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) — search design, basket gate, edge cases
-· [Low-level design](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) — schemas, node contracts, algorithms, API
-· [Architecture note](https://claude.ai/artifact/9rDaEZH2uFA1sLQhWTGH7C) — LangGraph graph, store model, routing
+**The model interprets and phrases; it never supplies a fact.** Every location,
+stock figure and distance comes from the store data, and `verify` re-checks every
+claim against it before anything reaches the page.
 
-**Running the app.** `uv run streamlit run app.py` — add `.streamlit/secrets.toml` with
-`GROQ_API_KEY = "…"` for the model, or run without it on the deterministic wording.
-Deploying: [`docs/deploy.md`](docs/deploy.md).
+## The documents
 
-**Running the checks.** Needs [uv](https://docs.astral.sh/uv/); it fetches Python 3.12 itself.
+| Document | Owns | Page | Doc |
+|---|---|---|---|
+| [`docs/requirements.md`](docs/requirements.md) | What the system must do: 24 FR, 11 NFR, 27 AC | [page](https://claude.ai/artifact/3EX5yVGXaiUrGvMukseQbz) | [doc](https://claude.ai/code/artifact/c7a45740-2eb9-44ff-abcf-9463efd1cd0b) |
+| [`docs/hld.md`](docs/hld.md) | Architecture, search design, interface, 47 edge cases | [page](https://claude.ai/artifact/TA9jWLPoYuomMyMLDLuVYB) | [doc](https://claude.ai/code/artifact/a9116252-bf28-42ef-9465-e28967d0db77) |
+| [`docs/lld.md`](docs/lld.md) | Modules, state, node contracts, algorithms, configuration | [page](https://claude.ai/artifact/ErGjPov73E5kEch1APTEpf) | [doc](https://claude.ai/code/artifact/96a1afa2-2ca7-4f5b-a10d-ce432489f37b) |
+| [`docs/schema.md`](docs/schema.md) | The six store CSVs and the 43 refusals and 5 warnings checked at load | [page](https://claude.ai/artifact/AqRDBHcHJ97xXCxKS6TQzf) | [doc](https://claude.ai/code/artifact/abf938c6-faf9-4a5d-95f4-b6559cfe24b7) |
+
+The pages and Docs are private; share them from their Share menu. Read in that
+order. The rules for building against them are in
+[`.specify/memory/constitution.md`](.specify/memory/constitution.md).
+
+## How it was built
+
+Nine phases with GitHub Spec Kit, test-first, each reviewed at a gate. Every
+phase's spec, plan, tasks and gate record is in `specs/`.
+
+| Phase | Built | Spec |
+|---|---|---|
+| 0 | Scaffold and guard rails | [`specs/001-project-scaffold`](specs/001-project-scaffold) |
+| 1 | Seeded store generator and validator | [`specs/002-store-data`](specs/002-store-data) |
+| 2 | Services and route engine | [`specs/003-services`](specs/003-services) |
+| 3 | Multi-stop routing and the basket | [`specs/004-multistop`](specs/004-multistop) |
+| 4 | Search | [`specs/005-search`](specs/005-search) |
+| 5 | The LangGraph pipeline | [`specs/006-graph`](specs/006-graph) |
+| 6 | GroqCloud | [`specs/007-groq`](specs/007-groq) |
+| 7 | The Streamlit page | [`specs/008-page`](specs/008-page) |
+| 8 | Second store, performance, hostile input, deployment | [`specs/009-portability-deploy`](specs/009-portability-deploy) |
+
+[`docs/traceability.md`](docs/traceability.md) lists every requirement,
+acceptance criterion, edge case and validation rule with the tests that prove it.
+All 27 acceptance criteria are covered.
+
+## Running it
+
+Needs [uv](https://docs.astral.sh/uv/); it fetches Python 3.12 itself.
 
 ```bash
-uv sync --locked      # create the environment from uv.lock
-scripts/check.sh      # lint, format check, every test
+uv sync --locked              # the environment, from uv.lock
+uv run streamlit run app.py   # the page
+scripts/check.sh              # lint, format check, every test
+uv run pytest -m live         # live GroqCloud tests — needs the key, run on demand
 ```
 
-[`docs/traceability.md`](docs/traceability.md) lists every requirement, acceptance criterion,
-edge case and validation rule with the tests that prove it. It is generated — run
-`uv run python scripts/trace_matrix.py` after adding a test.
+For the model, put `GROQ_API_KEY = "…"` in `.streamlit/secrets.toml`, which is
+gitignored. Without it the page runs on the deterministic wording.
+`LOCATOR_STORE=data/SBY-PORT-002` serves the two-floor test store. Deploying:
+[`docs/deploy.md`](docs/deploy.md).
 
----
+After adding a test, regenerate the matrix with
+`uv run python scripts/trace_matrix.py`; a stale matrix fails the check.
 
-## The use case in one paragraph
+## Historical documents
 
-A user searches for a product in a store. The system shows whether it is
-available, where it is (aisle, bay, shelf), and the optimal route to reach it.
-Four kinds of data are needed to do that — a product catalogue, a stock
-position, planogram location data, and a store floor layout. In a real build
-those are four separate upstream systems, and obtaining them is the project.
-For the proof of concept all four are synthetic, which is what makes a week
-realistic.
-
-## The three things worth knowing
-
-**1. The hard part is data, not algorithms.** Routing is close to free — the
-store layout is static, so shortest paths across all three floors are
-precomputed once at startup and every route query becomes a table lookup. There
-is no runtime pathfinding and no need for A*. What actually decides feasibility
-is whether machine-readable planogram and floor-plan data exist. No public
-dataset holds a multi-floor supermarket planogram at rack level, so the POC's
-store map is authored.
-
-**2. A planogram says where a product is *supposed* to be.** Shelves drift from
-plan within days of a range change. In a POC this doesn't bite, because the
-data is synthetic and therefore perfect. In a real build it is the single
-biggest risk, and it needs either a compliance signal or a user "this is wrong"
-feedback loop.
-
-**3. Who the user is changes everything.** A shopper finding one product and a
-colleague picking a 60-item online order share a data layer and nothing else —
-the second is a route-sequencing problem, not a shortest-path one. The POC
-assumes a shopper; that assumption is the first one to get corrected.
-
-## Gen AI, briefly
-
-One use in the POC: **turning how people actually phrase a search** ("something
-gluten free for lunchboxes") into a structured catalogue filter. One call, with
-keyword search as the fallback.
-
-The rule that matters: **the model interprets and explains, it never supplies
-facts.** Locations, stock and routes come from the systems of record. A
-hallucinated aisle number sends a shopper to the wrong aisle, and a
-hallucinated dietary claim is considerably worse than that.
-
-The larger opportunity — vision models reading shelf photos to detect where
-reality has drifted from the planogram — is the roadmap item worth raising,
-because it is the only real answer to point 2 above.
-
----
-
-## Reading order
-
-| # | Document | What it covers |
-|---|---|---|
-| 1 | [`docs/proposed-scope.md`](docs/proposed-scope.md) | **Start here.** The POC definition, in/out of scope, assumptions register, stack, six-day build plan |
-| 1b | [`docs/hld.md`](docs/hld.md) | **The review document.** Consolidated requirements register, the search design, 46 edge cases, and answers to the questions most likely to be asked |
-| 1c | [`docs/lld.md`](docs/lld.md) | Low-level design: graph state, node contracts, search and routing internals, startup validation, test plan |
-| 1d | [`docs/schema.md`](docs/schema.md) | The data schema: six CSVs, the identifier scheme, the three-state boolean, referential integrity, validation rules, sizing |
-| 1e | [`docs/architecture.md`](docs/architecture.md) | The LangGraph graph spec, three-floor store model, routing design, and every decision with its reasoning |
-| 2 | [`docs/use-case-understanding.md`](docs/use-case-understanding.md) | What a planogram is, the use case decomposed, and the customer vs. colleague split |
-| 3 | [`docs/clarifying-questions.md`](docs/clarifying-questions.md) | Questions for the stakeholder, prioritised, each with why it matters |
-| 4 | [`docs/solution-sketch.md`](docs/solution-sketch.md) | Data model, store graph, the tiered routing answer, API shape, risks |
-| 5 | [`docs/genai-opportunities.md`](docs/genai-opportunities.md) | Where Gen AI fits, where it must not be used, guardrails |
-
-For the Friday conversation, documents 1, 1b and 3 are the ones that matter:
-here is what I'm building, here is how it's put together, here is what I
-assumed, and here is what I need from you.
+Written on 2026-10-08, before the four documents were split out and before the
+build. They are kept for their reasoning, and each opens with a note on what no
+longer matches:
+[`proposed-scope.md`](docs/proposed-scope.md) ·
+[`architecture.md`](docs/architecture.md) ·
+[`use-case-understanding.md`](docs/use-case-understanding.md) ·
+[`clarifying-questions.md`](docs/clarifying-questions.md) ·
+[`solution-sketch.md`](docs/solution-sketch.md) ·
+[`genai-opportunities.md`](docs/genai-opportunities.md).

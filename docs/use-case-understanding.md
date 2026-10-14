@@ -1,5 +1,7 @@
 # Planogram-Based Product Locator — Use Case Understanding
 
+> **Historical — written before the build (2026-10-08), kept for its reasoning.** Its domain background still holds; its scoping now lives in the requirements. The current design is [`requirements.md`](requirements.md), [`hld.md`](hld.md), [`lld.md`](lld.md) and [`schema.md`](schema.md); what was built is in `specs/` and the code.
+
 > Background on the domain. The build itself is scoped in
 > `proposed-scope.md` — one store, synthetic data, one week. This document
 > exists so the POC's design decisions are informed rather than arbitrary, and

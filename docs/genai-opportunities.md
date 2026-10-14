@@ -1,5 +1,7 @@
 # Where Gen AI Belongs in the Planogram Locator
 
+> **Historical — written before the build (2026-10-08), kept for its reasoning.** It names Claude models and a roadmap; the build uses GroqCloud in three model nodes, each with a deterministic fallback, and no item here is planned work. The current design is [`requirements.md`](requirements.md), [`hld.md`](hld.md), [`lld.md`](lld.md) and [`schema.md`](schema.md); what was built is in `specs/` and the code.
+
 > **In the one-week POC, only item 1 below gets built** — natural-language
 > query understanding, one structured-output call, with keyword search as the
 > fallback. Everything else here is the roadmap: worth raising on Friday to

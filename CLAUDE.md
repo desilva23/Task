@@ -10,7 +10,7 @@ A shopper types one or more products and gets, for each: whether it is
 available, where it is (floor, aisle, rack, shelf), and the shortest walking
 route to it, across floors. Built as an agentic system on synthetic data.
 
-**Current state: design complete; the build has started under GitHub Spec Kit.**
+**Current state: built, tested and deployed** — https://weurhd8vy4j68dmbhcbkd6.streamlit.app.
 The four design documents are the specification. The rules for building against
 them are in `.specify/memory/constitution.md` — read it before writing code.
 Work proceeds in phases 0–8 (see **Pending work**), and the owner reviews each
@@ -57,9 +57,10 @@ the source of truth and update the HTML alongside it, or stop maintaining the
 HTML — but do not let them silently disagree.
 
 Older documents (`proposed-scope.md`, `architecture.md`,
-`use-case-understanding.md`, `clarifying-questions.md`,
-`solution-sketch.md`, `genai-opportunities.md`) predate the four-document split
-and still carry stale content. See **Pending work** below.
+`use-case-understanding.md`, `clarifying-questions.md`, `solution-sketch.md`,
+`genai-opportunities.md`) predate the four-document split and the build. Each opens
+with a **historical** note saying what no longer matches; they are kept for their
+reasoning, not maintained. Never treat them as the current design.
 
 ## Settled decisions — do not re-open without being asked
 
@@ -190,9 +191,9 @@ dropped; add new ones the same turn they are deferred.
   all five pages republished from their sources and the four Docs brought up to date,
   diagrams included.)
 
-## Pending work, in order
+## The build — complete
 
-**The build.** One Spec Kit feature per phase:
+**All nine phases are built, gated and approved.** One Spec Kit feature per phase:
 `/speckit-specify` → `/speckit-clarify` if needed → `/speckit-plan` →
 `/speckit-tasks` → `/speckit-analyze` → `/speckit-implement`. Stop at the
 gate after each phase for the owner's review.
@@ -209,13 +210,5 @@ gate after each phase for the owner's review.
 | 7 | Streamlit page | AC-08, AC-15, AC-22, AC-27 |
 | 8 | Portability store, performance, hostile input, deployment | AC-09, AC-12, AC-13 |
 
-**Tidying, not blocking the build:**
-
-1. **`solution-sketch.md` is stale throughout** — pre-split data model. Mark it
-   historical or delete it.
-2. **`README.md` has no Schema row** in the four-document table or reading order.
-3. **`architecture.md` predates the four-document split** and still says nine
-   nodes (there are eleven). Its model names and traps now match GroqCloud.
-   Decide whether it is historical or current.
-4. **`proposed-scope.md` and `genai-opportunities.md` still name Claude models.**
-   Both are pre-split; the current spec names GroqCloud.
+**Open, the owner's to decide:** the Groq tier and a spend limit in the Groq console
+(the app is public); whether the app should deploy from `main` rather than this branch.
