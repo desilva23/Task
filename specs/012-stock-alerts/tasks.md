@@ -4,4 +4,4 @@
 - [X] T002 Tests first — `tests/unit/test_stock_alerts.py`
 - [X] T003 `services/stock_alerts.py`, `notify/`, `LOW_STOCK_UNITS`
 - [X] T004 The GitHub Action; `docs/deploy.md` setup steps; lld §1, §11a, §14; constitution 1.5.0
-- [ ] T005 Owner: AgentMail key, inbox and manager address as repository secrets; run "stock alerts" once with "current"
+- [X] T005 Owner set the three repository secrets; "stock alerts" run with "current" on 2026-10-15 sent both emails (run 38616490875)
