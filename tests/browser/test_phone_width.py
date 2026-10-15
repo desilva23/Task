@@ -186,24 +186,23 @@ def test_ac_15_nfr_11_the_journey_fits_a_phone(server):
         plate = page.locator("svg[data-floor]").first
         plate.wait_for(timeout=20000)
         assert no_page_scroll(page), "the route scrolls the page"
-        page.get_by_role("button", name="Next", exact=True).click()
-        assert no_page_scroll(page), "a step scrolls the page"
 
         box = plate.bounding_box()
         assert box["width"] <= WIDTH and box["width"] >= WIDTH * 0.8, box
-
-        markers = page.locator("svg[data-floor] [data-stop] circle")
-        assert markers.count() >= 1
-        for i in range(markers.count()):
-            size = markers.nth(i).bounding_box()
-            if size:
-                assert size["width"] >= MIN_MARKER_PX, size
-        labels = page.locator("svg[data-floor] [data-stop] text")
-        sizes = labels.evaluate_all(
-            "els => els.filter(e => e.getBoundingClientRect().height > 0)"
-            ".map(e => e.getBoundingClientRect().height)"
+        # measured in one pass, before a step can switch the floor shown
+        sizes = plate.evaluate(
+            """svg => ({
+              circles: [...svg.querySelectorAll('[data-stop] circle')]
+                .map(e => e.getBoundingClientRect().width),
+              texts: [...svg.querySelectorAll('[data-stop] text')]
+                .map(e => e.getBoundingClientRect().height).filter(h => h > 0),
+            })"""
         )
-        assert sizes and min(sizes) >= MIN_LABEL_PX, sizes
+        assert sizes["circles"] and min(sizes["circles"]) >= MIN_MARKER_PX, sizes
+        assert sizes["texts"] and min(sizes["texts"]) >= MIN_LABEL_PX, sizes
+
+        page.get_by_role("button", name="Next", exact=True).click()
+        assert no_page_scroll(page), "a step scrolls the page"
         page.get_by_role("tab", name="Floor 0").click()  # every floor the route touches is drawn
         page.locator("svg[data-floor='0']").wait_for(timeout=5000)
         if os.environ.get("LOCATOR_SCREENSHOTS"):  # gate evidence, on request only
