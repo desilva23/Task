@@ -242,7 +242,7 @@ def test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width(server, tmp_
         page.get_by_role("button", name="Scan a barcode").click()
         page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
         assert page.locator("video").count() == 0, "the camera kept running after the read"
-        assert page.get_by_role("button", name="Add 1 available to basket").count() == 1
+        assert page.get_by_role("button", name="Add to basket").count() == 1
         assert no_page_scroll(page), "the scan scrolls the page"
         if os.environ.get("LOCATOR_SCREENSHOTS"):
             page.screenshot(path=str(REPO / "specs" / "011-nextjs-vercel" / "phone-390-scan.png"),
@@ -477,3 +477,13 @@ def test_nfr_12_the_page_can_be_added_to_the_home_screen(server):
         manifest = page.evaluate(f"fetch('{href}').then(r => r.json())")
         assert manifest["display"] == "standalone" and manifest["start_url"] == "/"
         assert {"192x192", "512x512"} <= {i["sizes"] for i in manifest["icons"]}
+
+
+def test_fr_22_ac_08_one_product_found_can_be_added_to_the_basket(server):
+    with phone(server) as page:
+        search(page, "shower gel 250ml")
+        page.get_by_role("button", name="Add to basket").click(timeout=20000)
+        page.get_by_text("Added 1 to your basket.").wait_for(timeout=5000)
+        page.get_by_role("tab", name="Basket (1)").wait_for(timeout=5000)
+        assert page.get_by_role("button", name="Show route").count() == 1
+        assert no_page_scroll(page)

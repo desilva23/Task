@@ -184,7 +184,6 @@ def page_view(services, state: dict, pending: dict | None = None) -> dict:
             "split": [],
         }  # fmt: skip — a run that made no claim says why (EC-01, EC-10)
     groups = group_results(services, state)
-    many = len(groups.available) + len(groups.unavailable) > 1
     return {
         "pending": None,
         "notice": None,
@@ -192,7 +191,8 @@ def page_view(services, state: dict, pending: dict | None = None) -> dict:
         "unavailable": [asdict(r) for r in groups.unavailable],
         "notes": groups.notes,
         "addable": addable(groups),
-        "offer_add": state.get("action") != "plan" and (many or state.get("shape") != "term"),
+        # FR-22 — every search offers its available products to the basket, one product or many
+        "offer_add": state.get("action") != "plan" and bool(groups.available or groups.unavailable),
         "route": route_view(services, state),
         "degraded": degraded_notice(state),
         "split": state.get("split") or [],  # shown, with a way to search it as one (FR-02)

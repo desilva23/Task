@@ -214,6 +214,7 @@ export default function Page() {
   const shown = routed ?? view;
   const route = (routed ? routed.route : view?.route) ?? null;
   const inBasket = basket.map((i) => i.sku);
+  const single = view ? view.available.length + view.unavailable.length === 1 : false;
   const ready = view
     ? view.available.filter((r) => view.addable.includes(r.sku) && !inBasket.includes(r.sku))
     : [];
@@ -370,24 +371,33 @@ export default function Page() {
                     {added}
                   </p>
                 )}
-                {view.offer_add &&
-                  (ready.length > 0 || view.available.length === 0 ? (
-                    <button
-                      type="button"
-                      className="primary wide"
-                      disabled={ready.length === 0} // EC-15: nothing available, nothing to add
-                      onClick={() => add(ready)}
-                    >
-                      Add {ready.length} available to basket
+                <div className="row">
+                  {view.offer_add &&
+                    (ready.length > 0 || (view.available.length === 0 && !single) ? (
+                      <button
+                        type="button"
+                        className={view.route ? "secondary grow" : "primary grow"}
+                        disabled={ready.length === 0} // EC-15: nothing available, nothing to add
+                        onClick={() => add(ready)}
+                      >
+                        {single ? "Add to basket" : `Add ${ready.length} available to basket`}
+                      </button>
+                    ) : (
+                      !added &&
+                      view.available.length > 0 && (
+                        <p className="caption grow">
+                          {single
+                            ? "It's in your basket."
+                            : "Everything available is in your basket."}
+                        </p>
+                      )
+                    ))}
+                  {view.route && (
+                    <button type="button" className="primary grow" onClick={() => setTab("route")}>
+                      Show route
                     </button>
-                  ) : (
-                    !added && <p className="caption">Everything available is in your basket.</p>
-                  ))}
-                {view.route && (
-                  <button type="button" className="primary wide" onClick={() => setTab("route")}>
-                    Show route
-                  </button>
-                )}
+                  )}
+                </div>
               </div>
             )}
             {shown?.degraded && <p className="caption">{shown.degraded}</p>}
