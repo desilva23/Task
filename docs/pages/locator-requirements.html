@@ -62,9 +62,9 @@
   <h1>Product Finder Requirements</h1>
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
-    <span><b>Requirements</b> 26 functional · 11 non-functional</span>
+    <span><b>Requirements</b> 27 functional · 11 non-functional</span>
     <span><b>Constraints</b> 9</span>
-    <span><b>Acceptance criteria</b> 29</span>
+    <span><b>Acceptance criteria</b> 30</span>
   </div>
 </header>
 
@@ -72,8 +72,8 @@
 <div class="prose">
   <p>Shoppers in a large multi-floor store lose time hunting for products and cannot tell from the shelf whether an item is stocked at that branch. This system takes one or more typed product requests and returns, for each, whether it is available, exactly where it sits, and the shortest walking route to reach it — including floor changes.</p>
   <p>It is built as an agentic system in which language models interpret and phrase, and deterministic tools supply every fact. It must work on any store by replacing the store data, with no code changes.</p>
-  <p><b>In scope:</b> typed requests (single, several at once, natural language); barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory; location to floor, aisle, rack and shelf; shortest route from any start point, across floors; one combined route for several products; step-free routing; a single-page user interface; an email to the store manager when a product runs low or runs out.</p>
-  <p><b>Out of scope:</b> voice input; live shopper positioning (beacons, Wi-Fi, QR); integration with any real inventory, planogram or mapping system; payments, loyalty and recommendations; shelf-compliance detection from photographs; recognising a product from a photograph — the camera reads a barcode and nothing else; more than one store running concurrently; colleague workflows — order picking, replenishment, shelf-edge tasks.</p>
+  <p><b>In scope:</b> typed requests (single, several at once, natural language); spoken requests; barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory; location to floor, aisle, rack and shelf; shortest route from any start point, across floors; one combined route for several products; step-free routing; a single-page user interface; an email to the store manager when a product runs low or runs out.</p>
+  <p><b>Out of scope:</b> live shopper positioning (beacons, Wi-Fi, QR); integration with any real inventory, planogram or mapping system; payments, loyalty and recommendations; shelf-compliance detection from photographs; recognising a product from a photograph — the camera reads a barcode and nothing else; more than one store running concurrently; colleague workflows — order picking, replenishment, shelf-edge tasks.</p>
   <p><b>Inputs:</b> one store folder holding four kinds of data — the <b>store map</b> (walkable points, paths between them, and the stairs and lifts connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
   <p><b>Done when:</b> a shopper's request returns the correct availability, the correct location and a provably shortest route — including from a start point other than the entrance, and across floors; every fact in every answer has been checked against the store data before it is shown; and a second, differently shaped store works with no code changes.</p>
 </div>
@@ -101,7 +101,7 @@
     <tr><td>C-05</td><td>No integration with any live retailer system</td><td>confirmed</td></tr>
     <tr><td>C-06</td><td>Language models are served through <b>GroqCloud</b></td><td>confirmed</td></tr>
     <tr><td>C-07</td><td>The application is deployed on <b>Vercel</b>: the page as static files, the agent as a Python function</td><td>confirmed — Streamlit Community Cloud until the owner's change of 2026-10-14</td></tr>
-    <tr><td>C-08</td><td>The site is served over <b>HTTPS</b>. Camera access requires a secure context, so FR-03's camera does not work over plain HTTP, including on a local machine addressed by IP</td><td>confirmed</td></tr>
+    <tr><td>C-08</td><td>The site is served over <b>HTTPS</b>. Camera and microphone access require a secure context, so FR-03's camera and FR-27's microphone do not work over plain HTTP, including on a local machine addressed by IP</td><td>confirmed</td></tr>
     <tr><td>C-09</td><td>Stock alerts are sent by email through <b>AgentMail</b></td><td>confirmed — owner's choice, 2026-10-14</td></tr>
   </tbody>
 </table>
@@ -118,6 +118,7 @@
     <tr><td>A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td>confirmed</td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
     <tr><td>A-07</td><td>The shopper's mobile browser can grant camera access and read an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing</td><td>confirmed</td><td>A still photo sent to the server and decoded there</td></tr>
     <tr><td>A-08</td><td>Stock changes arrive as a new version of the store's stock file. Alerts compare each version with the one before it</td><td>confirmed</td><td>A live stock feed: the same comparison runs on each update instead of each file version</td></tr>
+    <tr><td>A-09</td><td>The shopper's mobile browser can turn speech into text itself. Where it cannot, or the microphone is declined, FR-27 degrades to typing rather than failing. The browser's speech service may be its maker's, so the shopper's voice can reach the browser maker — never this system's server</td><td>confirmed — owner, 2026-10-15</td><td>Audio sent to this system's server and transcribed there</td></tr>
   </tbody>
 </table>
 </div>
@@ -201,6 +202,7 @@
   <thead><tr><th>ID</th><th>Requirement</th><th>Status</th></tr></thead>
   <tbody>
     <tr><td class="id">FR-26</td><td>The <b>store manager is emailed</b> when a product stocked at the branch falls to a <b>very low</b> shelf quantity, and again when it <b>runs out</b>. Each product is reported once per change, not again while it stays low or out</td><td>confirmed — owner, 2026-10-14</td></tr>
+    <tr><td class="id">FR-27</td><td>A shopper can <b>speak a request</b> instead of typing it. The words heard are shown as the search, where the shopper can correct them, and the request is handled exactly as if they had been typed. Where speech is unavailable, unsupported or the microphone is declined, typing keeps working</td><td>confirmed — owner, 2026-10-15</td></tr>
   </tbody>
 </table>
 </div>
@@ -260,6 +262,7 @@
     <tr><td class="id">AC-27</td><td>NFR-10</td><td>Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07</td></tr>
     <tr><td class="id">AC-28</td><td>FR-03</td><td>A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match</td></tr>
     <tr><td class="id">AC-29</td><td>FR-26</td><td>A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once</td></tr>
+    <tr><td class="id">AC-30</td><td>FR-27</td><td>A spoken request returns the same result as typing the words heard, and those words are left in the search box; with the microphone declined the page says so, in a browser that cannot recognise speech no microphone is offered, and in both typing still finds the product</td></tr>
   </tbody>
 </table>
 </div>
@@ -268,6 +271,7 @@
   <p>Required behaviours, not solutions. Each becomes a test case.</p>
   <p><b>Input</b> — empty, one character, extremely long · misspelled ("paracetomol", "yoghurt") · non-English text, emoji, punctuation only · many items at once, duplicated items, quantities ("2 x milk") · text that is not a product request · text written to subvert the system's instructions.</p>
   <p><b>Barcode scan</b> — camera permission declined, or revoked after one successful scan · a browser with no camera · a damaged, creased or partly obscured barcode that will not decode · a barcode decoded correctly but absent from this catalogue · a barcode from something that is not a grocery product at all · mistyped digits · the page opened over plain HTTP, where the camera cannot start.</p>
+  <p><b>Voice</b> — microphone declined, or the page on plain HTTP · a browser that cannot recognise speech · nothing heard, or only background noise · a misheard word.</p>
   <p><b>Matching</b> — synonyms and colloquial names ("coke", "nappies", "kitchen roll") · several sizes or variants of the same product · a generic word that is a category rather than a product ("milk", "dairy") · a product held in two places at once · a product in the catalogue but absent from the planogram · a product in the catalogue but not stocked at this branch.</p>
   <p><b>Start point</b> — the entrance; any other aisle; an unrecognised location · standing on a staircase or in a lift lobby · already standing at the product.</p>
   <p><b>Routing</b> — same floor; different floor; every floor · a connector out of out of service · step-free requested where no step-free path exists · a single item submitted as a multi-product request · chilled and frozen items that should be collected last.</p>
@@ -291,7 +295,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 26 functional · 11 non-functional · 9 constraints · 29 acceptance criteria · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 27 functional · 11 non-functional · 9 constraints · 30 acceptance criteria · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>

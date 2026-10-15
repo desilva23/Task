@@ -78,6 +78,8 @@
   lib/api.ts              the four calls the page makes, and the JSON they return
   lib/scan.ts             barcode decoding on the phone — zxing-wasm, retail formats (§8.5)
   components/Scanner.tsx  the camera behind a switch; typed digits beside it (FR-03)
+  lib/voice.ts            the browser's speech recogniser, found and read; failure wording (§11)
+  components/Voice.tsx    the microphone button in the search box (FR-27)
 api/
   index.py                FastAPI — the HTTP API, one Vercel Python function (§11)
 present/
@@ -568,6 +570,7 @@ if choice.sku not in {p.sku for p in candidates}:
 <div class="prose">
   <p><b>Stateless, so it scales to zero and to many.</b> <code>services()</code> is built once per function instance and reused; a journey is built per request, around that visitor's model client, and its thread is deleted before the response is sent. A clarification is answered by sending the search back with the answers — <code>Journey.answer</code> re-runs it and resumes it round by round; <code>clarify</code> accepts only an option it offered, so a stale answer is simply asked again (EC-05). The page holds the position, the basket and the answers so far, the last two in the tab's session storage (EC-41).</p>
   <p><b>The floor plates are the only markup the page inserts.</b> The SVG is drawn by our code from validated map data and carries no free text. Everything else — statements, questions, notes, directions, which can hold the shopper's or the model's words — is rendered by React as text, so nothing typed can become a link, an image or a script (AC-13).</p>
+  <p><b>Voice is typing.</b> <code>components/Voice.tsx</code> draws its button only once mounted and only if <code>recogniserClass()</code> finds <code>SpeechRecognition</code> or <code>webkitSpeechRecognition</code> (EC-62). A tap builds one recogniser — <code>lang = "en-GB"</code>, <code>interimResults = true</code>, <code>continuous = false</code> — and <code>transcript()</code> joins every result so far into the search box as it arrives. On <code>end</code> the last words heard, final or not (some recognisers end without marking them), go to <code>POST /api/search</code> exactly as a typed query, cut at <code>MAX_QUERY_CHARS</code>. <code>failure(code)</code> maps the recogniser's error: <code>no-speech</code> → not heard (EC-63); <code>not-allowed</code>, <code>service-not-allowed</code>, <code>audio-capture</code> → microphone unavailable (EC-61); anything else → voice not working; <code>aborted</code> (the page closing) → nothing. An end with no words and no error is not heard too. No API call, no server code and no model call was added.</p>
   <p><b>Failures are an apology.</b> An unhandled error returns <code>500</code> with one sentence and is logged; a malformed request returns <code>422</code> without echoing it; the schema and docs pages are off. The page shows its own apology for either.</p>
   <p><b>Local runs.</b> <code>npm run build</code> then <code>LOCATOR_STATIC=out uv run uvicorn api.index:app</code> serves page and API from one process — what the browser tests do. <code>npm run dev</code> with the API on port 8000 proxies <code>/api/*</code> to it.</p>
 </div>
@@ -663,7 +666,7 @@ MODEL_CALLS_PER_SESSION = 60  # public-deployment guard — then fallbacks only<
     <tr><td>Unit · search</td><td>Ranking precedence</td><td>Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected</td></tr>
     <tr><td>Unit · barcode</td><td>§8.5</td><td>Valid EAN-13, EAN-8, UPC-A · failed check digit · swapped digits · wrong length · exact lookup</td></tr>
     <tr><td>Integration · API</td><td>§11</td><td>Every call's shape · a clarification answered by resending · an answer not offered is asked again · no thread survives a request · apology on failure</td></tr>
-    <tr><td>Browser · 390 px</td><td>§11, AC-15, AC-28</td><td>The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text</td></tr>
+    <tr><td>Browser · 390 px</td><td>§11, AC-15, AC-28, AC-30</td><td>The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text · a scripted recogniser: spoken search found, microphone declined, nothing heard, no recogniser</td></tr>
     <tr><td>Unit · routing</td><td>Matrix and reconstruction</td><td>Same-node route returns <code>[u]</code> · known-distance pair · NO_PATH raises · step-free matrix differs where it should</td></tr>
     <tr><td>Unit · TSP</td><td>Open-path correctness</td><td>Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till</td></tr>
     <tr><td>Unit · grounding</td><td>§9 guardrails</td><td>Out-of-set SKU raises <code>GroundingError</code> · <code>null</code> dietary flag never satisfies a requirement</td></tr>

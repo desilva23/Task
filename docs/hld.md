@@ -423,15 +423,42 @@ address held as repository secrets — the repository is public, and none of the
 three is in it. Each email carries an idempotency key built from the store, the
 commit and the alert kind, so re-running the job never delivers an email twice.
 
+### 3.7 Voice input
+
+FR-27 is for a shopper with their hands full — a basket on one arm, a child by
+the other — or who would rather say a product than spell it. It is a way of
+typing, not a new kind of search.
+
+**The browser turns speech into words.** The page uses the browser's own speech
+recogniser (the Web Speech API), set to British English, behind a microphone
+button in the search box. Nothing is asked for until the button is tapped; it
+listens for one request, shows the words in the box as they are recognised, and
+when the shopper stops, runs the search on them. Only the words reach this
+system's server — **no audio is sent to it or stored by it** — and from there the
+request is a typed one: the same call, the same graph, the same ranking and the
+same clarifying question. The model is not asked to transcribe or interpret
+sound, so voice adds no model call and no new way for a fact to be invented.
+
+**What the browser does with the sound is the browser's.** Chrome sends it to
+Google's speech service; Safari uses Apple's, on the phone or on Apple's servers (A-09). That is the cost of a free
+recogniser with nothing to host; the alternative — audio to our own function and
+a speech model there — would put shoppers' voices on our side of the line.
+
+**The words stay in the box.** A misheard word is not a dead end: it is in the
+search box, where it can be corrected by typing and searched again, and a search
+that matches nothing says so the way a typed one does (EC-64). Where the browser
+has no recogniser the button is not drawn at all (EC-62).
+
 ## 4. Interface and presentation
 
 One Next.js page, used by a shopper standing in the store on their own phone
-(A-06). The page is not a thin shell over the graph — four requirements land
+(A-06). The page is not a thin shell over the graph — five requirements land
 here and nowhere else.
 
 | Requirement | What the page does |
 |---|---|
 | FR-03 · barcode scan | A "Scan a barcode" switch under the search box. Only when it is on does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup |
+| FR-27 · voice | A microphone button at the end of the search box, drawn only where the browser can recognise speech. One tap listens for one request; the words fill the box as they are heard, "Listening…" says it is on, and when the shopper stops the search runs. A second tap stops it early |
 | FR-15 · start point | Two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
 | FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
@@ -608,6 +635,15 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-58 | The mail service fails or rejects the send | The job fails and shows it in GitHub; re-running it sends once, by the idempotency key. The website is unaffected |
 | EC-59 | The secrets are missing | The job stops with a message naming the missing setting, and sends nothing. A dry run prints the emails instead |
 | EC-60 | An update makes no product cross a threshold | No email at all — not an empty one |
+
+### 6.9 Voice input
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-61 | Microphone declined, absent, blocked because the page is on plain HTTP (C-08), or the browser's speech service cannot be reached | Said in one line — type instead — and the search box keeps working; nothing about the search depends on the microphone |
+| EC-62 | A browser with no speech recogniser | No microphone is offered; the page is the typed page |
+| EC-63 | Nothing heard — silence, or only the noise of the store | "Didn't catch that", and no search is run. Never a guess at what was meant |
+| EC-64 | A word misheard | The search runs on what was heard, which stays in the box: the result is what typing those words would give, and the shopper corrects it by typing |
 
 ## 7. Onboarding a new store
 

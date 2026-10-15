@@ -14,6 +14,8 @@ app/  components/  lib/   the Next.js page — a static export served from the C
   lib/api.ts              the four calls the page makes, and the JSON they return
   lib/scan.ts             barcode decoding on the phone — zxing-wasm, retail formats (§8.5)
   components/Scanner.tsx  the camera behind a switch; typed digits beside it (FR-03)
+  lib/voice.ts            the browser's speech recogniser, found and read; failure wording (§11)
+  components/Voice.tsx    the microphone button in the search box (FR-27)
 api/
   index.py                FastAPI — the HTTP API, one Vercel Python function (§11)
 present/
@@ -719,6 +721,18 @@ statements, questions, notes, directions, which can hold the shopper's or the
 model's words — is rendered by React as text, so nothing typed can become a
 link, an image or a script (AC-13).
 
+**Voice is typing.** `components/Voice.tsx` draws its button only once mounted and
+only if `recogniserClass()` finds `SpeechRecognition` or `webkitSpeechRecognition`
+(EC-62). A tap builds one recogniser — `lang = "en-GB"`, `interimResults = true`,
+`continuous = false` — and `transcript()` joins every result so far into the
+search box as it arrives. On `end` the last words heard, final or not (some
+recognisers end without marking them), go to `POST /api/search` exactly as a
+typed query, cut at `MAX_QUERY_CHARS`. `failure(code)` maps the recogniser's
+error: `no-speech` → not heard (EC-63); `not-allowed`, `service-not-allowed`,
+`audio-capture` → microphone unavailable (EC-61); anything else → voice not
+working; `aborted` (the page closing) → nothing. An end with no words and no
+error is not heard too. No API call, no server code and no model call was added.
+
 **Failures are an apology.** An unhandled error returns `500` with one sentence
 and is logged; a malformed request returns `422` without echoing it; the schema
 and docs pages are off. The page shows its own apology for either.
@@ -852,7 +866,7 @@ thread before answering (§11, EC-34).
 | Unit · search | Ranking precedence | Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected |
 | Unit · barcode | §8.5 | Valid EAN-13, EAN-8, UPC-A · failed check digit · swapped digits · wrong length · exact lookup |
 | Integration · API | §11 | Every call's shape · a clarification answered by resending · an answer not offered is asked again · no thread survives a request · apology on failure |
-| Browser · 390 px | §11, AC-15, AC-28 | The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text |
+| Browser · 390 px | §11, AC-15, AC-28, AC-30 | The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text · a scripted recogniser: spoken search found, microphone declined, nothing heard, no recogniser |
 | Unit · routing | Matrix and reconstruction | Same-node route returns `[u]` · known-distance pair · NO_PATH raises · step-free matrix differs where it should |
 | Unit · TSP | Open-path correctness | Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till |
 | Unit · grounding | §9 guardrails | Out-of-set SKU raises `GroundingError` · `null` dietary flag never satisfies a requirement |

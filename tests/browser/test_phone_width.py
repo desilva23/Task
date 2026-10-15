@@ -4,9 +4,11 @@ Serves the built Next.js page and the API from one local process with the model 
 a deployed site through LOCATOR_URL), drives a three-floor journey at 390 × 844, and measures:
 no horizontal page scroll at any step, the floor plate within the viewport, and route markers
 and labels big enough to read without zooming. The scan tests feed Chromium's fake camera a
-frame showing a barcode — the real path from camera to product, decoded on the phone.
+frame showing a barcode — the real path from camera to product, decoded on the phone. The voice
+tests stand a scripted recogniser in for the browser's own, which a headless browser cannot run.
 """
 
+import json
 import os
 import socket
 import subprocess
@@ -86,8 +88,41 @@ def barcode(name: str) -> str:
     return next(r.split(",")[4] for r in rows if r.split(",")[1] == name)
 
 
+# The browser's speech recogniser, scripted: it "hears" HEARD word by word, or fails with FAIL.
+# A blank HEARD ends having heard nothing; NONE removes the recogniser, as in Firefox.
+FAKE_RECOGNISER = """
+(() => {
+  const script = %s;
+  if (script.none) { delete window.SpeechRecognition; delete window.webkitSpeechRecognition; return; }
+  class Fake {
+    start() {
+      window.__voice = { lang: this.lang, starts: (window.__voice?.starts ?? 0) + 1 };
+      const words = script.heard.split(" ").filter(Boolean);
+      let said = [];
+      const step = () => {
+        if (script.fail) { this.onerror?.({ error: script.fail }); return this.onend?.(); }
+        if (!words.length) return this.onend?.();
+        said.push(words.shift());
+        const last = !words.length;
+        this.onresult?.({ results: { length: 1, 0: { isFinal: last, length: 1,
+          0: { transcript: said.join(" ") } } } });
+        setTimeout(step, 120);
+      };
+      setTimeout(step, 120);
+    }
+    stop() {}
+    abort() {}
+  }
+  window.SpeechRecognition = Fake;
+  window.webkitSpeechRecognition = Fake;
+})();
+"""
+
+
 @contextmanager
-def phone(server, camera: Path | None = None, camera_allowed: bool = True):
+def phone(
+    server, camera: Path | None = None, camera_allowed: bool = True, voice: dict | None = None
+):
     args = ["--use-fake-device-for-media-stream"]
     if camera:
         args.append(f"--use-file-for-fake-video-capture={camera}")
@@ -100,6 +135,8 @@ def phone(server, camera: Path | None = None, camera_allowed: bool = True):
             is_mobile=True,
             permissions=["camera"] if camera_allowed else [],
         )
+        if voice is not None:
+            context.add_init_script(FAKE_RECOGNISER % json.dumps({"heard": "", **voice}))
         page = context.new_page()
         page.dialogs = []
         page.on("dialog", lambda d: (page.dialogs.append(d.message), d.dismiss()))
@@ -231,3 +268,45 @@ def test_ec_41_a_refresh_keeps_the_basket_and_the_start_point(server):
         page.reload()
         page.get_by_role("heading", name="Basket (2)").wait_for(timeout=20000)
         assert page.get_by_label("Which floor are you on?").input_value() == "1"
+
+
+MIC = "Speak your search"
+
+
+def test_ac_30_fr_27_ec_64_a_spoken_request_runs_the_search_it_heard(server):
+    """The words fill the box as they are heard and the search runs on them when the shopper
+    stops — the same search as typing them, and still in the box to correct."""
+    with phone(server, voice={"heard": "coca cola classic"}) as page:
+        page.get_by_role("button", name=MIC).click()
+        page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
+        assert page.get_by_label(SEARCH_LABEL).input_value() == "coca cola classic"
+        assert page.evaluate("window.__voice") == {"lang": "en-GB", "starts": 1}
+        page.get_by_role("heading", name="Your route").wait_for(timeout=20000)  # as typed: routed
+        assert page.get_by_text("Didn't catch that").count() == 0
+        assert no_horizontal_scroll(page), "the microphone scrolls sideways"
+
+
+def test_ec_62_ac_30_no_recogniser_no_microphone_and_typing_still_works(server):
+    with phone(server, voice={"none": True}) as page:
+        assert page.get_by_role("button", name=MIC).count() == 0
+        search(page, "coca cola classic")
+        page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
+
+
+def test_ec_61_ac_30_microphone_declined_says_so_and_typing_still_works(server):
+    with phone(server, voice={"fail": "not-allowed"}) as page:
+        page.get_by_role("button", name=MIC).click()
+        page.get_by_text("The microphone isn't available here").wait_for(timeout=20000)
+        search(page, "coca cola classic")
+        page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
+
+
+def test_ec_63_nothing_heard_runs_no_search(server):
+    with phone(server, voice={"fail": "no-speech"}) as page:
+        page.get_by_role("button", name=MIC).click()
+        page.get_by_text("Didn't catch that").wait_for(timeout=20000)
+        assert page.get_by_text("In stock").count() == 0
+    with phone(server, voice={"heard": ""}) as page:  # ended without a word, and no error
+        page.get_by_role("button", name=MIC).click()
+        page.get_by_text("Didn't catch that").wait_for(timeout=20000)
+        assert page.get_by_label(SEARCH_LABEL).input_value() == ""

@@ -19,13 +19,13 @@ and deterministic tools supply every fact. It must work on any store by
 replacing the store data, with no code changes.
 
 **In scope:** typed requests (single, several at once, natural language);
-barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory;
+spoken requests; barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory;
 location to floor, aisle, rack and shelf; shortest route from any start point,
 across floors; one combined route for several products; step-free routing;
 a single-page user interface; an email to the store manager when a product runs
 low or runs out.
 
-**Out of scope:** voice input; live shopper positioning (beacons, Wi-Fi, QR);
+**Out of scope:** live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
 loyalty and recommendations; shelf-compliance detection from photographs;
 recognising a product from a photograph — the camera reads a barcode and
@@ -70,7 +70,7 @@ store works with no code changes.
 | C-05 | No integration with any live retailer system | confirmed |
 | C-06 | Language models are served through **GroqCloud** | confirmed |
 | C-07 | The application is deployed on **Vercel**: the page as static files, the agent as a Python function | confirmed — Streamlit Community Cloud until the owner's change of 2026-10-14 |
-| C-08 | The site is served over **HTTPS**. Camera access requires a secure context, so FR-03's camera does not work over plain HTTP, including on a local machine addressed by IP | confirmed |
+| C-08 | The site is served over **HTTPS**. Camera and microphone access require a secure context, so FR-03's camera and FR-27's microphone do not work over plain HTTP, including on a local machine addressed by IP | confirmed |
 | C-09 | Stock alerts are sent by email through **AgentMail** | confirmed — owner's choice, 2026-10-14 |
 
 | ID | Assumption | Status | If it later proves wrong |
@@ -83,6 +83,7 @@ store works with no code changes.
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
 | A-07 | The shopper's mobile browser can grant camera access and read an EAN-13 from the live camera. Where it cannot, FR-03 degrades to typed digits rather than failing | confirmed | A still photo sent to the server and decoded there |
 | A-08 | Stock changes arrive as a new version of the store's stock file. Alerts compare each version with the one before it | confirmed | A live stock feed: the same comparison runs on each update instead of each file version |
+| A-09 | The shopper's mobile browser can turn speech into text itself. Where it cannot, or the microphone is declined, FR-27 degrades to typing rather than failing. The browser's speech service may be its maker's, so the shopper's voice can reach the browser maker — never this system's server | confirmed — owner, 2026-10-15 | Audio sent to this system's server and transcribed there |
 
 ---
 
@@ -148,6 +149,7 @@ store works with no code changes.
 | ID | Requirement | Status |
 |---|---|---|
 | FR-26 | The **store manager is emailed** when a product stocked at the branch falls to a **very low** shelf quantity, and again when it **runs out**. Each product is reported once per change, not again while it stays low or out | confirmed — owner, 2026-10-14 |
+| FR-27 | A shopper can **speak a request** instead of typing it. The words heard are shown as the search, where the shopper can correct them, and the request is handled exactly as if they had been typed. Where speech is unavailable, unsupported or the microphone is declined, typing keeps working | confirmed — owner, 2026-10-15 |
 
 ---
 
@@ -205,6 +207,7 @@ finished being written.
 | AC-27 | NFR-10 | Read as plain text with the floor map removed, the directions list names every stop's floor, aisle, rack and shelf and every floor change; a step-free request also passes AC-07 |
 | AC-28 | FR-03 | A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
 | AC-29 | FR-26 | A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once |
+| AC-30 | FR-27 | A spoken request returns the same result as typing the words heard, and those words are left in the search box; with the microphone declined the page says so, in a browser that cannot recognise speech no microphone is offered, and in both typing still finds the product |
 
 ---
 
@@ -223,6 +226,10 @@ that will not decode · a barcode decoded correctly but absent from this
 catalogue · a barcode from something that is not a grocery product at all ·
 mistyped digits · the page opened over plain HTTP, where the camera cannot
 start.
+
+**Voice** — microphone declined, or the page on plain HTTP · a browser that
+cannot recognise speech · nothing heard, or only background noise · a misheard
+word.
 
 **Matching** — synonyms and colloquial names ("coke", "nappies", "kitchen
 roll") · several sizes or variants of the same product · a generic word that is

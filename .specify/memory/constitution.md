@@ -106,6 +106,7 @@ requires amending the specification, not a pull request.
 | Routing maths | `scipy.sparse.csgraph.shortest_path`, method `D`, directed |
 | Search | `rank_bm25`, `rapidfuzz` |
 | Barcode decoding | zxing-wasm in the page, from live camera frames; retail symbologies only; the server re-checks the digits |
+| Voice input | The browser's own speech recogniser (Web Speech API), only the words reach the API — no audio is sent to or stored by this system, and no model transcribes it |
 | Data | Six CSVs per `schema.md`, synthetic only (C-04), produced by a seeded generator |
 | Deployment | Vercel (C-07) — the page from the CDN, the API as one Python function |
 | Stock alerts | AgentMail (C-09), from a GitHub Action; SDK only in the `alerts` dependency group; settings are repository secrets |
@@ -141,6 +142,7 @@ A lower document that disagrees with a higher one is wrong.
 | 9 | Barcode scan — FR-03 reinstated by the owner | AC-28 |
 | 10 | Next.js page and Vercel deployment — C-03 and C-07 changed by the owner | AC-15, AC-28, AC-13 |
 | 11 | Stock alert emails to the store manager | AC-29 |
+| 12 | Voice input — FR-27, brought into scope by the owner | AC-30 |
 
 **Gate.** A phase is complete only when all of its traced tests pass, `ruff` is clean, the
 traceability matrix is updated, and the owner has reviewed it. The next phase MUST NOT start
@@ -160,4 +162,4 @@ Versioning is semantic: MAJOR for removing or redefining a principle, MINOR for 
 materially expanding guidance, PATCH for wording. Every `/speckit-plan` MUST record a Constitution
 Check, and every gate review MUST confirm compliance with Principles I–VI before approval.
 
-**Version**: 1.5.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-14
+**Version**: 1.6.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-15

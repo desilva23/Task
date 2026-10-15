@@ -10,6 +10,7 @@ import Basket, { type Item } from "@/components/Basket";
 import Results, { Clarify } from "@/components/Results";
 import Route from "@/components/Route";
 import Scanner from "@/components/Scanner";
+import Voice from "@/components/Voice";
 import Where, { type Place } from "@/components/Where";
 import {
   APOLOGY,
@@ -54,6 +55,8 @@ export default function Page() {
   const [basket, setBasket] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const [voiceNote, setVoiceNote] = useState<string | null>(null);
 
   useEffect(() => {
     setBasket(load<Item[]>("basket", []));
@@ -129,20 +132,51 @@ export default function Page() {
         className="search"
         onSubmit={(e) => {
           e.preventDefault();
+          setVoiceNote(null);
           if (query.trim()) ask({ query, answers: [] });
         }}
       >
-        <label className="field">
-          <span>What are you looking for?</span>
-          <input
-            type="search"
-            enterKeyHint="search"
-            maxLength={MAX_QUERY_CHARS}
-            placeholder="e.g. milk, bread, eggs — or 'something for a headache'"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+        <div className="row">
+          <label className="field grow">
+            <span>What are you looking for?</span>
+            <input
+              type="search"
+              enterKeyHint="search"
+              maxLength={MAX_QUERY_CHARS}
+              placeholder={
+                listening
+                  ? "Listening — say what you're looking for"
+                  : "e.g. milk, bread, eggs — or 'something for a headache'"
+              }
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </label>
+          <Voice
+            busy={busy || !where}
+            onListening={(on) => {
+              setListening(on);
+              if (on) setQuery("");
+            }}
+            onHearing={(text) => setQuery(text.slice(0, MAX_QUERY_CHARS))}
+            onHeard={(text) => {
+              const heard = text.slice(0, MAX_QUERY_CHARS);
+              setQuery(heard);
+              ask({ query: heard, answers: [] }); // the same search as typing it (AC-30)
+            }}
+            onMessage={setVoiceNote}
           />
-        </label>
+        </div>
+        {listening && (
+          <p className="caption" role="status">
+            Listening… tap the microphone again when you&apos;ve finished.
+          </p>
+        )}
+        {voiceNote && (
+          <p className="callout warn" role="status">
+            {voiceNote}
+          </p>
+        )}
         <button type="submit" className="primary wide" disabled={busy || !where}>
           {busy ? "Searching…" : "Search"}
         </button>
