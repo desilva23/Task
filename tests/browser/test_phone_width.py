@@ -410,3 +410,22 @@ def test_ac_32_fr_27_a_spoken_list_without_and_is_split_and_can_be_undone(server
         page.get_by_text("We don't recognise").wait_for(timeout=20000)
         assert page.get_by_label(SEARCH_LABEL).input_value() == '"milk bread chicken"'
         assert page.get_by_text("Searched as:").count() == 0
+
+
+def test_fr_20_nfr_10_the_step_on_screen_pulses_its_pin_and_a_tapped_pin_says_what_it_is(server):
+    with phone(server) as page:
+        search(page, "bananas, baked beans")
+        page.get_by_role("button", name="Add 2 available to basket").click(timeout=20000)
+        page.get_by_role("tab", name="Basket (2)").click()
+        page.get_by_role("button", name="Plan my route").click()
+        page.locator("svg[data-floor]").first.wait_for(timeout=20000)
+        for _ in range(8):  # step on until a step picks something up
+            if page.locator("[data-stop].current").count():
+                break
+            page.get_by_role("button", name="Next", exact=True).click()
+        assert page.locator("[data-stop].current").count() == 1
+        pin = page.locator("[data-stop]").first
+        number = pin.get_attribute("data-stop")
+        pin.click(force=True)  # it pulses, so it is never "stable" to the test browser
+        page.get_by_text(f"Pin {number}:").wait_for(timeout=5000)
+        assert no_page_scroll(page)

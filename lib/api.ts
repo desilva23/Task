@@ -15,7 +15,8 @@ export type Store = { entrance: string; floors: Floor[]; products: Suggestion[] 
 export type Option = { sku: string; label: string };
 export type Question = { index: string; term: string; options: Option[] };
 export type Row = { sku: string; label: string; statement: string; availability: string };
-export type Plate = { level: number; name: string; svg: string };
+export type Pick = { n: number; node: string; label: string; where: string };
+export type Plate = { level: number; name: string; svg: string; picks: Pick[] };
 
 export type RouteView = {
   kind: "single" | "multi" | "none";

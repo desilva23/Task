@@ -78,10 +78,27 @@ its SKU instead.
 To see the emails without sending, run
 `uv run python -m notify.run --store data/SBY-DEMO-001 --current --dry-run`.
 
-## Optional hardening
+## Spend limits — do these two
 
-- **Rate limit.** In the project's **Firewall**, add a rule that rate-limits `/api/*` per IP
-  address, if your plan offers it. It protects the Groq key better than the cookie does.
+The site is public and every search can spend the Groq key. The per-visitor cookie cap is a
+courtesy (clearing cookies resets it); these two are the real limits.
+
+1. **Groq spend limit.** In the [Groq console](https://console.groq.com) → **Settings →
+   Billing → Limits**, set a monthly spend limit. On the free tier its own rate limits already
+   apply; the limit matters once a paid plan is on.
+2. **Vercel rate limit on the API.** The firewall cannot be created through the API until it
+   has been opened once in the dashboard. In Vercel → project **find-it-in-store** →
+   **Firewall** → **Configure** → **New Rule**:
+   - Name: `Rate limit the API`
+   - If **Request Path** **starts with** `/api/`
+   - Then **Rate Limit** — **Fixed Window**, **60 seconds**, **60 requests**, keyed on **IP**,
+     action **Too Many Requests (429)**
+   - **Save**, then **Review Changes → Publish**.
+
+   60 a minute per address leaves room for a room of people on one office Wi-Fi during a demo,
+   and stops a script draining the key. When it trips, the page shows its usual apology.
+
+## Optional hardening
 - **Deployment Protection.** Previews are protected by Vercel authentication by default; leave
   that on so only you can use branch previews.
 

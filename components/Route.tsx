@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import type { RouteView } from "@/lib/api";
+import type { Pick, RouteView } from "@/lib/api";
 
 const FLOOR = /floor (\d+)/gi;
 
@@ -24,28 +24,35 @@ export default function Route({ route, empty }: { route: RouteView | null; empty
   const [list, setList] = useState(false);
   const frame = useRef<HTMLDivElement>(null);
 
+  const [tapped, setTapped] = useState<(Pick & { level: number }) | null>(null);
+
   const plates = route?.plates ?? [];
+  const picks = plates.flatMap((p) => p.picks.map((k) => ({ ...k, level: p.level })));
+  const line = route?.directions[step] ?? "";
+  // The pin this step picks up: the step names the product (verified), or failing that its rack.
+  const here = picks.find((k) => line.includes(k.label));
   useEffect(() => {
-    const level = route ? floorOf(route.directions[step] ?? "") : null;
+    const level = here ? here.level : floorOf(line);
     const i = plates.findIndex((p) => p.level === level);
     if (i >= 0) setShown(i);
-  }, [route, step, plates]);
-  // Open the map on this step's shelf — or the first pick on the floor, or the start — rather
-  // than on the empty edge of the plan.
+  }, [here?.level, line, plates]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Open the map on this step's pin, pulsing — or the first pick on the floor, or the start —
+  // rather than on the empty edge of the plan.
   useEffect(() => {
     const box = frame.current;
     if (!box) return;
-    const at = /floor (\d+), aisle (\d+), rack (\d+)/i.exec(route?.directions[step] ?? "");
-    const node = at && `F${at[1]}-A${at[2].padStart(2, "0")}-R${at[3].padStart(2, "0")}`;
-    const target =
-      (node && box.querySelector(`[data-node="${node}"]`)) ||
-      box.querySelector("[data-stop]") ||
-      box.querySelector("[data-start]");
+    const at = /floor (\d+), aisle (\d+), rack (\d+)/i.exec(line);
+    const node =
+      here?.node ?? (at && `F${at[1]}-A${at[2].padStart(2, "0")}-R${at[3].padStart(2, "0")}`);
+    box.querySelectorAll("[data-stop].current").forEach((el) => el.classList.remove("current"));
+    const pin = node ? box.querySelector(`[data-stop][data-node="${node}"]`) : null;
+    pin?.classList.add("current");
+    const target = pin || box.querySelector("[data-stop]") || box.querySelector("[data-start]");
     if (!target) return;
     const t = target.getBoundingClientRect();
     const b = box.getBoundingClientRect();
     box.scrollTo({ top: box.scrollTop + t.top - b.top - box.clientHeight / 2, behavior: "smooth" });
-  }, [route, step, shown, list]);
+  }, [here?.node, line, shown, list]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!route) {
     return (
@@ -108,6 +115,16 @@ export default function Route({ route, empty }: { route: RouteView | null; empty
           role="tabpanel"
           aria-label={`Floor ${plate.level} — ${plate.name}`}
           dangerouslySetInnerHTML={{ __html: plate.svg }}
+          onClick={(e) => {
+            // a pin, or its line in the list under the plan: say what it is, go to its step
+            const hit = (e.target as Element).closest("[data-stop], [data-pick]");
+            const n = Number(hit?.getAttribute("data-stop") ?? hit?.getAttribute("data-pick"));
+            const pick = plate.picks.find((k) => k.n === n);
+            if (!pick) return;
+            setTapped({ ...pick, level: plate.level });
+            const i = route.directions.findIndex((d) => d.includes(pick.label));
+            if (i >= 0) setStep(i);
+          }}
         />
       )}
 
@@ -124,13 +141,21 @@ export default function Route({ route, empty }: { route: RouteView | null; empty
           Step {step + 1} of {n}
           {notes.length > 0 && <> · {notes.join(" ")}</>}
         </p>
+        {tapped && (
+          <p className="tapped" role="status">
+            Pin {tapped.n}: <b>{tapped.label}</b> — {tapped.where}
+          </p>
+        )}
         <p className="now">{route.directions[step]}</p>
         <div className="row">
           <button
             type="button"
             className="secondary"
             disabled={step === 0}
-            onClick={() => setStep(step - 1)}
+            onClick={() => {
+              setStep(step - 1);
+              setTapped(null);
+            }}
           >
             Back
           </button>
@@ -141,7 +166,10 @@ export default function Route({ route, empty }: { route: RouteView | null; empty
             type="button"
             className="primary grow"
             disabled={step >= n - 1}
-            onClick={() => setStep(step + 1)}
+            onClick={() => {
+              setStep(step + 1);
+              setTapped(null);
+            }}
           >
             Next
           </button>

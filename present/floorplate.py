@@ -39,6 +39,7 @@ class Plate:
     svg: str
     segments: tuple[Segment, ...]
     stops: tuple[tuple[int, str], ...]  # (number shown, node)
+    picks: tuple[tuple[int, str, str, str], ...] = ()  # (number, node, product, where) — tap a pin
 
 
 def _segments(levels: list[int], nodes: list[str]) -> list[tuple[int, Segment]]:
@@ -71,7 +72,10 @@ def floor_plates(services, route: dict) -> list[Plate]:
                 marks.append((nodes[b], way, f"Arrive from floor {levels[a]} by {kind}"))
         name = next(n.floor_name for n in store.nodes.values() if n.level == level) or ""
         svg = _draw(services, level, name, mine, my_stops, marks, route, nodes[0])
-        plates.append(Plate(level, name, svg, mine, tuple((n, node) for n, node, _ in my_stops)))
+        picks = tuple((n, node, _label(services, sku), _where(services, sku, node))
+                      for n, node, sku in my_stops)  # fmt: skip
+        plates.append(Plate(level, name, svg, mine, tuple((n, node) for n, node, _ in my_stops),
+                            picks))  # fmt: skip
     return plates
 
 
@@ -95,6 +99,11 @@ def _shelf(services, sku: str, node_id: str) -> str:
         if p.node_id == node_id and p.shelf_no:
             return f"shelf {p.shelf_no}"
     return ""
+
+
+def _label(services, sku: str) -> str:
+    p = services.catalogue.by_sku(sku)
+    return f"{p.name} {p.size}" if p else sku
 
 
 def _where(services, sku: str, node_id: str) -> str:
@@ -337,14 +346,13 @@ def _draw(services, level, floor_name, segments, stops, marks, route, start) -> 
                          fill=MUTED))  # fmt: skip
         y += 2.6
         for number, node_id, sku in stops:
-            p = services.catalogue.by_sku(sku)
             cy = y + 1.2 + FONT * 0.7
             out.append(
                 f'<g data-pick="{number}"><circle cx="{left + 2.6:.2f}" cy="{cy:.2f}" r="1.35" '
                 f'fill="{STOP}"/><text x="{left + 2.6:.2f}" y="{cy + 0.6:.2f}" '
                 f'font-size="{SMALL}" font-weight="700" text-anchor="middle" fill="#fff" {SANS}>'
                 f"{number}</text>"
-                + _text(left + 4.8, cy + 0.6, f"{p.name} {p.size}" if p else sku, weight=700)
+                + _text(left + 4.8, cy + 0.6, _label(services, sku), weight=700)
                 + _text(left + 4.8, cy + 0.6 + line, _where(services, sku, node_id),
                         size=SMALL, fill=MUTED)
                 + "</g>"
