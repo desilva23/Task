@@ -14,6 +14,9 @@
   --warn-fg: #7a4a06;
   --error-bg: #fbe9e7;
   --error-fg: #8f2516;
+  --rec: #d32f2f; /* the microphone while it is recording */
+  --rec-fg: #ffffff;
+  --rec-soft: #f7d4d1;
   --plate-bg: #ffffff; /* the floor plates are drawn for a light ground in both themes */
   color-scheme: light;
 }
@@ -32,6 +35,9 @@
     --warn-fg: #f3d29b;
     --error-bg: #3d1d18;
     --error-fg: #f6b9ad;
+    --rec: #ef5350;
+    --rec-fg: #ffffff;
+    --rec-soft: #4a2220;
     color-scheme: dark;
   }
 }
@@ -348,15 +354,15 @@ button.mic {
 }
 
 button.mic.listening {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-fg);
+  background: var(--rec);
+  border-color: var(--rec);
+  color: var(--rec-fg);
   animation: listening 1.2s ease-in-out infinite;
 }
 
 @keyframes listening {
   50% {
-    box-shadow: 0 0 0 0.35rem var(--accent-soft);
+    box-shadow: 0 0 0 0.35rem var(--rec-soft);
   }
 }
 

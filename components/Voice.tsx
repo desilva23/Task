@@ -90,7 +90,11 @@ export default function Voice({
       aria-label={listening ? "Stop listening" : "Speak your search"}
       aria-pressed={listening}
       disabled={busy && !listening}
-      onClick={() => (listening ? active.current?.stop() : start())}
+      onClick={() => {
+        if (!listening) return start();
+        listen(false); // back at once; the recogniser's end still delivers what was heard
+        active.current?.stop();
+      }}
     >
       <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
         <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" />

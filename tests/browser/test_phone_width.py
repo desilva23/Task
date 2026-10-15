@@ -101,7 +101,7 @@ FAKE_RECOGNISER = """
       let said = [];
       const step = () => {
         if (script.fail) { this.onerror?.({ error: script.fail }); return this.onend?.(); }
-        if (!words.length) return this.onend?.();
+        if (!words.length || this.stopped) return this.onend?.();
         said.push(words.shift());
         const last = !words.length;
         this.onresult?.({ results: { length: 1, 0: { isFinal: last, length: 1,
@@ -110,7 +110,7 @@ FAKE_RECOGNISER = """
       };
       setTimeout(step, 120);
     }
-    stop() {}
+    stop() { this.stopped = true; }
     abort() {}
   }
   window.SpeechRecognition = Fake;
@@ -310,3 +310,25 @@ def test_ec_63_nothing_heard_runs_no_search(server):
         page.get_by_role("button", name=MIC).click()
         page.get_by_text("Didn't catch that").wait_for(timeout=20000)
         assert page.get_by_label(SEARCH_LABEL).input_value() == ""
+
+
+def test_fr_27_the_microphone_is_red_while_recording_and_a_second_tap_stops_it(server):
+    """FR-27 — a long request, stopped early: the button turns red while it records, turns back
+    on the second tap, and the search runs on the words heard so far."""
+    words = "coca cola classic and some words nobody will hear"
+    with phone(server, voice={"heard": words}) as page:
+        page.get_by_role("button", name=MIC).click()
+        mic = page.get_by_role("button", name="Stop listening")
+        page.wait_for_function(
+            "document.querySelector('button.mic').getAttribute('aria-pressed') === 'true'"
+        )
+        red, green, blue = map(int, mic.evaluate(
+            "b => getComputedStyle(b).backgroundColor.match(/\\d+/g).slice(0, 3)"))  # fmt: skip
+        assert red > 180 and green < 100 and blue < 100, (red, green, blue)
+        page.wait_for_function(
+            "document.querySelector('input[type=search]').value.split(' ').length >= 3"
+        )
+        mic.click()
+        page.get_by_role("button", name=MIC).wait_for(timeout=5000)
+        heard = page.get_by_label(SEARCH_LABEL).input_value()
+        assert heard.startswith("coca cola classic") and heard != words
