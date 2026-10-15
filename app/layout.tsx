@@ -4,7 +4,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Find it in store",
-  description: "Where a product is in the store, whether it's in stock, and the shortest walk to it.",
+  description:
+    "Where a product is in the store, whether it's in stock, and the shortest walk to it.",
+  manifest: "/manifest.webmanifest", // NFR-12 — can be added to the home screen
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Find it", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

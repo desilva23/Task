@@ -29,6 +29,8 @@ import {
 } from "@/lib/api";
 
 const MAX_QUERY_CHARS = 1000; // NFR-06 — the server cuts here too, and says so
+const OFFLINE =
+  "No connection — a search needs signal. Suggestions and your basket still work; try again when you're back online.";
 const SAVED = "locator:session";
 
 type Asked = { query: string; answers: Record<string, string>[] };
@@ -109,17 +111,44 @@ export default function Page() {
   const [tab, setTab] = useState<Tab>("search");
   const [sheet, setSheet] = useState<"where" | "scan" | null>(null);
 
+  const [online, setOnline] = useState(true);
+
+  // NFR-12 — weak in-store signal. The worker keeps the page and the store call, network first;
+  // what this visit has already loaded is handed to it, so the first visit counts.
+  useEffect(() => {
+    const on = () => setOnline(navigator.onLine);
+    on();
+    window.addEventListener("online", on);
+    window.addEventListener("offline", on);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", on);
+    };
+  }, []);
+  const keepOffline = useCallback(() => {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(() => navigator.serviceWorker.ready)
+      .then((reg) => {
+        const loaded = performance.getEntriesByType("resource").map((r) => r.name);
+        reg.active?.postMessage({ keep: [location.href, ...loaded] });
+      })
+      .catch(() => undefined); // no worker, no offline copy — the page works as before
+  }, []);
+
   useEffect(() => {
     setBasket(load<Item[]>("basket", []).map((i) => ({ ...i, qty: i.qty || 1 })));
     getStore()
       .then((s) => {
+        keepOffline();
         setStore(s);
         const saved = load<Place | null>("place", null);
         const known = saved && s.floors.some((f) => f.spots.some((p) => p.node === saved.node));
         setPlace(known ? saved : { level: s.floors[0].level, node: s.entrance, stepFree: false });
       })
-      .catch(() => setError(APOLOGY));
-  }, []);
+      .catch(() => setError(navigator.onLine ? APOLOGY : OFFLINE));
+  }, [keepOffline]);
 
   useEffect(() => save("basket", basket), [basket]);
   useEffect(() => {
@@ -134,7 +163,7 @@ export default function Page() {
     try {
       then(await call());
     } catch {
-      setError(APOLOGY); // an apology, never a trace (AC-13)
+      setError(navigator.onLine ? APOLOGY : OFFLINE); // an apology, never a trace (AC-13)
     } finally {
       setBusy(false);
     }
@@ -207,6 +236,11 @@ export default function Page() {
           </button>
         )}
       </header>
+      {!online && (
+        <p className="offline" role="status">
+          No connection — suggestions and your basket still work.
+        </p>
+      )}
 
       <main className="pane">
         {tab === "search" && (

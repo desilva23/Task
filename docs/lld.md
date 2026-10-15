@@ -19,6 +19,7 @@ app/  components/  lib/   the Next.js page — a static export served from the C
   lib/suggest.ts          suggestions as the shopper types — the item being typed, matched (FR-28)
   components/SearchBox.tsx the search box as a combobox over those suggestions
   app/page.tsx            one screen: header, Search · Basket · Route panes, sheets (NFR-11)
+  public/sw.js            the offline layer — network first, the store call kept (NFR-12)
 api/
   index.py                FastAPI — the HTTP API, one Vercel Python function (§11)
 present/
@@ -764,6 +765,14 @@ each only when the attribute `is True` — and `qty`, summed from the terms that
 The basket is `{sku, label, qty}` in `localStorage` (kept between visits, FR-30); the start
 point stays in `sessionStorage`. Planning sends SKUs only: how many to pick up is the
 shopper's list, not a routing fact.
+
+**Offline.** `public/sw.js` (cache `find-it-v1`) is network first for every same-origin GET
+except `/api/*` other than `/api/store`: a success refreshes the cached copy, a failure falls
+back to it, and a navigation falls back to `/`. After the store loads, the page posts every
+resource it has already fetched (`performance.getEntriesByType("resource")`) so the first visit
+is kept too. A failed call while `navigator.onLine` is false shows the offline message instead
+of the apology. `public/manifest.webmanifest` and the icons (`scripts/make_icons.py`) make it
+installable.
 
 **One screen.** `html` and `body` are `overflow: hidden` and the app is a `100dvh` grid —
 header, pane, tab bar. Panes are flex columns whose growing part has `min-height: 0`, so a

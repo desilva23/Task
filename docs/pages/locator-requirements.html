@@ -62,9 +62,9 @@
   <h1>Product Finder Requirements</h1>
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
-    <span><b>Requirements</b> 30 functional · 11 non-functional</span>
+    <span><b>Requirements</b> 30 functional · 12 non-functional</span>
     <span><b>Constraints</b> 9</span>
-    <span><b>Acceptance criteria</b> 34</span>
+    <span><b>Acceptance criteria</b> 35</span>
   </div>
 </header>
 
@@ -225,6 +225,7 @@
     <tr><td class="id">NFR-09</td><td>Explainability</td><td>Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model.</td></tr>
     <tr><td class="id">NFR-10</td><td>Accessibility</td><td>Step-free routing is available, and route directions are usable by a screen reader.</td></tr>
     <tr><td class="id">NFR-11</td><td>Mobile layout</td><td>The interface is usable at phone width — roughly 390 px — in a mobile browser: <b>the page never scrolls, across or down</b> — every view fits the screen, and only a long list or the floor map moves, inside its own frame — controls reachable one-handed, and the floor map legible without pinch-zoom.</td></tr>
+    <tr><td class="id">NFR-12</td><td>Weak signal</td><td>Once opened, the page, the start-point picker, the suggestions and the basket keep working without a connection; a search that needs the server says it needs a connection rather than failing silently; and the page can be added to the phone's home screen and opened like an app. Online, the shopper always gets the current release, never a stale copy</td></tr>
   </tbody>
 </table>
 </div>
@@ -270,6 +271,7 @@
     <tr><td class="id">AC-32</td><td>FR-02</td><td>"milk bread chicken", spoken or typed with no separator, is searched as three items and the page says so, with one action to search it as one item instead; words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs" — are never split; and "coke", which names several products equally, asks which one rather than answering with one of them</td></tr>
     <tr><td class="id">AC-33</td><td>FR-29, NFR-03</td><td>Every result shows the catalogue price, and a dietary tag appears exactly when the product's recorded attribute is <code>true</code> — never for <code>false</code> or empty, and never worded as an absence</td></tr>
     <tr><td class="id">AC-34</td><td>FR-30</td><td>"2 x baked beans" adds baked beans with quantity 2; a quantity changed in the basket survives closing the page and opening it again in a new tab; "Clear basket" empties it</td></tr>
+    <tr><td class="id">AC-35</td><td>NFR-12</td><td>After one visit, with the connection cut, reloading the page shows it, says there is no connection, and still suggests products; a search then says it needs a connection; the page offers a web app manifest with home-screen icons</td></tr>
   </tbody>
 </table>
 </div>
@@ -302,7 +304,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 30 functional · 11 non-functional · 9 constraints · 34 acceptance criteria · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 30 functional · 12 non-functional · 9 constraints · 35 acceptance criteria · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>

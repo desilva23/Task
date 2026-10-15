@@ -475,6 +475,7 @@ Only a long list or the map moves, inside its own frame.
 | FR-15 · start point | In a sheet from the header: two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
 | FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate. The pin for the step on screen pulses; tapping a pin, or its line in the list, says which product it is and where, and goes to its step |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
+| NFR-12 · weak signal | A service worker keeps the page, its scripts and the store call (floors, aisles and the catalogue the suggestions match), network first: online, every request goes to the network and refreshes the copy; offline, the copy answers. Searches, scans and routes are never answered from it — they need the server, and the page says so. A web app manifest and icons let the page be added to the home screen and open full screen |
 | NFR-11 · phone width | One screen at 390 × 844: header, one pane, tab bar, and the page never scrolls. The floor plate keeps its readable size in a frame of its own, and the primary buttons sit at the bottom, within thumb reach |
 
 **Explainability is a presentation requirement too** (NFR-09). The page can
@@ -679,6 +680,8 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 
 | ID | Scenario | Behaviour |
 |---|---|---|
+| EC-72 | No signal in the store — a basement aisle, a dead spot | The page, the start point, the suggestions and the basket still work from what the last visit kept; a search, scan or route says it needs a connection, never an apology or a blank. A line under the header says the phone is offline |
+| EC-73 | A new release while a copy is kept on the phone | Online, the page is always fetched fresh — the kept copy answers only when the network does not, so nobody is stuck on an old release |
 | EC-71 | A product whose dietary attributes are not recorded | No tag for them. The page never shows "not vegan" or "not gluten free" — an empty attribute is unknown, not no (NFR-03) |
 
 ## 7. Onboarding a new store

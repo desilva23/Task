@@ -171,6 +171,7 @@ store works with no code changes.
 | NFR-09 | Explainability | Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model. |
 | NFR-10 | Accessibility | Step-free routing is available, and route directions are usable by a screen reader. |
 | NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: **the page never scrolls, across or down** — every view fits the screen, and only a long list or the floor map moves, inside its own frame — controls reachable one-handed, and the floor map legible without pinch-zoom. |
+| NFR-12 | Weak signal | Once opened, the page, the start-point picker, the suggestions and the basket keep working without a connection; a search that needs the server says it needs a connection rather than failing silently; and the page can be added to the phone's home screen and opened like an app. Online, the shopper always gets the current release, never a stale copy |
 
 ---
 
@@ -215,6 +216,7 @@ finished being written.
 | AC-32 | FR-02 | "milk bread chicken", spoken or typed with no separator, is searched as three items and the page says so, with one action to search it as one item instead; words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs" — are never split; and "coke", which names several products equally, asks which one rather than answering with one of them |
 | AC-33 | FR-29, NFR-03 | Every result shows the catalogue price, and a dietary tag appears exactly when the product's recorded attribute is `true` — never for `false` or empty, and never worded as an absence |
 | AC-34 | FR-30 | "2 x baked beans" adds baked beans with quantity 2; a quantity changed in the basket survives closing the page and opening it again in a new tab; "Clear basket" empties it |
+| AC-35 | NFR-12 | After one visit, with the connection cut, reloading the page shows it, says there is no connection, and still suggests products; a search then says it needs a connection; the page offers a web app manifest with home-screen icons |
 
 ---
 

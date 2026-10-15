@@ -448,3 +448,32 @@ def test_ac_34_fr_30_the_basket_keeps_quantities_between_visits_until_cleared(se
         later.get_by_role("button", name="Clear basket").click()
         later.get_by_role("heading", name="Basket (0)").wait_for(timeout=5000)
         assert no_page_scroll(later)
+
+
+def test_ac_35_nfr_12_ec_72_with_no_signal_the_page_and_suggestions_still_work(server):
+    with phone(server) as page:
+        kept = "caches.open('find-it-v1').then(c => c.match('/api/store')).then(r => !!r)"
+        deadline = time.time() + 20
+        while not page.evaluate(kept):  # the first visit has been kept
+            assert time.time() < deadline, "the store call was never kept for offline use"
+            page.wait_for_timeout(250)
+        page.context.set_offline(True)
+        page.reload()
+        box = page.get_by_label(SEARCH_LABEL)
+        box.wait_for(timeout=20000)
+        page.get_by_text("No connection — suggestions and your basket still work.").wait_for()
+        box.press_sequentially("bre")
+        assert any("Bread" in s for s in suggestions(page))
+        box.fill("bananas")
+        box.press("Enter")
+        page.get_by_text("No connection — a search needs signal.").wait_for(timeout=10000)
+        assert no_page_scroll(page)
+        page.context.set_offline(False)
+
+
+def test_nfr_12_the_page_can_be_added_to_the_home_screen(server):
+    with phone(server) as page:
+        href = page.locator("link[rel=manifest]").get_attribute("href")
+        manifest = page.evaluate(f"fetch('{href}').then(r => r.json())")
+        assert manifest["display"] == "standalone" and manifest["start_url"] == "/"
+        assert {"192x192", "512x512"} <= {i["sizes"] for i in manifest["icons"]}
