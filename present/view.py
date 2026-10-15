@@ -27,6 +27,26 @@ def start_options(services) -> dict[int, list[tuple[str, str]]]:
     return options
 
 
+def suggestions(services) -> list[dict]:
+    """FR-28 — what the search box can suggest: every product this store carries, by the label
+    that searches straight to it, with the words it answers to and whether it is on the shelf.
+    Sent once with the store; the phone matches it as the shopper types, so no keystroke reaches
+    the server. A product not carried here is never suggested (EC-04 stays a search answer)."""
+    out = []
+    for sku, p in services.store.products.items():
+        pos = services.stock.positions([sku])[sku]
+        if not pos.ranged:
+            continue
+        out.append({
+            "sku": sku,
+            "label": product_label(services, sku),
+            "terms": [p.name, p.brand, *p.synonyms],
+            "in_stock": pos.shelf_qty > 0,
+            "popularity": p.popularity,
+        })  # fmt: skip
+    return sorted(out, key=lambda r: (-r["popularity"], r["label"]))
+
+
 def floor_names(services) -> dict[int, str]:
     return {n.level: n.floor_name or f"Floor {n.level}" for n in services.store.nodes.values()}
 

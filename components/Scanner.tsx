@@ -1,7 +1,7 @@
 "use client";
 
-// FR-03 — the barcode scan. The camera starts only when the shopper turns the scan on, so nobody
-// is asked for camera permission unless they want to scan. Frames are decoded on the phone; the
+// FR-03 — the barcode scan, in its own sheet. The camera starts only when the shopper opens the
+// sheet with "Scan a barcode", so nobody is asked for camera permission unless they want to scan. Frames are decoded on the phone; the
 // camera stops at the first single read, so a code is looked up once (EC-54). The typed digits
 // beside it are the same lookup when the camera is declined, missing or cannot start (EC-48).
 
@@ -13,15 +13,20 @@ const FRAME_MS = 250;
 const HINT_AFTER_MS = 6000; // EC-49 — say what to try once nothing has been read for a while
 const MAX_SIDE = 1280;
 
-export default function Scanner({ onCode, busy }: { onCode: (code: string) => void; busy: boolean }) {
-  const [on, setOn] = useState(false);
-  const [looking, setLooking] = useState(false);
+export default function Scanner({
+  onCode,
+  busy,
+}: {
+  onCode: (code: string) => void;
+  busy: boolean;
+}) {
+  const [looking, setLooking] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
   const [digits, setDigits] = useState("");
   const video = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!on || !looking) return;
+    if (!looking) return;
     let stream: MediaStream | null = null;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
@@ -89,13 +94,7 @@ export default function Scanner({ onCode, busy }: { onCode: (code: string) => vo
     })();
 
     return stop;
-  }, [on, looking, onCode]);
-
-  const toggle = (next: boolean) => {
-    setOn(next);
-    setLooking(next);
-    setMessage(null);
-  };
+  }, [looking, onCode]);
 
   const submitDigits = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,52 +103,46 @@ export default function Scanner({ onCode, busy }: { onCode: (code: string) => vo
 
   return (
     <section className="scan" aria-label="Barcode scan">
-      <label className="switch">
-        <input type="checkbox" checked={on} onChange={(e) => toggle(e.target.checked)} />
-        <span>Scan a barcode</span>
-      </label>
-      {on && (
-        <div className="scan-body">
-          {looking ? (
-            <div className="viewfinder">
-              <video ref={video} playsInline muted aria-label="Camera — point it at the barcode" />
-              <span className="guide" aria-hidden="true" />
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="secondary"
-              onClick={() => {
-                setMessage(null);
-                setLooking(true);
-              }}
-            >
-              Scan another barcode
-            </button>
-          )}
-          {message && (
-            <p className="callout warn" role="status">
-              {message}
-            </p>
-          )}
-          <form onSubmit={submitDigits} className="row">
-            <label className="field grow">
-              <span>Or type the numbers under the barcode</span>
-              <input
-                inputMode="numeric"
-                autoComplete="off"
-                maxLength={20}
-                placeholder="13 digits"
-                value={digits}
-                onChange={(e) => setDigits(e.target.value)}
-              />
-            </label>
-            <button type="submit" disabled={busy}>
-              Look up
-            </button>
-          </form>
-        </div>
-      )}
+      <div className="scan-body">
+        {looking ? (
+          <div className="viewfinder">
+            <video ref={video} playsInline muted aria-label="Camera — point it at the barcode" />
+            <span className="guide" aria-hidden="true" />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="secondary"
+            onClick={() => {
+              setMessage(null);
+              setLooking(true);
+            }}
+          >
+            Scan another barcode
+          </button>
+        )}
+        {message && (
+          <p className="callout warn" role="status">
+            {message}
+          </p>
+        )}
+        <form onSubmit={submitDigits} className="row">
+          <label className="field grow">
+            <span>Or type the numbers under the barcode</span>
+            <input
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={20}
+              placeholder="13 digits"
+              value={digits}
+              onChange={(e) => setDigits(e.target.value)}
+            />
+          </label>
+          <button type="submit" disabled={busy}>
+            Look up
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

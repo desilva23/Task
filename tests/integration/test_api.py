@@ -137,3 +137,25 @@ def test_ec_17_a_route_is_never_planned_to_an_empty_shelf(api):
     sold_out = scan(api, diet)["unavailable"][0]["sku"]
     planned = route(api, [sold_out])
     assert planned["route"] is None or planned["route"]["kind"] == "none"
+
+
+def test_ac_31_fr_28_every_suggestion_searches_straight_to_its_product(api):
+    """A suggestion's label is what the box receives, so each one must find exactly that product
+    with no question — checked for every product the store sells."""
+    products = api.get("/api/store").json()["products"]
+    ranged = [r for r in csv.DictReader((REPO / "data/SBY-DEMO-001/stock.csv").open())
+              if r["ranged"] == "true"]  # fmt: skip
+    assert len(products) == len(ranged) > 100
+    for p in products:
+        view = search(api, p["label"])
+        found = [r["sku"] for r in view["available"] + view["unavailable"]]
+        assert view["pending"] is None and found == [p["sku"]], p["label"]
+        assert p["in_stock"] == bool(view["available"]), p["label"]  # the mark matches the answer
+
+
+def test_ec_66_a_product_not_sold_here_is_never_suggested(api):
+    products = api.get("/api/store").json()["products"]
+    labels = " ".join(p["label"] for p in products)
+    assert "Pepsi" not in labels and "Diet Coke" in labels  # not ranged vs sold out
+    diet = next(p for p in products if p["label"].startswith("Diet Coke"))
+    assert diet["in_stock"] is False and "Diet Coke" in diet["terms"]

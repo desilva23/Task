@@ -16,6 +16,9 @@ app/  components/  lib/   the Next.js page — a static export served from the C
   components/Scanner.tsx  the camera behind a switch; typed digits beside it (FR-03)
   lib/voice.ts            the browser's speech recogniser, found and read; failure wording (§11)
   components/Voice.tsx    the microphone button in the search box (FR-27)
+  lib/suggest.ts          suggestions as the shopper types — the item being typed, matched (FR-28)
+  components/SearchBox.tsx the search box as a combobox over those suggestions
+  app/page.tsx            one screen: header, Search · Basket · Route panes, sheets (NFR-11)
 api/
   index.py                FastAPI — the HTTP API, one Vercel Python function (§11)
 present/
@@ -683,7 +686,7 @@ them, four calls (C-03):
 
 | Call | Body | Does |
 |---|---|---|
-| `GET /api/store` | — | Floors and the spots on each, for the position picker (FR-15) |
+| `GET /api/store` | — | Floors and the spots on each, for the position picker (FR-15); every product sold here as `{sku, label, terms, in_stock, popularity}` for suggestions (FR-28) |
 | `POST /api/search` | `query`, `answers[]`, `start`, `step_free` | `Journey.answer` — the search, resumed with each round's answer (FR-05) |
 | `POST /api/scan` | `code`, `start`, `step_free` | `Journey.run_scan` — one exact product (FR-03) |
 | `POST /api/route` | `skus[]`, `start`, `step_free` | `Journey.plan_route` — the basket, routed (FR-16, FR-23) |
@@ -732,6 +735,23 @@ error: `no-speech` → not heard (EC-63); `not-allowed`, `service-not-allowed`,
 `audio-capture` → microphone unavailable (EC-61); anything else → voice not
 working; `aborted` (the page closing) → nothing. An end with no words and no
 error is not heard too. No API call, no server code and no model call was added.
+
+**Suggestions are matched on the phone.** `present.view.suggestions` lists every ranged
+product with its label (`name size`, which searches straight to it — tested for every product),
+its terms (name, brand, each synonym), whether it is on the shelf, and its popularity.
+`lib/suggest.ts` takes the item being typed — the text after the last `,` `;` newline `+` or
+` and `, the server's own separators — and keeps products where every typed word starts some
+word of the label or terms. Order: a label or term that starts with the typed phrase, then
+labels naming every typed word, then in stock, then popularity; at most six, from two
+characters. Choosing one replaces that item with the label and searches.
+
+**One screen.** `html` and `body` are `overflow: hidden` and the app is a `100dvh` grid —
+header, pane, tab bar. Panes are flex columns whose growing part has `min-height: 0`, so a
+long result list or basket scrolls inside itself; the floor plate keeps its width in a frame
+that scrolls, centred on the step's rack (`[data-node="F1-A03-R01"]`, read from the step's
+"floor, aisle, rack"), else the floor's first pick. The directions are stepped through, each
+step showing the floor it names; the full list stays in the page, visually hidden, for a
+screen reader (NFR-10).
 
 **Failures are an apology.** An unhandled error returns `500` with one sentence
 and is logged; a malformed request returns `422` without echoing it; the schema
@@ -870,7 +890,7 @@ thread before answering (§11, EC-34).
 | Unit · search | Ranking precedence | Unstocked never outranks stocked · exact size wins · typo resolves via fuzzy · category query detected |
 | Unit · barcode | §8.5 | Valid EAN-13, EAN-8, UPC-A · failed check digit · swapped digits · wrong length · exact lookup |
 | Integration · API | §11 | Every call's shape · a clarification answered by resending · an answer not offered is asked again · no thread survives a request · apology on failure |
-| Browser · 390 px | §11, AC-15, AC-28, AC-30 | The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text · a scripted recogniser: spoken search found, microphone declined, nothing heard, no recogniser |
+| Browser · 390 px | §11, AC-15, AC-28, AC-30, AC-31 | The full journey · a live camera scan from Chromium's fake camera · a QR code ignored · two codes refused · camera declined, typed digits found · typed markup stays text · a scripted recogniser: spoken search found, microphone declined, nothing heard, no recogniser |
 | Unit · routing | Matrix and reconstruction | Same-node route returns `[u]` · known-distance pair · NO_PATH raises · step-free matrix differs where it should |
 | Unit · TSP | Open-path correctness | Single stop returns unchanged · 2-opt never lengthens a route · chilled last · ends at a till |
 | Unit · grounding | §9 guardrails | Out-of-set SKU raises `GroundingError` · `null` dietary flag never satisfies a requirement |

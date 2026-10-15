@@ -57,25 +57,108 @@ body {
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-main {
-  max-width: 40rem;
+html,
+body {
+  height: 100%;
+  overflow: hidden; /* NFR-11 — the page never scrolls; each pane fits the screen */
+}
+
+/* One screen: header, the pane, the tab bar. 100dvh follows the phone's toolbars as they show. */
+.app {
+  height: 100dvh;
+  max-width: 34rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 4rem;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.bar {
   display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--line);
 }
 
 h1 {
-  font-size: 2.25rem;
-  line-height: 1.15;
-  margin: 1rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.2;
+  margin: 0;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 h2 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   margin: 0;
+}
+
+button.place {
+  min-height: 2.4rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 1.5rem;
+  background: var(--accent-soft);
+  border-color: transparent;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.pane {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pane-body {
+  height: 100%;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.tabbar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabbar button {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--muted);
+  min-height: 3.4rem;
+  font-weight: 600;
+}
+
+.tabbar button.on {
+  color: var(--accent);
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+
+.tabbar .dot {
+  position: absolute;
+  top: 0.8rem;
+  margin-left: 0.25rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.loading {
+  position: fixed;
+  inset: 45% 0 auto;
+  text-align: center;
 }
 
 section,
@@ -370,4 +453,267 @@ button.mic.listening {
   button.mic.listening {
     animation: none;
   }
+}
+
+/* ── the search pane ─────────────────────────────────────────────────────────────────────── */
+
+.search-pane .search {
+  gap: 0.5rem;
+  flex: none;
+}
+
+.combo {
+  position: relative;
+}
+
+.suggestions {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 0.3rem;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.6rem;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.14);
+}
+
+.suggestions li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.suggestions li.on,
+.suggestions li:hover {
+  background: var(--accent-soft);
+}
+
+.badge {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 1rem;
+  align-self: flex-start;
+}
+
+.badge.ok {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.badge.out {
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+}
+
+.badge.note {
+  background: var(--line);
+  color: var(--fg);
+}
+
+.answer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  margin: auto 0;
+  color: var(--muted);
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.results {
+  flex: 1;
+  min-height: 0;
+  gap: 0.5rem;
+}
+
+.results-list {
+  gap: 0.5rem;
+}
+
+.results-list li.result {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.results-list li.result p {
+  margin: 0;
+}
+
+.results-list li.result button.link {
+  min-height: 2.2rem;
+  padding: 0;
+}
+
+.clarify {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+button.secondary {
+  background: var(--surface);
+}
+
+/* ── basket and route ────────────────────────────────────────────────────────────────────── */
+
+.lines {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.lines li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lines button {
+  flex: none;
+  min-width: 2.9rem;
+  padding: 0;
+}
+
+.basket .empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.route-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.route-head .tab {
+  min-height: 2.3rem;
+  padding: 0.2rem 0.7rem;
+}
+
+/* The map in its own frame: it keeps a readable size and is dragged, like any map. */
+.frame {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.directions.frame {
+  padding: 0.5rem 0.5rem 0.5rem 1.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: var(--surface);
+}
+
+.directions li.on {
+  font-weight: 700;
+}
+
+.step {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.step p {
+  margin: 0;
+}
+
+.step .now {
+  font-weight: 600;
+  min-height: 3em;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── sheets over the pane: where you are, and the barcode camera ─────────────────────────── */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: rgb(0 0 0 / 0.35);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 34rem;
+  max-height: 92dvh;
+  overflow-y: auto;
+  background: var(--bg);
+  border-radius: 1rem 1rem 0 0;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sheet-head button {
+  min-width: 2.9rem;
+  padding: 0;
+}
+
+.sheet .viewfinder {
+  aspect-ratio: 4 / 3;
+  max-height: 45dvh;
 }

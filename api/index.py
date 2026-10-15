@@ -29,7 +29,7 @@ from graph.journey import Journey  # noqa: E402
 from graph.model import NoModel  # noqa: E402
 from graph.model_factory import make_model  # noqa: E402
 from graph.services import Services  # noqa: E402
-from present.view import floor_names, page_view, start_options  # noqa: E402
+from present.view import floor_names, page_view, start_options, suggestions  # noqa: E402
 from validation import load_store  # noqa: E402
 
 APOLOGY = "Something went wrong on our side — please try your search again."
@@ -104,8 +104,9 @@ def _journey_run(request: Request, response: Response, run) -> dict:
 
 @app.get("/api/store")
 def store() -> dict:
-    """What the position picker offers (FR-15). Built from the map, so another store's folder
-    offers its own floors and aisles with no code change (FR-25)."""
+    """What the position picker offers (FR-15), and the catalogue the search box suggests from
+    (FR-28). Built from the store's files, so another store's folder offers its own floors, aisles
+    and products with no code change (FR-25)."""
     svc, names = services(), floor_names(services())
     return {
         "entrance": svc.engine.graph.entrance,
@@ -117,6 +118,7 @@ def store() -> dict:
             }
             for level, spots in start_options(svc).items()
         ],  # fmt: skip
+        "products": suggestions(svc),  # FR-28 — matched on the phone as the shopper types
     }
 
 

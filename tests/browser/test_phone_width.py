@@ -2,8 +2,8 @@
 
 Serves the built Next.js page and the API from one local process with the model off (or targets
 a deployed site through LOCATOR_URL), drives a three-floor journey at 390 × 844, and measures:
-no horizontal page scroll at any step, the floor plate within the viewport, and route markers
-and labels big enough to read without zooming. The scan tests feed Chromium's fake camera a
+the page never scrolls, across or down, at any step; the floor plate fills the width; and route
+markers and labels are big enough to read without zooming. The scan tests feed Chromium's fake camera a
 frame showing a barcode — the real path from camera to product, decoded on the phone. The voice
 tests stand a scripted recogniser in for the browser's own, which a headless browser cannot run.
 """
@@ -142,32 +142,52 @@ def phone(
         page.on("dialog", lambda d: (page.dialogs.append(d.message), d.dismiss()))
         page.goto(server)
         page.get_by_label(SEARCH_LABEL).wait_for(timeout=20000)
-        page.get_by_label("Which floor are you on?").wait_for(timeout=20000)
+        page.get_by_role("button", name="Where you are").wait_for(timeout=20000)
         yield page
         browser.close()
 
 
-def no_horizontal_scroll(page) -> bool:
-    return page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+def no_page_scroll(page) -> bool:
+    """NFR-11 — the page fits the screen both ways; only a list or the map moves, in its frame."""
+    return page.evaluate(
+        "(() => { const d = document.documentElement, b = document.body;"
+        " return d.scrollWidth <= innerWidth && d.scrollHeight <= innerHeight"
+        " && b.scrollHeight <= innerHeight; })()"
+    )
 
 
 def search(page, query):
-    page.get_by_label(SEARCH_LABEL).fill(query)
-    page.get_by_role("button", name="Search", exact=True).click()
+    box = page.get_by_label(SEARCH_LABEL)
+    box.fill(query)
+    box.press("Enter")  # Enter searches what was typed; the suggestion list may cover the button
+
+
+def set_place(page, level: str, spot: str | None = None, step_free: bool | None = None):
+    page.get_by_role("button", name="Where you are").click()
+    page.get_by_label("Which floor are you on?").select_option(level)
+    if spot:
+        page.get_by_label("Where on that floor?").select_option(label=spot)
+    if step_free is not None:
+        page.get_by_label("Step-free route (lifts, no stairs)").set_checked(step_free)
+    page.get_by_role("button", name="Done").click()
 
 
 def test_ac_15_nfr_11_the_journey_fits_a_phone(server):
     with phone(server) as page:
-        assert no_horizontal_scroll(page), "landing page scrolls sideways"
+        assert no_page_scroll(page), "landing page scrolls"
         search(page, "everyday shampoo, baked beans, bananas, salmon fillet")
         page.get_by_role("button", name="Add 4 available to basket").wait_for(timeout=20000)
-        assert no_horizontal_scroll(page), "results scroll sideways"
+        assert no_page_scroll(page), "results scroll the page"
 
         page.get_by_role("button", name="Add 4 available to basket").click()
+        page.get_by_role("tab", name="Basket (4)").click()
+        assert no_page_scroll(page), "the basket scrolls the page"
         page.get_by_role("button", name="Plan my route").click()
         plate = page.locator("svg[data-floor]").first
         plate.wait_for(timeout=20000)
-        assert no_horizontal_scroll(page), "route view scrolls sideways"
+        assert no_page_scroll(page), "the route scrolls the page"
+        page.get_by_role("button", name="Next", exact=True).click()
+        assert no_page_scroll(page), "a step scrolls the page"
 
         box = plate.bounding_box()
         assert box["width"] <= WIDTH and box["width"] >= WIDTH * 0.8, box
@@ -209,6 +229,7 @@ def test_fr_05_a_choice_is_asked_and_answered_in_the_browser(server):
         page.get_by_text("Which did you mean?").wait_for(timeout=20000)
         page.get_by_role("radio").nth(1).check()
         page.get_by_role("button", name="Continue").click()
+        page.get_by_role("button", name="Show route").click(timeout=20000)
         page.get_by_role("heading", name="Your route").wait_for(timeout=20000)
         assert page.get_by_text("Which did you mean?").count() == 0
 
@@ -219,11 +240,11 @@ def test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width(server, tmp_
     camera = y4m(frame_of(barcode_image(barcode("Coca-Cola Classic"))), tmp_path / "coke.y4m")
     with phone(server, camera) as page:
         assert page.locator("video").count() == 0, "the camera started before it was asked for"
-        page.get_by_text("Scan a barcode").click()
+        page.get_by_role("button", name="Scan a barcode").click()
         page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
         assert page.locator("video").count() == 0, "the camera kept running after the read"
         assert page.get_by_role("button", name="Add 1 available to basket").count() == 1
-        assert no_horizontal_scroll(page), "the scan scrolls sideways"
+        assert no_page_scroll(page), "the scan scrolls the page"
         if os.environ.get("LOCATOR_SCREENSHOTS"):
             page.screenshot(path=str(REPO / "specs" / "011-nextjs-vercel" / "phone-390-scan.png"),
                             full_page=True)  # fmt: skip
@@ -232,7 +253,7 @@ def test_ac_28_fr_03_a_camera_scan_finds_the_product_at_phone_width(server, tmp_
 def test_ec_51_ec_49_a_qr_code_is_not_read_and_the_page_says_what_to_try(server, tmp_path):
     qr = barcode_image(barcode("Coca-Cola Classic"), zxingcpp.BarcodeFormat.QRCode, scale=8)
     with phone(server, y4m(frame_of(qr), tmp_path / "qr.y4m")) as page:
-        page.get_by_text("Scan a barcode").click()
+        page.get_by_role("button", name="Scan a barcode").click()
         page.get_by_text("No barcode read yet").wait_for(timeout=20000)
         assert page.get_by_text("In stock").count() == 0
 
@@ -241,7 +262,7 @@ def test_ec_53_two_barcodes_in_view_are_never_chosen_between(server, tmp_path):
     two = frame_of(barcode_image(barcode("Coca-Cola Classic"), scale=2),
                    barcode_image(barcode("Diet Coke"), scale=2), size=(800, 480))  # fmt: skip
     with phone(server, y4m(two, tmp_path / "two.y4m")) as page:
-        page.get_by_text("Scan a barcode").click()
+        page.get_by_role("button", name="Scan a barcode").click()
         page.get_by_text("more than one barcode").wait_for(timeout=20000)
         assert (
             page.get_by_text("In stock").count() == 0 and page.get_by_text("Sold out").count() == 0
@@ -250,7 +271,7 @@ def test_ec_53_two_barcodes_in_view_are_never_chosen_between(server, tmp_path):
 
 def test_ec_48_ac_28_camera_declined_typed_digits_still_find_it(server):
     with phone(server, camera_allowed=False) as page:
-        page.get_by_text("Scan a barcode").click()
+        page.get_by_role("button", name="Scan a barcode").click()
         page.get_by_text("The camera isn't available here").wait_for(timeout=20000)
         page.get_by_label("Or type the numbers under the barcode").fill(
             barcode("Coca-Cola Classic")
@@ -261,13 +282,14 @@ def test_ec_48_ac_28_camera_declined_typed_digits_still_find_it(server):
 
 def test_ec_41_a_refresh_keeps_the_basket_and_the_start_point(server):
     with phone(server) as page:
-        page.get_by_label("Which floor are you on?").select_option("1")
+        set_place(page, "1")
         search(page, "bananas, baked beans")
         page.get_by_role("button", name="Add 2 available to basket").click()
-        page.get_by_role("heading", name="Basket (2)").wait_for(timeout=5000)
+        page.get_by_role("tab", name="Basket (2)").wait_for(timeout=5000)
         page.reload()
-        page.get_by_role("heading", name="Basket (2)").wait_for(timeout=20000)
-        assert page.get_by_label("Which floor are you on?").input_value() == "1"
+        page.get_by_role("tab", name="Basket (2)").click(timeout=20000)
+        page.get_by_role("heading", name="Basket (2)").wait_for(timeout=5000)
+        assert "Floor 1" in page.get_by_role("button", name="Where you are").inner_text()
 
 
 MIC = "Speak your search"
@@ -281,9 +303,9 @@ def test_ac_30_fr_27_ec_64_a_spoken_request_runs_the_search_it_heard(server):
         page.get_by_text("Classic 500ml — In stock").wait_for(timeout=20000)
         assert page.get_by_label(SEARCH_LABEL).input_value() == "coca cola classic"
         assert page.evaluate("window.__voice") == {"lang": "en-GB", "starts": 1}
-        page.get_by_role("heading", name="Your route").wait_for(timeout=20000)  # as typed: routed
+        page.get_by_role("button", name="Show route").wait_for(timeout=20000)  # as typed: routed
         assert page.get_by_text("Didn't catch that").count() == 0
-        assert no_horizontal_scroll(page), "the microphone scrolls sideways"
+        assert no_page_scroll(page), "the microphone scrolls the page"
 
 
 def test_ec_62_ac_30_no_recogniser_no_microphone_and_typing_still_works(server):
@@ -332,3 +354,49 @@ def test_fr_27_the_microphone_is_red_while_recording_and_a_second_tap_stops_it(s
         page.get_by_role("button", name=MIC).wait_for(timeout=5000)
         heard = page.get_by_label(SEARCH_LABEL).input_value()
         assert heard.startswith("coca cola classic") and heard != words
+
+
+def suggestions(page) -> list[str]:
+    page.get_by_role("listbox", name="Suggestions").wait_for(timeout=5000)
+    return page.get_by_role("option").all_inner_texts()
+
+
+def test_ac_31_fr_28_typing_suggests_and_a_suggestion_finds_that_product(server):
+    with phone(server) as page:
+        box = page.get_by_label(SEARCH_LABEL)
+        box.press_sequentially("bre")
+        shown = suggestions(page)
+        assert 1 <= len(shown) <= 6 and all("Bread" in s or "Loaf" in s for s in shown[:3]), shown
+        assert no_page_scroll(page), "the suggestions scroll the page"
+        page.get_by_role("option", name="White Bread Medium Sliced 800g").click()
+        page.get_by_text("White Bread Medium Sliced 800g — In stock").wait_for(timeout=20000)
+        assert page.get_by_text("Which did you mean?").count() == 0
+        assert box.input_value() == "White Bread Medium Sliced 800g"
+
+
+def test_ec_67_ac_31_after_a_comma_only_the_item_being_typed_is_replaced(server):
+    with phone(server) as page:
+        box = page.get_by_label(SEARCH_LABEL)
+        box.press_sequentially("bananas, baked be")
+        first = suggestions(page)[0]
+        box.press("ArrowDown")
+        box.press("Enter")  # the highlighted suggestion, not the half-typed word
+        assert box.input_value() == f"bananas, {first.split('Sold out')[0].strip()}"
+        page.get_by_role("button", name="Add 2 available to basket").wait_for(timeout=20000)
+
+
+def test_ec_65_ec_66_no_list_for_one_letter_or_a_product_not_sold_here(server):
+    with phone(server) as page:
+        box = page.get_by_label(SEARCH_LABEL)
+        box.press_sequentially("b")
+        assert page.get_by_role("listbox").count() == 0
+        box.fill("")
+        box.press_sequentially("pepsi")  # in the catalogue, not sold at this branch
+        page.wait_for_timeout(300)
+        assert page.get_by_role("listbox").count() == 0
+        box.fill("")
+        box.press_sequentially("diet co")
+        assert any("Diet Coke" in s and "Sold out" in s for s in suggestions(page))
+        box.fill("pepsi")
+        box.press("Enter")  # typing on and searching still works: "not sold here", as before
+        page.get_by_text("Not sold at this store").wait_for(timeout=20000)

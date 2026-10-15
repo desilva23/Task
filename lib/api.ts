@@ -3,7 +3,14 @@
 
 export type Spot = { label: string; node: string };
 export type Floor = { level: number; name: string; spots: Spot[] };
-export type Store = { entrance: string; floors: Floor[] };
+export type Suggestion = {
+  sku: string;
+  label: string; // searches straight to this product
+  terms: string[]; // name, brand and each synonym — what it answers to
+  in_stock: boolean;
+  popularity: number;
+};
+export type Store = { entrance: string; floors: Floor[]; products: Suggestion[] };
 
 export type Option = { sku: string; label: string };
 export type Question = { index: string; term: string; options: Option[] };

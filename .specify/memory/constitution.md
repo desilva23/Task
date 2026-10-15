@@ -143,6 +143,7 @@ A lower document that disagrees with a higher one is wrong.
 | 10 | Next.js page and Vercel deployment — C-03 and C-07 changed by the owner | AC-15, AC-28, AC-13 |
 | 11 | Stock alert emails to the store manager | AC-29 |
 | 12 | Voice input — FR-27, brought into scope by the owner | AC-30 |
+| 13 | Suggestions as you type (FR-28) and a one-screen page (NFR-11) — reviewers' input | AC-31, AC-15 |
 
 **Gate.** A phase is complete only when all of its traced tests pass, `ruff` is clean, the
 traceability matrix is updated, and the owner has reviewed it. The next phase MUST NOT start
@@ -162,4 +163,4 @@ Versioning is semantic: MAJOR for removing or redefining a principle, MINOR for 
 materially expanding guidance, PATCH for wording. Every `/speckit-plan` MUST record a Constitution
 Check, and every gate review MUST confirm compliance with Principles I–VI before approval.
 
-**Version**: 1.6.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-15
+**Version**: 1.7.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-16

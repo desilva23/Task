@@ -1,7 +1,8 @@
 "use client";
 
 // FR-05 and FR-21 to FR-24 — the clarification, results grouped by availability, and the
-// basket gate: one action moves only the available items.
+// basket gate: one action moves only the available items. On one screen (NFR-11): results are
+// short cards in the pane, and a question is asked one at a time.
 
 import { useState } from "react";
 
@@ -19,48 +20,63 @@ export function Clarify({
   const [picks, setPicks] = useState<Record<string, string>>(() =>
     Object.fromEntries(questions.map((q) => [q.index, q.options[0]?.sku ?? ""])),
   );
+  const [at, setAt] = useState(0);
+  const q = questions[at];
+  const last = at === questions.length - 1;
   return (
     <form
-      className="card"
+      className="card clarify"
       onSubmit={(e) => {
         e.preventDefault();
-        onAnswer(picks);
+        if (last) onAnswer(picks);
+        else setAt(at + 1);
       }}
     >
       <h2>Which did you mean?</h2>
-      {questions.map((q) => (
-        <fieldset key={q.index}>
-          <legend>“{q.term}”</legend>
-          {q.options.map((o) => (
-            <label key={o.sku} className="choice">
-              <input
-                type="radio"
-                name={`choose-${q.index}`}
-                value={o.sku}
-                checked={picks[q.index] === o.sku}
-                onChange={() => setPicks({ ...picks, [q.index]: o.sku })}
-              />
-              <span>{o.label}</span>
-            </label>
-          ))}
-        </fieldset>
-      ))}
-      <button type="submit" className="primary wide" disabled={busy}>
-        Continue
-      </button>
+      <fieldset key={q.index}>
+        <legend>
+          “{q.term}”
+          {questions.length > 1 && (
+            <span className="caption">
+              {" "}
+              · {at + 1} of {questions.length}
+            </span>
+          )}
+        </legend>
+        {q.options.map((o) => (
+          <label key={o.sku} className="choice">
+            <input
+              type="radio"
+              name={`choose-${q.index}`}
+              value={o.sku}
+              checked={picks[q.index] === o.sku}
+              onChange={() => setPicks({ ...picks, [q.index]: o.sku })}
+            />
+            <span>{o.label}</span>
+          </label>
+        ))}
+      </fieldset>
+      <div className="row">
+        {at > 0 && (
+          <button type="button" className="secondary" onClick={() => setAt(at - 1)}>
+            Back
+          </button>
+        )}
+        <button type="submit" className="primary grow" disabled={busy}>
+          {last ? "Continue" : "Next"}
+        </button>
+      </div>
     </form>
   );
 }
 
-function Statements({ rows }: { rows: Row[] }) {
-  return (
-    <ul className="statements">
-      {rows.map((r) => (
-        <li key={r.sku}>{r.statement}</li>
-      ))}
-    </ul>
-  );
-}
+const BADGE: Record<string, [string, string]> = {
+  in_stock: ["In stock", "ok"],
+  sold_out: ["Sold out", "out"],
+  not_ranged: ["Not sold here", "out"],
+};
+
+type Line = { key: string; row?: Row; note?: string };
 
 export default function Results({
   view,
@@ -71,52 +87,33 @@ export default function Results({
   basket: string[];
   onAdd: (rows: Row[]) => void;
 }) {
-  const ready = view.available.filter((r) => view.addable.includes(r.sku) && !basket.includes(r.sku));
+  const lines: Line[] = [
+    ...view.available.map((row) => ({ key: row.sku, row })),
+    ...view.unavailable.map((row) => ({ key: row.sku, row })),
+    ...view.notes.map((note) => ({ key: note, note })),
+  ];
+  if (!lines.length) return null;
+  // Available first (FR-21), each a short card with its state up front. A search of a handful
+  // of products fits the pane; a longer list scrolls inside it, never the page.
   return (
-    <section className="results" aria-live="polite">
-      {view.available.length > 0 && (
-        <>
-          <h2>Available</h2>
-          <Statements rows={view.available} />
-        </>
-      )}
-      {view.unavailable.length > 0 && (
-        <>
-          <h2>Not available</h2>
-          <ul className="statements">
-            {view.unavailable.map((r) => (
-              <li key={r.sku}>
-                {r.statement}
-                {!basket.includes(r.sku) && (
-                  <button type="button" className="link" onClick={() => onAdd([r])}>
-                    Add {r.label} anyway (it won&apos;t be routed)
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {view.notes.length > 0 && (
-        <ul className="statements notes">
-          {view.notes.map((n) => (
-            <li key={n}>{n}</li>
-          ))}
-        </ul>
-      )}
-      {view.offer_add &&
-        (ready.length > 0 || view.available.length === 0 ? (
-          <button
-            type="button"
-            className="primary wide"
-            disabled={ready.length === 0} // EC-15: nothing available, nothing to add
-            onClick={() => onAdd(ready)}
-          >
-            Add {ready.length} available to basket
-          </button>
-        ) : (
-          <p className="caption">Everything available is in your basket.</p>
-        ))}
+    <section className="results" aria-label="Results" aria-live="polite">
+      <ul className="lines results-list">
+        {lines.map(({ key, row, note }) => {
+          const [badge, tone] = row ? (BADGE[row.availability] ?? ["", ""]) : ["Not found", "note"];
+          const unavailable = row && !view.available.includes(row);
+          return (
+            <li key={key} className="result">
+              {badge && <span className={`badge ${tone}`}>{badge}</span>}
+              <p>{row ? row.statement : note}</p>
+              {row && unavailable && !basket.includes(row.sku) && (
+                <button type="button" className="link" onClick={() => onAdd([row])}>
+                  Add {row.label} anyway (it won&apos;t be routed)
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

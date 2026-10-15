@@ -150,6 +150,7 @@ store works with no code changes.
 |---|---|---|
 | FR-26 | The **store manager is emailed** when a product stocked at the branch falls to a **very low** shelf quantity, and again when it **runs out**. Each product is reported once per change, not again while it stays low or out | confirmed — owner, 2026-10-14 |
 | FR-27 | A shopper can **speak a request** instead of typing it. The words heard are shown as the search, where the shopper can correct them, and the request is handled exactly as if they had been typed. Where speech is unavailable, unsupported or the microphone is declined, typing keeps working | confirmed — owner, 2026-10-15 |
+| FR-28 | While the shopper types, the page **suggests products from this store's catalogue** that match what has been typed so far; choosing one searches for exactly that product. A product not sold at this store is never suggested, and typing on and searching is never prevented | confirmed — owner, 2026-10-16 |
 
 ---
 
@@ -167,7 +168,7 @@ store works with no code changes.
 | NFR-08 | Portability | A differently shaped store passes the same acceptance tests with no code changes. |
 | NFR-09 | Explainability | Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model. |
 | NFR-10 | Accessibility | Step-free routing is available, and route directions are usable by a screen reader. |
-| NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom. |
+| NFR-11 | Mobile layout | The interface is usable at phone width — roughly 390 px — in a mobile browser: **the page never scrolls, across or down** — every view fits the screen, and only a long list or the floor map moves, inside its own frame — controls reachable one-handed, and the floor map legible without pinch-zoom. |
 
 ---
 
@@ -192,7 +193,7 @@ finished being written.
 | AC-12 | NFR-05 | Measured over repeated runs, one product completes inside 5 s and ten products inside 10 s |
 | AC-13 | NFR-06 | Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call |
 | AC-14 | NFR-07 | Each malformed store fixture is rejected at load with a message naming the fault |
-| AC-15 | NFR-11 | At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming |
+| AC-15 | NFR-11 | At a 390 × 844 viewport the full journey completes with the page never scrolling, across or down, at any step, and the route on the floor map is legible without zooming |
 | AC-16 | FR-12 | A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required |
 | AC-17 | FR-09 | An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one |
 | AC-18 | FR-04 | A natural-language request returns only SKUs present in `products.csv`; a model response carrying any field outside its schema — a product name, a SKU — is rejected before it can influence the result |
@@ -208,6 +209,7 @@ finished being written.
 | AC-28 | FR-03 | A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match |
 | AC-29 | FR-26 | A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once |
 | AC-30 | FR-27 | A spoken request returns the same result as typing the words heard, and those words are left in the search box; with the microphone declined the page says so, in a browser that cannot recognise speech no microphone is offered, and in both typing still finds the product |
+| AC-31 | FR-28 | Typing two or more letters lists matching products from this store; choosing any suggestion returns that exact product with no choice to make — true of every product the store sells; a product not sold here is never listed; after a comma, suggestions are for the item being typed and the earlier items are kept |
 
 ---
 

@@ -630,18 +630,20 @@ Crayons are out of stock and left out of the route.</code></pre>
 </div>
 <h2><span class="sec">4</span> &nbsp;Interface and presentation</h2>
 <div class="prose">
-  <p>One Next.js page, used by a shopper standing in the store on their own phone (A-06). The page is not a thin shell over the graph — five requirements land here and nowhere else.</p>
+  <p>One Next.js page, used by a shopper standing in the store on their own phone (A-06). The page is not a thin shell over the graph — six requirements land here and nowhere else.</p>
+  <p><b>One screen, three panes.</b> The page never scrolls (NFR-11). A header carries where the shopper is — "Floor 0 · Entrance", tapped to change it in a sheet — and a tab bar at the bottom switches between <b>Search</b>, <b>Basket</b> and <b>Route</b>, each of which fits the space between. Search holds the box, its suggestions, the microphone, "Scan a barcode" (a sheet with the camera) and the results as short cards, available first, with the basket action under them. Basket lists what is collected and plans the route. Route shows the floor plate in its own frame, opened on the step's shelf and dragged like any map, with the directions under it one step at a time, each step showing its own floor; "All steps" swaps the map for the whole list. Only a long list or the map moves, inside its own frame.</p>
 </div>
 <div class="tablewrap">
 <table>
   <thead><tr><th>Requirement</th><th>What the page does</th></tr></thead>
   <tbody>
-    <tr><td>FR-03 · barcode scan</td><td>A "Scan a barcode" switch under the search box. Only when it is on does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup</td></tr>
+    <tr><td>FR-03 · barcode scan</td><td>A "Scan a barcode" button beside Search opens a sheet with the camera. Only then does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup. A read closes the sheet and shows the product</td></tr>
+    <tr><td>FR-28 · suggestions</td><td>From two letters, a list under the box of up to six products this store sells whose words begin with what was typed — those whose name or a synonym starts with it first, then in stock, then the popular; a sold-out one says so. Arrow keys and Enter, or a tap, choose one; its name and size replace the item being typed and the search runs. The catalogue comes once with the store call and is matched on the phone, so a keystroke reaches no server and no model, and a product's label searches straight to it, so the suggestion and the answer cannot disagree</td></tr>
     <tr><td>FR-27 · voice</td><td>A microphone button at the end of the search box, drawn only where the browser can recognise speech. One tap listens for one request; the button turns red while it records, the words fill the box as they are heard, "Listening…" says it is on, and when the shopper stops the search runs. A second tap stops the recording at once and searches what was heard so far</td></tr>
-    <tr><td>FR-15 · start point</td><td>Two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported</td></tr>
+    <tr><td>FR-15 · start point</td><td>In a sheet from the header: two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported</td></tr>
     <tr><td>FR-20 · route presented twice</td><td>Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate</td></tr>
     <tr><td>NFR-10 · screen reader</td><td>The directions list <i>is</i> the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route</td></tr>
-    <tr><td>NFR-11 · phone width</td><td>Single column at 390 px, the floor plate scaled to width with no pinch-zoom, controls within thumb reach, no horizontal page scroll</td></tr>
+    <tr><td>NFR-11 · phone width</td><td>One screen at 390 × 844: header, one pane, tab bar, and the page never scrolls. The floor plate keeps its readable size in a frame of its own, and the primary buttons sit at the bottom, within thumb reach</td></tr>
   </tbody>
 </table>
 </div>
@@ -658,7 +660,7 @@ Crayons are out of stock and left out of the route.</code></pre>
 <div class="prose">
 <ol>
   <li><b>The expensive objects are built once per instance</b>, when the function starts: store, BM25 index, and the distance and predecessor matrices. Every request on a warm instance reuses them; only a cold start pays for them, and NFR-05 is measured warm and cold.</li>
-  <li><b>The search commits on submit</b>, so the agent runs once per search rather than once per keystroke.</li>
+  <li><b>The search commits on submit</b>, so the agent runs once per search rather than once per keystroke. Suggestions as the shopper types (FR-28) need no request at all: the store call carries the catalogue's labels, and the phone matches them.</li>
   <li><b>The clarification is carried by the page, not the server.</b> FR-05's <code>interrupt()</code> still suspends the graph, but the request that asked the question has ended by the time the shopper answers. The page sends the search back with the answers; the server runs the graph again on a fresh thread and resumes it with each round's answer in turn. Only an option the graph itself offered is accepted (EC-05), and a thread is deleted before its request returns, so an abandoned question leaves nothing behind (EC-34).</li>
   <li><b>The basket and the shopper's position live in the page</b>, and a route is planned from the SKUs the page sends. Availability and routability are re-read from the store data on every request, so a stale page can ask for a route but never receive one to an empty shelf (EC-17).</li>
 </ol>
@@ -822,6 +824,17 @@ Crayons are out of stock and left out of the route.</code></pre>
     <tr><td class="id">EC-62</td><td>A browser with no speech recogniser</td><td>No microphone is offered; the page is the typed page</td></tr>
     <tr><td class="id">EC-63</td><td>Nothing heard — silence, or only the noise of the store</td><td>"Didn't catch that", and no search is run. Never a guess at what was meant</td></tr>
     <tr><td class="id">EC-64</td><td>A word misheard</td><td>The search runs on what was heard, which stays in the box: the result is what typing those words would give, and the shopper corrects it by typing</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>6.10 &nbsp;Suggestions</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-65</td><td>One letter typed, or nothing in the catalogue begins with what was typed</td><td>No list; Search still searches exactly what was typed, and says what it does not recognise as before</td></tr>
+    <tr><td class="id">EC-66</td><td>A product not sold at this store, or one sold out</td><td>The first is never suggested — the search still answers "not sold here" (EC-04). A sold-out one is suggested, marked sold out</td></tr>
+    <tr><td class="id">EC-67</td><td>Typing the next item of a list — "milk, bre"</td><td>Suggestions are for "bre" only; choosing one keeps "milk, " and replaces just that item</td></tr>
   </tbody>
 </table>
 </div>

@@ -16,21 +16,37 @@ export default function Basket({
   onPlan: () => void;
   busy: boolean;
 }) {
-  if (!items.length) return null;
   return (
-    <section className="basket" aria-label="Basket">
+    <section className="pane-body basket" aria-label="Basket">
       <h2>Basket ({items.length})</h2>
-      <p className="caption">Tap an item to remove it</p>
-      <ul className="chips">
-        {items.map((i) => (
-          <li key={i.sku}>
-            <button type="button" className="chip" onClick={() => onRemove(i.sku)} aria-label={`Remove ${i.label}`}>
-              ✕ {i.label}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button type="button" className="primary wide" onClick={onPlan} disabled={busy}>
+      {items.length ? (
+        <ul className="lines">
+          {items.map((i) => (
+            <li key={i.sku}>
+              <span>{i.label}</span>
+              <button
+                type="button"
+                className="secondary"
+                onClick={() => onRemove(i.sku)}
+                aria-label={`Remove ${i.label}`}
+              >
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="empty">
+          Nothing here yet. Search for products, then add the ones in stock — they&apos;re collected
+          here for one route.
+        </p>
+      )}
+      <button
+        type="button"
+        className="primary wide"
+        onClick={onPlan}
+        disabled={busy || !items.length}
+      >
         Plan my route
       </button>
     </section>

@@ -452,17 +452,28 @@ has no recogniser the button is not drawn at all (EC-62).
 ## 4. Interface and presentation
 
 One Next.js page, used by a shopper standing in the store on their own phone
-(A-06). The page is not a thin shell over the graph — five requirements land
+(A-06). The page is not a thin shell over the graph — six requirements land
 here and nowhere else.
+
+**One screen, three panes.** The page never scrolls (NFR-11). A header carries where the
+shopper is — "Floor 0 · Entrance", tapped to change it in a sheet — and a tab bar at the bottom
+switches between **Search**, **Basket** and **Route**, each of which fits the space between.
+Search holds the box, its suggestions, the microphone, "Scan a barcode" (a sheet with the
+camera) and the results as short cards, available first, with the basket action under them.
+Basket lists what is collected and plans the route. Route shows the floor plate in its own
+frame, opened on the step's shelf and dragged like any map, with the directions under it one
+step at a time, each step showing its own floor; "All steps" swaps the map for the whole list.
+Only a long list or the map moves, inside its own frame.
 
 | Requirement | What the page does |
 |---|---|
-| FR-03 · barcode scan | A "Scan a barcode" switch under the search box. Only when it is on does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup |
+| FR-03 · barcode scan | A "Scan a barcode" button beside Search opens a sheet with the camera. Only then does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup. A read closes the sheet and shows the product |
+| FR-28 · suggestions | From two letters, a list under the box of up to six products this store sells whose words begin with what was typed — those whose name or a synonym starts with it first, then in stock, then the popular; a sold-out one says so. Arrow keys and Enter, or a tap, choose one; its name and size replace the item being typed and the search runs. The catalogue comes once with the store call and is matched on the phone, so a keystroke reaches no server and no model, and a product's label searches straight to it, so the suggestion and the answer cannot disagree |
 | FR-27 · voice | A microphone button at the end of the search box, drawn only where the browser can recognise speech. One tap listens for one request; the button turns red while it records, the words fill the box as they are heard, "Listening…" says it is on, and when the shopper stops the search runs. A second tap stops the recording at once and searches what was heard so far |
-| FR-15 · start point | Two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
+| FR-15 · start point | In a sheet from the header: two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
 | FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
-| NFR-11 · phone width | Single column at 390 px, the floor plate scaled to width with no pinch-zoom, controls within thumb reach, no horizontal page scroll |
+| NFR-11 · phone width | One screen at 390 × 844: header, one pane, tab bar, and the page never scrolls. The floor plate keeps its readable size in a frame of its own, and the primary buttons sit at the bottom, within thumb reach |
 
 **Explainability is a presentation requirement too** (NFR-09). The page can
 always answer two questions, and both answers come from the mechanism itself.
@@ -491,7 +502,8 @@ consequences are design-level rather than implementation detail:
    request on a warm instance reuses them; only a cold start pays for them,
    and NFR-05 is measured warm and cold.
 2. **The search commits on submit**, so the agent runs once per search rather
-   than once per keystroke.
+   than once per keystroke. Suggestions as the shopper types (FR-28) need no request at all:
+   the store call carries the catalogue's labels, and the phone matches them.
 3. **The clarification is carried by the page, not the server.** FR-05's
    `interrupt()` still suspends the graph, but the request that asked the
    question has ended by the time the shopper answers. The page sends the
@@ -644,6 +656,14 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-62 | A browser with no speech recogniser | No microphone is offered; the page is the typed page |
 | EC-63 | Nothing heard — silence, or only the noise of the store | "Didn't catch that", and no search is run. Never a guess at what was meant |
 | EC-64 | A word misheard | The search runs on what was heard, which stays in the box: the result is what typing those words would give, and the shopper corrects it by typing |
+
+### 6.10 Suggestions
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-65 | One letter typed, or nothing in the catalogue begins with what was typed | No list; Search still searches exactly what was typed, and says what it does not recognise as before |
+| EC-66 | A product not sold at this store, or one sold out | The first is never suggested — the search still answers "not sold here" (EC-04). A sold-out one is suggested, marked sold out |
+| EC-67 | Typing the next item of a list — "milk, bre" | Suggestions are for "bre" only; choosing one keeps "milk, " and replaces just that item |
 
 ## 7. Onboarding a new store
 

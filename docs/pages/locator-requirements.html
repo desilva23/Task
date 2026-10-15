@@ -62,9 +62,9 @@
   <h1>Product Finder Requirements</h1>
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
-    <span><b>Requirements</b> 27 functional · 11 non-functional</span>
+    <span><b>Requirements</b> 28 functional · 11 non-functional</span>
     <span><b>Constraints</b> 9</span>
-    <span><b>Acceptance criteria</b> 30</span>
+    <span><b>Acceptance criteria</b> 31</span>
   </div>
 </header>
 
@@ -203,6 +203,7 @@
   <tbody>
     <tr><td class="id">FR-26</td><td>The <b>store manager is emailed</b> when a product stocked at the branch falls to a <b>very low</b> shelf quantity, and again when it <b>runs out</b>. Each product is reported once per change, not again while it stays low or out</td><td>confirmed — owner, 2026-10-14</td></tr>
     <tr><td class="id">FR-27</td><td>A shopper can <b>speak a request</b> instead of typing it. The words heard are shown as the search, where the shopper can correct them, and the request is handled exactly as if they had been typed. Where speech is unavailable, unsupported or the microphone is declined, typing keeps working</td><td>confirmed — owner, 2026-10-15</td></tr>
+    <tr><td class="id">FR-28</td><td>While the shopper types, the page <b>suggests products from this store's catalogue</b> that match what has been typed so far; choosing one searches for exactly that product. A product not sold at this store is never suggested, and typing on and searching is never prevented</td><td>confirmed — owner, 2026-10-16</td></tr>
   </tbody>
 </table>
 </div>
@@ -221,7 +222,7 @@
     <tr><td class="id">NFR-08</td><td>Portability</td><td>A differently shaped store passes the same acceptance tests with no code changes.</td></tr>
     <tr><td class="id">NFR-09</td><td>Explainability</td><td>Why a product ranked where it did, and why a route took the order it did, can both be explained without reference to a model.</td></tr>
     <tr><td class="id">NFR-10</td><td>Accessibility</td><td>Step-free routing is available, and route directions are usable by a screen reader.</td></tr>
-    <tr><td class="id">NFR-11</td><td>Mobile layout</td><td>The interface is usable at phone width — roughly 390 px — in a mobile browser: no horizontal page scrolling, controls reachable one-handed, and the floor map legible without pinch-zoom.</td></tr>
+    <tr><td class="id">NFR-11</td><td>Mobile layout</td><td>The interface is usable at phone width — roughly 390 px — in a mobile browser: <b>the page never scrolls, across or down</b> — every view fits the screen, and only a long list or the floor map moves, inside its own frame — controls reachable one-handed, and the floor map legible without pinch-zoom.</td></tr>
   </tbody>
 </table>
 </div>
@@ -247,7 +248,7 @@
     <tr><td class="id">AC-12</td><td>NFR-05</td><td>Measured over repeated runs, one product completes inside 5 s and ten products inside 10 s</td></tr>
     <tr><td class="id">AC-13</td><td>NFR-06</td><td>Each hostile input in §7 is handled without an error page, a leaked file path, or a changed tool call</td></tr>
     <tr><td class="id">AC-14</td><td>NFR-07</td><td>Each malformed store fixture is rejected at load with a message naming the fault</td></tr>
-    <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 px viewport the full journey completes with no horizontal page scroll, and the route on the floor map is legible without zooming</td></tr>
+    <tr><td class="id">AC-15</td><td>NFR-11</td><td>At a 390 × 844 viewport the full journey completes with the page never scrolling, across or down, at any step, and the route on the floor map is legible without zooming</td></tr>
     <tr><td class="id">AC-16</td><td>FR-12</td><td>A counter product and a locked-cabinet product each return their counter or cabinet location with no shelf or facing value, and state that a colleague is required</td></tr>
     <tr><td class="id">AC-17</td><td>FR-09</td><td>An out-of-stock product returns at least one in-stock alternative from the same category; every candidate offered is itself in stock and compatible with the original's recorded dietary attributes; and where no compatible in-stock alternative exists it says so rather than offering an incompatible one</td></tr>
     <tr><td class="id">AC-18</td><td>FR-04</td><td>A natural-language request returns only SKUs present in <code>products.csv</code>; a model response carrying any field outside its schema — a product name, a SKU — is rejected before it can influence the result</td></tr>
@@ -263,6 +264,7 @@
     <tr><td class="id">AC-28</td><td>FR-03</td><td>A scan of a catalogued product's barcode returns that exact product, with no choice prompt; with the camera declined, typing the same digits returns the same product; and a barcode that is valid but not in the catalogue says so rather than returning a nearest match</td></tr>
     <tr><td class="id">AC-29</td><td>FR-26</td><td>A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once</td></tr>
     <tr><td class="id">AC-30</td><td>FR-27</td><td>A spoken request returns the same result as typing the words heard, and those words are left in the search box; with the microphone declined the page says so, in a browser that cannot recognise speech no microphone is offered, and in both typing still finds the product</td></tr>
+    <tr><td class="id">AC-31</td><td>FR-28</td><td>Typing two or more letters lists matching products from this store; choosing any suggestion returns that exact product with no choice to make — true of every product the store sells; a product not sold here is never listed; after a comma, suggestions are for the item being typed and the earlier items are kept</td></tr>
   </tbody>
 </table>
 </div>
@@ -295,7 +297,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 27 functional · 11 non-functional · 9 constraints · 30 acceptance criteria · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 28 functional · 11 non-functional · 9 constraints · 31 acceptance criteria · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>
