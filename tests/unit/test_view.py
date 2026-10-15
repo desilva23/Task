@@ -12,7 +12,7 @@ from graph.journey import Journey
 from graph.model import FakeModel, NoModel, good_model
 from graph.services import Services
 from present.floorplate import floor_plates
-from present.view import addable, group_results, start_options
+from present.view import addable, group_results, recorded_tags, start_options
 from validation import load_store
 
 DEMO = Path(__file__).resolve().parents[2] / "data" / "SBY-DEMO-001"
@@ -161,3 +161,30 @@ def test_fr_20_ac_15_no_label_on_any_plate_touches_another_thing():
             ]
             floor_plates(svc, route)
     assert floorplate.CROWDED == []
+
+
+class TestPriceAndRecordedTags:
+    """FR-29, NFR-03 — a result shows its price and only the dietary properties its record says
+    are true; nothing is ever shown as lacking one."""
+
+    def test_ac_33_only_a_recorded_true_becomes_a_tag(self):
+        svc = services()
+        for p in svc.store.products.values():
+            tags = recorded_tags(p)
+            assert ("Vegan" in tags) == (p.diet_vegan is True)
+            assert ("Gluten free" in tags) == (p.diet_gluten_free is True)
+            assert ("Halal" in tags) == (p.diet_halal is True)
+            assert "Vegetarian" not in tags or (p.diet_vegetarian is True and not p.diet_vegan)
+
+    def test_ec_71_a_product_with_unrecorded_attributes_shows_no_tag_for_them(self):
+        svc = services()
+        unknown = [p for p in svc.store.products.values() if p.diet_gluten_free is None]
+        assert unknown and all("Gluten free" not in recorded_tags(p) for p in unknown)
+
+    def test_ac_33_fr_30_a_row_carries_price_tags_and_the_quantity_asked_for(self):
+        journey = Journey(services(), NoModel())
+        out = journey.run_query("t-price", "2 x baked beans, bananas", "F0-ENTRANCE")
+        (beans,) = [r for r in group_results(services(), out.state).available if "Beans" in r.label]
+        p = services().catalogue.by_sku(beans.sku)
+        assert beans.price == f"£{p.price_gbp:.2f}" and beans.qty == 2
+        assert beans.tags == recorded_tags(p)

@@ -760,3 +760,55 @@ button.secondary {
   margin: 0;
   font-size: 0.92rem;
 }
+
+.result-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.result-head .price {
+  margin-left: auto;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.qty {
+  font-weight: 700;
+}
+
+.tags {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.tags li {
+  font-size: 0.75rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
+}
+
+.stepper output {
+  min-width: 1.6rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.lines .stepper button {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+}

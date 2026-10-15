@@ -471,6 +471,7 @@ Only a long list or the map moves, inside its own frame.
 | FR-03 · barcode scan | A "Scan a barcode" button beside Search opens a sheet with the camera. Only then does the camera start, so no permission is asked until the shopper wants it; frames are decoded as they arrive, and beneath the camera a field for the digits does the same lookup. A read closes the sheet and shows the product |
 | FR-28 · suggestions | From two letters, a list under the box of up to six products this store sells whose words begin with what was typed — those whose name or a synonym starts with it first, then in stock, then the popular; a sold-out one says so. Arrow keys and Enter, or a tap, choose one; its name and size replace the item being typed and the search runs. The catalogue comes once with the store call and is matched on the phone, so a keystroke reaches no server and no model, and a product's label searches straight to it, so the suggestion and the answer cannot disagree |
 | FR-27 · voice | A microphone button at the end of the search box, drawn only where the browser can recognise speech. One tap listens for one request; the button turns red while it records, the words fill the box as they are heard, "Listening…" says it is on, and when the shopper stops the search runs. A second tap stops the recording at once and searches what was heard so far |
+| FR-29, FR-30 · result details and basket | Each result card shows its state, the quantity asked for ("2 ×"), the price, and the dietary tags its record confirms — only a recorded "yes", passed through. The basket lists each product with − and + for how many, a remove button and "Clear basket", and is kept on the phone between visits (local storage); where the shopper stands is kept only for the visit |
 | FR-15 · start point | In a sheet from the header: two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
 | FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate. The pin for the step on screen pulses; tapping a pin, or its line in the list, says which product it is and where, and goes to its step |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
@@ -673,6 +674,12 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-68 | Words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs" | Never cut: searched as one item, as before |
 | EC-69 | A word in an unseparated list names nothing here — "wheat bread", "milk crayons bread" | Not cut: searched as typed, and answered as any unrecognised search is — with suggestions, never a guess |
 | EC-70 | Several products answer to every word and none is called exactly that — "coke" names Diet Coke, Coca-Cola Classic and Coke Zero | Asks which one (FR-05), rather than letting a text score pick — least of all a sold-out one. A search that is exactly one product's name, synonym, or name and size ("white bread", "skimmed milk 2 pint") is that product |
+
+### 6.12 Prices, tags and the kept basket
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-71 | A product whose dietary attributes are not recorded | No tag for them. The page never shows "not vegan" or "not gluten free" — an empty attribute is unknown, not no (NFR-03) |
 
 ## 7. Onboarding a new store
 

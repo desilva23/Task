@@ -103,8 +103,20 @@ export default function Results({
           const unavailable = row && !view.available.includes(row);
           return (
             <li key={key} className="result">
-              {badge && <span className={`badge ${tone}`}>{badge}</span>}
+              <div className="result-head">
+                {badge && <span className={`badge ${tone}`}>{badge}</span>}
+                {row && row.qty > 1 && <span className="qty">{row.qty} ×</span>}
+                {row?.price && <span className="price">{row.price}</span>}
+              </div>
               <p>{row ? row.statement : note}</p>
+              {row && row.tags.length > 0 && (
+                // FR-29, NFR-03 — the record's own "yes", passed through; nothing is shown as "no"
+                <ul className="tags" aria-label="Recorded as">
+                  {row.tags.map((t) => (
+                    <li key={t}>{t}</li>
+                  ))}
+                </ul>
+              )}
               {row && unavailable && !basket.includes(row.sku) && (
                 <button type="button" className="link" onClick={() => onAdd([row])}>
                   Add {row.label} anyway (it won&apos;t be routed)

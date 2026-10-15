@@ -14,7 +14,15 @@ export type Store = { entrance: string; floors: Floor[]; products: Suggestion[] 
 
 export type Option = { sku: string; label: string };
 export type Question = { index: string; term: string; options: Option[] };
-export type Row = { sku: string; label: string; statement: string; availability: string };
+export type Row = {
+  sku: string;
+  label: string;
+  statement: string;
+  availability: string;
+  price: string; // FR-29
+  tags: string[]; // FR-29 — only what the product's record says is true
+  qty: number; // FR-30 — "2 x milk"
+};
 export type Pick = { n: number; node: string; label: string; where: string };
 export type Plate = { level: number; name: string; svg: string; picks: Pick[] };
 

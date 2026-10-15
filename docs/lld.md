@@ -758,6 +758,13 @@ word of the label or terms. Order: a label or term that starts with the typed ph
 labels naming every typed word, then in stock, then popularity; at most six, from two
 characters. Choosing one replaces that item with the label and searches.
 
+**Each result row** carries `price` (`£` and two places, from `price_gbp`), `tags` —
+`recorded_tags(product)`: "Vegan", "Vegetarian" (left out beside Vegan), "Gluten free", "Halal",
+each only when the attribute `is True` — and `qty`, summed from the terms that resolved to it.
+The basket is `{sku, label, qty}` in `localStorage` (kept between visits, FR-30); the start
+point stays in `sessionStorage`. Planning sends SKUs only: how many to pick up is the
+shopper's list, not a routing fact.
+
 **One screen.** `html` and `body` are `overflow: hidden` and the app is a `100dvh` grid —
 header, pane, tab bar. Panes are flex columns whose growing part has `min-height: 0`, so a
 long result list or basket scrolls inside itself; the floor plate keeps its width in a frame

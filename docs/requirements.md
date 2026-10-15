@@ -151,6 +151,8 @@ store works with no code changes.
 | FR-26 | The **store manager is emailed** when a product stocked at the branch falls to a **very low** shelf quantity, and again when it **runs out**. Each product is reported once per change, not again while it stays low or out | confirmed — owner, 2026-10-14 |
 | FR-27 | A shopper can **speak a request** instead of typing it. The words heard are shown as the search, where the shopper can correct them, and the request is handled exactly as if they had been typed. Where speech is unavailable, unsupported or the microphone is declined, typing keeps working | confirmed — owner, 2026-10-15 |
 | FR-28 | While the shopper types, the page **suggests products from this store's catalogue** that match what has been typed so far; choosing one searches for exactly that product. A product not sold at this store is never suggested, and typing on and searching is never prevented | confirmed — owner, 2026-10-16 |
+| FR-29 | Each result shows the product's **price** and the **dietary properties its record confirms** — vegan, vegetarian, gluten free, halal. A property recorded as false, or not recorded, is not shown, and nothing says a product lacks it | confirmed — owner, 2026-10-16 |
+| FR-30 | The basket shows **how many of each** product the shopper wants — taken from "2 x milk" or changed in the basket — and is **kept on the phone between visits** until the shopper clears it | confirmed — owner, 2026-10-16 |
 
 ---
 
@@ -211,6 +213,8 @@ finished being written.
 | AC-30 | FR-27 | A spoken request returns the same result as typing the words heard, and those words are left in the search box; with the microphone declined the page says so, in a browser that cannot recognise speech no microphone is offered, and in both typing still finds the product |
 | AC-31 | FR-28 | Typing two or more letters lists matching products from this store; choosing any suggestion returns that exact product with no choice to make — true of every product the store sells; a product not sold here is never listed; after a comma, suggestions are for the item being typed and the earlier items are kept |
 | AC-32 | FR-02 | "milk bread chicken", spoken or typed with no separator, is searched as three items and the page says so, with one action to search it as one item instead; words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs" — are never split; and "coke", which names several products equally, asks which one rather than answering with one of them |
+| AC-33 | FR-29, NFR-03 | Every result shows the catalogue price, and a dietary tag appears exactly when the product's recorded attribute is `true` — never for `false` or empty, and never worded as an absence |
+| AC-34 | FR-30 | "2 x baked beans" adds baked beans with quantity 2; a quantity changed in the basket survives closing the page and opening it again in a new tab; "Clear basket" empties it |
 
 ---
 

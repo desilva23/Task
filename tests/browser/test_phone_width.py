@@ -429,3 +429,22 @@ def test_fr_20_nfr_10_the_step_on_screen_pulses_its_pin_and_a_tapped_pin_says_wh
         pin.click(force=True)  # it pulses, so it is never "stable" to the test browser
         page.get_by_text(f"Pin {number}:").wait_for(timeout=5000)
         assert no_page_scroll(page)
+
+
+def test_ac_34_fr_30_the_basket_keeps_quantities_between_visits_until_cleared(server):
+    with phone(server) as page:
+        search(page, "2 x baked beans, bananas")
+        page.get_by_text("2 ×").wait_for(timeout=20000)  # the quantity asked for, on its card
+        page.get_by_role("button", name="Add 2 available to basket").click()
+        page.get_by_role("tab", name="Basket (2)").click()
+        page.get_by_role("button", name="One more Bananas 5 pack").click()
+        quantities = page.locator(".stepper output").all_inner_texts()
+        assert quantities == ["2", "2"], quantities
+
+        later = page.context.new_page()  # a new visit: a new tab, a new session
+        later.goto(server)
+        later.get_by_role("tab", name="Basket (2)").click(timeout=20000)
+        assert later.locator(".stepper output").all_inner_texts() == ["2", "2"]
+        later.get_by_role("button", name="Clear basket").click()
+        later.get_by_role("heading", name="Basket (0)").wait_for(timeout=5000)
+        assert no_page_scroll(later)

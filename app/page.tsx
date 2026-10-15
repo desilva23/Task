@@ -34,9 +34,16 @@ const SAVED = "locator:session";
 type Asked = { query: string; answers: Record<string, string>[] };
 type Tab = "search" | "basket" | "route";
 
+// Where the shopper stands is for this visit (the tab's session); the basket is a shopping list,
+// kept on the phone between visits until it is cleared (FR-30).
+const KEEP: Record<string, () => Storage> = {
+  place: () => sessionStorage,
+  basket: () => localStorage,
+};
+
 function load<T>(key: string, fallback: T): T {
   try {
-    const raw = sessionStorage.getItem(`${SAVED}:${key}`);
+    const raw = KEEP[key]().getItem(`${SAVED}:${key}`) ?? sessionStorage.getItem(`${SAVED}:${key}`);
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -45,7 +52,7 @@ function load<T>(key: string, fallback: T): T {
 
 function save(key: string, value: unknown) {
   try {
-    sessionStorage.setItem(`${SAVED}:${key}`, JSON.stringify(value));
+    KEEP[key]().setItem(`${SAVED}:${key}`, JSON.stringify(value));
   } catch {
     /* private mode — the page still works, it just forgets on refresh */
   }
@@ -103,7 +110,7 @@ export default function Page() {
   const [sheet, setSheet] = useState<"where" | "scan" | null>(null);
 
   useEffect(() => {
-    setBasket(load<Item[]>("basket", []));
+    setBasket(load<Item[]>("basket", []).map((i) => ({ ...i, qty: i.qty || 1 })));
     getStore()
       .then((s) => {
         setStore(s);
@@ -167,7 +174,10 @@ export default function Page() {
 
   const add = (rows: Row[]) => {
     const fresh = rows.filter((r) => !basket.some((i) => i.sku === r.sku));
-    setBasket((b) => [...b, ...fresh.map((r) => ({ sku: r.sku, label: r.label }))]);
+    setBasket((b) => [
+      ...b,
+      ...fresh.map((r) => ({ sku: r.sku, label: r.label, qty: r.qty || 1 })),
+    ]);
     setAdded(`Added ${fresh.length} to your basket.`);
   };
 
@@ -354,7 +364,11 @@ export default function Page() {
           <Basket
             items={basket}
             busy={busy || !where}
+            onQty={(sku, qty) =>
+              setBasket((b) => b.map((i) => (i.sku === sku ? { ...i, qty } : i)))
+            }
             onRemove={(sku) => setBasket((b) => b.filter((i) => i.sku !== sku))}
+            onClear={() => setBasket([])}
             onPlan={() =>
               where &&
               run(

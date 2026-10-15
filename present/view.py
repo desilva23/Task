@@ -57,6 +57,25 @@ class Row:
     label: str
     statement: str
     availability: str
+    price: str = ""  # FR-29 — from the catalogue
+    tags: tuple[str, ...] = ()  # FR-29 — only properties the record says are true (NFR-03)
+    qty: int = 1  # FR-30 — "2 x milk"
+
+
+DIET_TAGS = (  # attribute, words shown — passed through from the record, never inferred
+    ("diet_vegan", "Vegan"),
+    ("diet_vegetarian", "Vegetarian"),
+    ("diet_gluten_free", "Gluten free"),
+    ("diet_halal", "Halal"),
+)
+
+
+def recorded_tags(product) -> tuple[str, ...]:
+    """FR-29 — the dietary properties this product's record says it has. A property recorded as
+    false or not recorded at all is simply not shown: nothing here says a product lacks one
+    (NFR-03). Vegan implies vegetarian, so the second is left out beside the first."""
+    tags = tuple(words for attr, words in DIET_TAGS if getattr(product, attr) is True)
+    return tuple(t for t in tags if not (t == "Vegetarian" and "Vegan" in tags))
 
 
 @dataclass(frozen=True)
@@ -72,12 +91,19 @@ def group_results(services, s: dict) -> Groups:
     skus = list(dict.fromkeys(resolved[k] for k in sorted(resolved, key=int)))
     if s.get("action") == "plan":
         skus = list(dict.fromkeys(b["sku"] for b in s.get("basket") or []))
+    terms, qty = s.get("terms") or [], {}
+    for k, sku in resolved.items():
+        if int(k) < len(terms):
+            qty[sku] = qty.get(sku, 0) + int(terms[int(k)].get("qty") or 1)
     lines, used, rows = list(s.get("results") or []), set(), []
     for sku in skus:
         label = product_label(services, sku)
         line = next((ln for ln in lines if ln.startswith(f"{label} — ")), label)
         used.add(line)
-        rows.append(Row(sku, label, line, (s.get("availability") or {}).get(sku, "unknown")))
+        p = services.catalogue.by_sku(sku)
+        rows.append(Row(sku, label, line, (s.get("availability") or {}).get(sku, "unknown"),
+                        price=f"£{p.price_gbp:.2f}" if p and p.price_gbp is not None else "",
+                        tags=recorded_tags(p) if p else (), qty=qty.get(sku, 1)))  # fmt: skip
     return Groups(
         available=[r for r in rows if r.availability == "in_stock"],
         unavailable=[r for r in rows if r.availability != "in_stock"],
