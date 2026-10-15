@@ -124,9 +124,15 @@ def route_view(services, state: dict) -> dict | None:
         "why": WHY_THIS_ORDER if r["kind"] == "multi" else None,
         # SVG drawn by our code from validated map data, with no free text in it (AC-13)
         "plates": [
-            {"level": p.level, "name": p.floor_name, "svg": p.svg,
-             "picks": [{"n": n, "node": node, "label": label, "where": where}
-                       for n, node, label, where in p.picks]}  # fmt: skip
+            {
+                "level": p.level,
+                "name": p.floor_name,
+                "svg": p.svg,
+                "picks": [
+                    {"n": n, "node": node, "label": label, "where": where}
+                    for n, node, label, where in p.picks
+                ],
+            }  # fmt: skip
             for p in floor_plates(services, r)
         ],  # fmt: skip
     }
