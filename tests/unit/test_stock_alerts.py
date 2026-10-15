@@ -186,3 +186,26 @@ def test_a_08_the_job_reads_the_previous_version_from_git(store, tmp_path, monke
         monkeypatch.setenv(k, v)
     assert run.main(["--store", f"data/{store.path.name}", "--before", "HEAD"], sender=sender) == 0
     assert len(sender.sent) == 1 and sender.sent[0][1].startswith("Out of stock")
+
+
+def test_ac_29_a_demo_sale_emails_one_low_and_one_out_and_changes_nothing(store, monkeypatch):
+    """The demo: a pretend sale sends exactly what a real update would, from a temporary copy —
+    the stock file is untouched, and each demo run is its own update."""
+    for k, v in SECRETS.items():
+        monkeypatch.setenv(k, v)
+    monkeypatch.setenv("GITHUB_RUN_ID", "777")
+    before = (store.path / "stock.csv").read_text()
+    sender = FakeSender()
+    code = run.main(
+        ["--store", str(store.path), "--sell", "Whole Milk=3, Bananas=0"], sender=sender
+    )
+    assert code == 0 and (store.path / "stock.csv").read_text() == before
+    (_, low, low_key), (_, out, out_key) = sender.sent
+    assert "Low stock" in low and "Whole Milk" in low and low_key.endswith("-777-demo-low")
+    assert "Out of stock" in out and "Bananas" in out and out_key.endswith("-777-demo-out")
+
+
+@pytest.mark.parametrize("sale", ["Free Range Eggs=0", "Unicorn Milk=0", "Bananas=lots"])
+def test_ac_29_a_demo_sale_refuses_a_product_it_cannot_pin_down(store, sale):
+    with pytest.raises(SystemExit, match="--sell"):
+        run.main(["--store", str(store.path), "--sell", sale, "--dry-run"], sender=FakeSender())

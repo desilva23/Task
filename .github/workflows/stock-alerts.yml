@@ -1,6 +1,7 @@
 # Stock alerts to the store manager (FR-26, hld.md §3.6). On each push to main that changes the
 # live store's stock file, compare it with the previous version and email what crossed into low
-# or out. Run it by hand with "current" to email everything already low or out.
+# or out. Run it by hand with "current" to email everything already low or out, or with "sale" to
+# demonstrate an update: a pretend sale in a temporary copy — nothing is committed.
 name: stock alerts
 
 on:
@@ -9,10 +10,14 @@ on:
     paths: ["data/SBY-DEMO-001/stock.csv"]
   workflow_dispatch:
     inputs:
-      current:
-        description: "Email everything already low or out (switching alerts on)"
-        type: boolean
-        default: true
+      mode:
+        description: "current: email everything already low or out · sale: demo a stock update"
+        type: choice
+        options: [current, sale]
+        default: current
+      sale:
+        description: "For sale: products and the units left after it (nothing is committed)"
+        default: "Whole Milk=3, Bananas=0"
 
 permissions:
   contents: read
@@ -36,8 +41,12 @@ jobs:
           AGENTMAIL_API_KEY: ${{ secrets.AGENTMAIL_API_KEY }}
           AGENTMAIL_INBOX_ID: ${{ secrets.AGENTMAIL_INBOX_ID }}
           STORE_MANAGER_EMAIL: ${{ secrets.STORE_MANAGER_EMAIL }}
+          MODE: ${{ inputs.mode }}
+          SALE: ${{ inputs.sale }}  # through the environment, never pasted into the script
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.current }}" = "true" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "$MODE" = "sale" ]; then
+            uv run --no-sync python -m notify.run --store "$STORE" --sell "$SALE"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             uv run --no-sync python -m notify.run --store "$STORE" --current
           else
             uv run --no-sync python -m notify.run --store "$STORE" --before "${{ github.event.before || 'HEAD~1' }}"

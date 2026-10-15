@@ -68,6 +68,13 @@ runs out (FR-26). The emails come from a GitHub Action, through AgentMail.
    everything out. After that, every push that changes `data/SBY-DEMO-001/stock.csv` emails
    only what newly crossed into low or out.
 
+**To demonstrate it**, open **Actions → stock alerts → Run workflow**, choose mode **sale**
+and keep (or change) `Whole Milk=3, Bananas=0`. The job pretends that sale happened in a
+temporary copy of the store and sends what a real stock update would: one low-stock email and
+one out-of-stock email, within a minute or two. Nothing is committed and the site's stock does
+not change, so it can be run as often as needed; a product name shared by several sizes needs
+its SKU instead.
+
 To see the emails without sending, run
 `uv run python -m notify.run --store data/SBY-DEMO-001 --current --dry-run`.
 

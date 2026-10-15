@@ -3,6 +3,7 @@ and email the store manager about every product that crossed into low or out.
 
     python -m notify.run --store data/SBY-DEMO-001 --before <git ref>   # on a push
     python -m notify.run --store data/SBY-DEMO-001 --current             # switching alerts on
+    python -m notify.run --store data/SBY-DEMO-001 --sell "Whole Milk=3, Bananas=0"   # a demo
     ... --dry-run                                                        # print, send nothing
 
 Settings come from the environment — in GitHub Actions, repository secrets: AGENTMAIL_API_KEY,
@@ -34,6 +35,38 @@ def _stock_from(folder: Path, stock_csv: str):
         return load_store(then).stock
 
 
+def _sold(folder: Path, store, sale: str):
+    """The store after a pretend sale — "Whole Milk=3, Bananas=0" sets those shelf quantities in a
+    temporary copy. Nothing is committed and the live stock file is untouched, so the emails show
+    exactly what a real stock update would send."""
+    by_name: dict[str, list[str]] = {}
+    for sku, p in store.products.items():
+        by_name.setdefault(p.name.casefold(), []).append(sku)
+    rows = (folder / "stock.csv").read_text().splitlines()
+    qty = {}
+    for item in filter(None, (i.strip() for i in sale.split(","))):
+        name, _, units = item.rpartition("=")
+        name = name.strip()
+        skus = [name] if name in store.products else by_name.get(name.casefold(), [])
+        if len(skus) != 1 or not units.strip().isdigit():
+            why = (
+                "several products have that name — use its SKU"
+                if len(skus) > 1
+                else ("not a product in this store" if not skus else "units must be a whole number")
+            )
+            raise SystemExit(f"--sell {item!r}: {why}")
+        qty[skus[0]] = units.strip()
+    with tempfile.TemporaryDirectory() as tmp:
+        then = Path(tmp) / folder.name
+        shutil.copytree(folder, then)
+        out = [rows[0]] + [
+            f"{r.split(',')[0]},{r.split(',')[1]},{qty[r.split(',')[0]]}"
+            if r.split(",")[0] in qty else r for r in rows[1:]
+        ]  # fmt: skip
+        (then / "stock.csv").write_text("\n".join(out) + "\n")
+        return load_store(then)
+
+
 def _previous(folder: Path, args) -> dict | None:
     if args.current:
         return None
@@ -51,12 +84,17 @@ def main(argv=None, sender=None) -> int:
     group.add_argument("--before", help="git ref of the previous version")
     group.add_argument("--before-file", help="a previous stock.csv")
     group.add_argument("--current", action="store_true", help="report everything low or out now")
+    group.add_argument("--sell", help='a demo: "Whole Milk=3, Bananas=0" — nothing is committed')
     ap.add_argument("--dry-run", action="store_true", help="print the emails, send nothing")
     args = ap.parse_args(argv)
 
     folder = Path(args.store)
     after = load_store(folder)
-    mails = emails(changes(_previous(folder, args), after), after)
+    if args.sell:
+        before, after = after.stock, _sold(folder, after, args.sell)
+    else:
+        before = _previous(folder, args)
+    mails = emails(changes(before, after), after)
     if not mails:
         print(f"{after.info.store_id}: no product crossed into low or out — nothing to send")
         return 0
@@ -74,6 +112,8 @@ def main(argv=None, sender=None) -> int:
 
     version = os.environ.get("GITHUB_SHA", "local")[:12]
     mode = "current" if args.current else "change"
+    if args.sell:  # each demo run is its own update; re-running the same run still sends once
+        version, mode = os.environ.get("GITHUB_RUN_ID", "local"), "demo"
     try:
         for mail in mails:
             key = f"{after.info.store_id}-{version}-{mode}-{mail.kind}"

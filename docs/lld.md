@@ -767,7 +767,11 @@ the environment; with any missing the job exits 2 without sending, and
 `--dry-run` prints instead. The `agentmail` SDK is in its own dependency group
 (`alerts`), imported only for a real send, so neither the site's function nor the
 tests carry it. `.github/workflows/stock-alerts.yml` runs the job on pushes to
-`main` that change the live store's stock, and by hand with `current`.
+`main` that change the live store's stock, and by hand with `current` — or with `sale`, a
+demonstration: `--sell "Whole Milk=3, Bananas=0"` sets those shelf quantities in a temporary
+copy of the store and compares it with the store as it is, so the emails are exactly what a real
+update would send while nothing is committed. Its idempotency key uses the run id in place of
+the commit, so each demo run sends and a re-run of the same one does not.
 
 ## 12. Error taxonomy
 
