@@ -135,7 +135,7 @@ def page_view(services, state: dict, pending: dict | None = None) -> dict:
     if pending:
         return {"pending": pending, "notice": None, "available": [], "unavailable": [],
                 "notes": [], "addable": [], "offer_add": False, "route": None,
-                "degraded": None}  # fmt: skip
+                "degraded": None, "split": state.get("split") or []}  # fmt: skip
     if not state.get("results") and state.get("message"):
         return {
             "pending": None,
@@ -147,6 +147,7 @@ def page_view(services, state: dict, pending: dict | None = None) -> dict:
             "offer_add": False,
             "route": None,
             "degraded": None,
+            "split": [],
         }  # fmt: skip — a run that made no claim says why (EC-01, EC-10)
     groups = group_results(services, state)
     many = len(groups.available) + len(groups.unavailable) > 1
@@ -160,4 +161,5 @@ def page_view(services, state: dict, pending: dict | None = None) -> dict:
         "offer_add": state.get("action") != "plan" and (many or state.get("shape") != "term"),
         "route": route_view(services, state),
         "degraded": degraded_notice(state),
+        "split": state.get("split") or [],  # shown, with a way to search it as one (FR-02)
     }

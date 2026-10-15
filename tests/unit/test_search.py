@@ -15,6 +15,7 @@ from services.search import (
     classify,
     explain,
     normalise,
+    prepare,
     rank,
     search_query,
 )
@@ -277,3 +278,61 @@ def test_fr_01_every_name_and_synonym_still_finds_its_product():
             if term.status in ("unresolved",):
                 lost.append(q)
     assert lost == []
+
+
+class TestListsWithoutSeparators:
+    """FR-02, AC-32 — a list as speech gives it, with no commas: cut into the items it names."""
+
+    def terms(self, raw):
+        _, index = demo()
+        p = prepare(raw, index)
+        return p.shape, [t.text for t in p.terms], [items for _, items in p.split]
+
+    def test_ac_32_three_names_are_three_items_and_the_cut_is_reported(self):
+        assert self.terms("milk bread chicken") == (
+            "batch", ["milk", "bread", "chicken"], [("milk", "bread", "chicken")]
+        )  # fmt: skip
+
+    def test_ac_32_a_spoken_and_splits_and_the_rest_is_cut(self):
+        shape, terms, split = self.terms("milk bread and chicken")
+        assert terms == ["milk", "bread", "chicken"] and split == [("milk", "bread")]
+
+    def test_ac_32_the_longest_run_that_names_a_product_is_kept_together(self):
+        assert self.terms("semi skimmed milk bread")[1] == ["semi skimmed milk", "bread"]
+        assert self.terms("free range eggs bananas")[1] == ["free range eggs", "bananas"]
+
+    @pytest.mark.parametrize("raw", ["chocolate milk", "tomato ketchup", "tomatoe ketchup",
+                                     "coca cola classic", "free range eggs", "semi skimmed milk"])  # fmt: skip
+    def test_ec_68_words_that_name_one_product_together_are_never_cut(self, raw):
+        assert self.terms(raw) == ("term", [raw], [])
+
+    def test_ec_69_a_word_that_names_nothing_here_stops_the_cut(self):
+        assert self.terms("wheat bread") == ("term", ["wheat bread"], [])
+        assert self.terms("milk crayons bread") == ("term", ["milk crayons bread"], [])
+
+    def test_ac_32_quoted_it_is_one_item(self):
+        assert self.terms('"milk bread chicken"') == ("term", ["milk bread chicken"], [])
+        assert self.terms('"milk bread" and chicken')[1] == ["milk bread", "chicken"]
+
+    def test_bread_is_never_read_as_a_misspelt_brand(self):
+        """FR-04 — "bread" names products, so it is not a typo of "Own Brand"."""
+        _, index = demo()
+        assert not index.names_one(["milk", "bread"])
+
+
+class TestEquallyNamed:
+    """EC-70, FR-05 — several products answer to every word and none is called exactly that."""
+
+    def test_ec_70_coke_asks_rather_than_landing_on_the_sold_out_one(self):
+        (r,) = search("coke").terms
+        assert r.status == "ambiguous" and r.chosen is None
+        names = {c.product.name for c in r.candidates}
+        assert {"Diet Coke", "Coca-Cola Classic"} <= names
+
+    @pytest.mark.parametrize("raw, name", [("white bread", "White Bread Medium Sliced"),
+                                           ("skimmed milk 2 pint", "Skimmed Milk"),
+                                           ("diet coke", "Diet Coke")])  # fmt: skip
+    def test_ec_70_exactly_what_one_product_is_called_settles_it(self, raw, name):
+        _, index = demo()
+        (r,) = search(raw).terms
+        assert r.status == "resolved" and index.by_sku[r.chosen].name == name

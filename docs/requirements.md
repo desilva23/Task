@@ -94,7 +94,7 @@ store works with no code changes.
 | ID | Requirement | Status |
 |---|---|---|
 | FR-01 | A shopper can find a product by typing its name | confirmed |
-| FR-02 | A shopper can request **several products in one search**, separated by commas, semicolons, new lines or the word "and", without first building a basket | confirmed |
+| FR-02 | A shopper can request **several products in one search**, separated by commas, semicolons, new lines or the word "and" — or with no separator at all, as speech gives it, when each part names a product — without first building a basket. A request split without separators says how it was split, and can be searched as one item instead | confirmed — no-separator lists added by the owner, 2026-10-16 |
 | FR-03 | A shopper can find a product by **scanning its barcode with the phone camera**. Where the camera is unavailable, unsupported or the shopper declines it, the same lookup is reachable by typing the digits | confirmed — withdrawn during review, reinstated by the owner 2026-10-14 |
 | FR-04 | A request phrased in natural language resolves to real catalogue products — never to an invented one | confirmed |
 | FR-05 | Where more than one product could match, the system **asks the shopper to choose** rather than selecting one | confirmed |
@@ -210,6 +210,7 @@ finished being written.
 | AC-29 | FR-26 | A stock update that takes one stocked product to the very low level and another to zero sends one low-stock email and one out-of-stock email to the store manager, each naming the product, the units left and its floor, aisle, rack and shelf; a product that stays low, improves, or is not stocked here sends nothing; sending the same update twice delivers each email once |
 | AC-30 | FR-27 | A spoken request returns the same result as typing the words heard, and those words are left in the search box; with the microphone declined the page says so, in a browser that cannot recognise speech no microphone is offered, and in both typing still finds the product |
 | AC-31 | FR-28 | Typing two or more letters lists matching products from this store; choosing any suggestion returns that exact product with no choice to make — true of every product the store sells; a product not sold here is never listed; after a comma, suggestions are for the item being typed and the earlier items are kept |
+| AC-32 | FR-02 | "milk bread chicken", spoken or typed with no separator, is searched as three items and the page says so, with one action to search it as one item instead; words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs" — are never split; and "coke", which names several products equally, asks which one rather than answering with one of them |
 
 ---
 

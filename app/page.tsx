@@ -278,6 +278,25 @@ export default function Page() {
               </p>
             )}
 
+            {view?.split.map((cut) => (
+              <p key={cut.from} className="split" role="status">
+                Searched as: <b>{cut.into.join(" · ")}</b>{" "}
+                <button
+                  type="button"
+                  className="link"
+                  disabled={busy}
+                  onClick={() => {
+                    // quoted, it is searched as one item (FR-02)
+                    const one = (asked?.query ?? query).replace(cut.from, `"${cut.from}"`);
+                    setQuery(one);
+                    ask({ query: one, answers: [] });
+                  }}
+                >
+                  Search “{cut.from}” as one item
+                </button>
+              </p>
+            ))}
+
             <div className="answer">
               {view?.pending && asked ? (
                 <Clarify

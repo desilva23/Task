@@ -17,6 +17,7 @@ FRESH = {
     "parsed": None,
     "sentence": False,
     "message": None,
+    "split": [],
     "term_status": [],
     "candidates": [],
     "category": [],

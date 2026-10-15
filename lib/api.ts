@@ -36,6 +36,7 @@ export type View = {
   offer_add: boolean;
   route: RouteView | null;
   degraded: string | null;
+  split: { from: string; into: string[] }[]; // a list said without commas, cut into items
 };
 
 export type Where = { start: string; step_free: boolean };

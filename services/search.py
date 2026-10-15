@@ -22,6 +22,7 @@ from config import (
     FUZZY_TRIGGER_SCORE,
     MAX_BATCH_TERMS,
     MAX_QUERY_CHARS,
+    MAX_SEGMENT_WORDS,
     MIN_QUERY_CHARS,
     NL_WORD_THRESHOLD,
     SEARCH_LIMIT,
@@ -139,6 +140,7 @@ class Scored:
 class SearchIndex:
     def __init__(self, store: Store):
         self.products = sorted(store.products.values(), key=lambda p: p.sku)
+        self.by_sku = {p.sku: p for p in self.products}
         docs = [normalise(searchable_text(p)) for p in self.products]
         self.bm25 = BM25Okapi(docs, k1=BM25_K1, b=BM25_B)
         self.vocab = sorted({tok for doc in docs for tok in doc})
@@ -152,6 +154,9 @@ class SearchIndex:
         self.described_by = {  # … and the words a shopper may add to pick one: its size
             p.sku: self.named_by[p.sku] | set(normalise(p.size)) for p in self.products
         }
+        # A word that names something in the catalogue is meant as itself, never as a typo of
+        # another: "bread" is bread, not a misspelt "Brand" (as in "Own Brand").
+        self.naming_words = set().union(*self.named_by.values())
         self.categories: dict[str, tuple[str, str]] = {}
         for p in self.products:
             for field_name in ("department", "aisle_category"):
@@ -231,9 +236,17 @@ class SearchIndex:
         own ("tomatoe ketchup"). The fuzzy name match compared whole names, so it counts."""
         if c.method == "name":
             return True
-        mine = self.described_by[c.sku]
-        return bool(words & self.named_by[c.sku]) and all(
-            w in mine or any(fuzz.ratio(w, m) >= FUZZY_THRESHOLD for m in mine) for w in words
+        return self._accounts(c.sku, words)
+
+    def _accounts(self, sku: str, words: set[str]) -> bool:
+        mine = self.described_by[sku]
+        return bool(words & self.named_by[sku]) and all(
+            w in mine
+            or (
+                w not in self.naming_words
+                and any(fuzz.ratio(w, m) >= FUZZY_THRESHOLD for m in mine)
+            )
+            for w in words
         )
 
     def nearest(
@@ -260,6 +273,41 @@ class SearchIndex:
         return [
             Scored(p, 0.0, "category") for p in self.products if getattr(p, field_name) == value
         ]
+
+    def names_one(self, words: list[str]) -> bool:
+        """Some single product is named by these words together — ``names_all`` asked of every
+        product: "chocolate milk" names Milk Chocolate Bar, "tomatoe ketchup" Tomato Ketchup."""
+        ws = set(words)
+        return bool(ws) and any(self._accounts(sku, ws) for sku in self.described_by)
+
+    def segment(self, text: str) -> list[str] | None:
+        """FR-02 — a list with no separator, as speech gives it: "milk bread chicken" is cut into
+        the longest runs of words that each name a product. None when the words together name
+        one product (EC-68), when any word names nothing here (EC-69), or when quoted — the
+        shopper asked for it as one item."""
+        raw = text.split()
+        if text.startswith('"') or len(raw) < 2 or len(raw) > MAX_SEGMENT_WORDS:
+            return None
+        norms = [normalise(w) for w in raw]
+        if self.names_one([t for n in norms for t in n]):
+            return None
+        runs, i = [], 0
+        while i < len(raw):
+            for j in range(len(raw), i, -1):  # the longest run from here that names a product
+                if self.names_one([t for n in norms[i:j] for t in n]):
+                    runs.append(" ".join(raw[i:j]))
+                    i = j
+                    break
+            else:
+                return None
+        return runs if len(runs) > 1 else None
+
+    def called(self, sku: str, words: list[str]) -> bool:
+        """The search is exactly what this product is called: its name, a synonym, or its name
+        and size — "white bread" is White Bread Medium Sliced, "skimmed milk 2 pint" is not the
+        semi-skimmed one."""
+        p = self.by_sku[sku]
+        return words in (normalise(t) for t in (*self.phrases[sku], f"{p.name} {p.size}"))
 
     def one_product_phrase(self, text: str) -> bool:
         """True if a single product's name or synonym contains every word of ``text``."""
@@ -391,12 +439,24 @@ def resolve(
     # ranking orders the options and the alternatives.
     by_text = sorted(found, key=lambda c: (-c.text_score, c.sku))
     ambiguous = sentence or needs_clarification(by_text)  # a keyword guess is never confident
+    chosen = by_text[0].sku
+    if not ambiguous and filt is None:
+        # Several products answer to every word and none is called exactly that: "coke" names
+        # Diet Coke, Coca-Cola Classic and Coke Zero alike, so a text score must not pick one —
+        # least of all a sold-out one (EC-70). Exactly what one product is called settles it.
+        said = normalise(corrected or term.text)
+        named = [c for c in by_text if index.names_all(c, words)]
+        exact = [c for c in named if index.called(c.sku, said)]
+        if len(exact) == 1:
+            chosen = exact[0].sku
+        elif len(named) > 1:
+            ambiguous = True
     return TermResult(
         term,
         "ambiguous" if ambiguous else "resolved",
         tuple(ranked),
         tuple(explain(ranked, term, stock)),
-        chosen=None if ambiguous else by_text[0].sku,
+        chosen=None if ambiguous else chosen,
         corrected=corrected,
     )
 
@@ -407,6 +467,7 @@ class Prepared:
     terms: tuple[SearchTerm, ...]
     overflow: tuple[str, ...] = ()
     message: str | None = None
+    split: tuple[tuple[str, tuple[str, ...]], ...] = ()  # (as typed, the items it became)
 
 
 def prepare(raw: str, index: SearchIndex) -> Prepared:
@@ -419,13 +480,26 @@ def prepare(raw: str, index: SearchIndex) -> Prepared:
         return Prepared(
             shape,
             (),
-            message="That looks like a barcode — turn on “Scan a barcode” to look it up, "
+            message="That looks like a barcode — tap “Scan a barcode” to look it up, "
             "or type the product name.",
         )
     if shape == "batch" and not HARD_SPLIT.search(q) and index.one_product_phrase(q):
         shape, terms = "term", [parse_qty(q)]  # "salt and vinegar crisps" stays whole
     if shape == "nl":
         terms = [SearchTerm(q)]  # keyword fallback; the model reads sentences (Phase 6)
+    split = []
+    if shape in ("term", "batch"):  # a list said without commas: "milk bread and chicken"
+        cut = []
+        for t in terms:
+            runs = index.segment(t.text)
+            if runs:
+                split.append((t.text, tuple(runs)))
+                cut += [SearchTerm(runs[0], t.qty)] + [SearchTerm(r) for r in runs[1:]]
+            else:
+                cut.append(SearchTerm(t.text.strip('"'), t.qty))
+        if split:
+            shape = "batch"
+        terms = cut[:MAX_BATCH_TERMS]
     overflow = tuple(_parts(q)[MAX_BATCH_TERMS:]) if shape == "batch" else ()
     notes = []
     if len(raw) > MAX_QUERY_CHARS:
@@ -434,7 +508,7 @@ def prepare(raw: str, index: SearchIndex) -> Prepared:
         notes.append(
             f"Only the first {MAX_BATCH_TERMS} items were searched; {len(overflow)} were not."
         )
-    return Prepared(shape, tuple(terms), overflow, " ".join(notes) or None)
+    return Prepared(shape, tuple(terms), overflow, " ".join(notes) or None, tuple(split))
 
 
 def search_query(

@@ -22,6 +22,7 @@ def make_classify_query(services, model):
             "terms": [{"text": t.text, "qty": t.qty} for t in p.terms],
             "sentence": p.shape == "nl",
             "message": p.message,
+            "split": [{"from": typed, "into": list(items)} for typed, items in p.split],
         }
 
     return classify_query

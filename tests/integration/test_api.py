@@ -159,3 +159,10 @@ def test_ec_66_a_product_not_sold_here_is_never_suggested(api):
     assert "Pepsi" not in labels and "Diet Coke" in labels  # not ranged vs sold out
     diet = next(p for p in products if p["label"].startswith("Diet Coke"))
     assert diet["in_stock"] is False and "Diet Coke" in diet["terms"]
+
+
+def test_ac_32_a_list_without_commas_is_searched_item_by_item_and_says_so(api):
+    view = search(api, "milk bread chicken")
+    assert view["split"] == [{"from": "milk bread chicken", "into": ["milk", "bread", "chicken"]}]
+    assert [q["term"] for q in view["pending"]["questions"]] == ["milk", "bread", "chicken"]
+    assert search(api, '"milk bread chicken"')["split"] == []  # the page's "as one item"

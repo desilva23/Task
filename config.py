@@ -4,6 +4,7 @@
 MIN_QUERY_CHARS = 2  # EC-01
 MAX_QUERY_CHARS = 1000  # NFR-06 — the page and classification both cut here
 MAX_BATCH_TERMS = 30  # EC-06
+MAX_SEGMENT_WORDS = 8  # FR-02 — a list said without commas is cut up only if this short or less
 NL_WORD_THRESHOLD = 3  # measured live: 'something for a headache' (4 words) must reach the model
 BM25_K1, BM25_B = 1.2, 0.5
 SEARCH_LIMIT = 10

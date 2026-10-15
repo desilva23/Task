@@ -374,6 +374,7 @@ Crayons are out of stock and left out of the route.</code></pre>
     <tr><td><code>coke 500ml</code></td><td>single term</td><td>One product, availability, location, route</td></tr>
     <tr><td><code>milk, bread, eggs</code></td><td>delimited list</td><td>Three rows, each with its own availability and location, plus one combined route offered</td></tr>
     <tr><td><code>milk and 6 eggs and some bread</code></td><td>delimited list</td><td>Same. <code>" and "</code> is a delimiter; quantities are parsed off the term</td></tr>
+    <tr><td><code>milk bread chicken</code></td><td>list without separators</td><td>As speech gives it. Cut into the longest runs of words that each name a product — milk · bread · chicken — and the page says "Searched as: …" with one tap to search it as one item (quoted). Words that together name one product ("chocolate milk", "semi skimmed milk") are never cut, and a word that names nothing here stops the cut</td></tr>
     <tr><td><code>what do I need for a fry up</code></td><td>natural language</td><td>Model expands to an item list, then the batch path. Items shown for confirmation before routing, because the model chose them</td></tr>
   </tbody>
 </table>
@@ -835,6 +836,17 @@ Crayons are out of stock and left out of the route.</code></pre>
     <tr><td class="id">EC-65</td><td>One letter typed, or nothing in the catalogue begins with what was typed</td><td>No list; Search still searches exactly what was typed, and says what it does not recognise as before</td></tr>
     <tr><td class="id">EC-66</td><td>A product not sold at this store, or one sold out</td><td>The first is never suggested — the search still answers "not sold here" (EC-04). A sold-out one is suggested, marked sold out</td></tr>
     <tr><td class="id">EC-67</td><td>Typing the next item of a list — "milk, bre"</td><td>Suggestions are for "bre" only; choosing one keeps "milk, " and replaces just that item</td></tr>
+  </tbody>
+</table>
+</div>
+<h3>6.11 &nbsp;Lists without separators and equally named products</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-68</td><td>Words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs"</td><td>Never cut: searched as one item, as before</td></tr>
+    <tr><td class="id">EC-69</td><td>A word in an unseparated list names nothing here — "wheat bread", "milk crayons bread"</td><td>Not cut: searched as typed, and answered as any unrecognised search is — with suggestions, never a guess</td></tr>
+    <tr><td class="id">EC-70</td><td>Several products answer to every word and none is called exactly that — "coke" names Diet Coke, Coca-Cola Classic and Coke Zero</td><td>Asks which one (FR-05), rather than letting a text score pick — least of all a sold-out one. A search that is exactly one product's name, synonym, or name and size ("white bread", "skimmed milk 2 pint") is that product</td></tr>
   </tbody>
 </table>
 </div>

@@ -19,6 +19,7 @@ class JourneyState(TypedDict, total=False):
     parsed: dict | None  # ParsedQuery, validated
     sentence: bool  # searched by keywords — never auto-resolved
     message: str | None
+    split: list[dict]  # {from, into} — a list said without commas, cut into items (FR-02)
 
     # resolution, per term index
     term_status: list[str]  # resolved · ambiguous · category · unresolved · not_catalogued

@@ -392,6 +392,8 @@ def classify(raw: str) -&gt; tuple[str, list[SearchTerm]]:
     return "term", [parse_qty(q)]</code></pre>
 <div class="prose">
   <p><b>Order matters, and one rule needs a guard.</b> <code>" and "</code> splits before the natural-language test, so <code>"milk and bread"</code> is a batch of two rather than a sentence. Split blindly, a product with "and" in its name breaks: "salt and vinegar crisps" becomes "salt" and "vinegar crisps" — and both resolve, to table salt and the crisps, so a retry-on-failure never fires. The guard runs <b>before</b> the split: when the query divides only on "and", it stays one term if a single product's name contains every one of its words. "Salt &amp; Vinegar Crisps" and "Sweet &amp; Sour Sauce" stay whole; "milk and bread" still splits, because no product is named after both.</p>
+  <p><b>A list without separators is cut by the catalogue.</b> Speech has no commas, so after <code>classify()</code>, each term of two to <code>MAX_SEGMENT_WORDS</code> (8) words that no single product is named by (<code>names_one</code> — <code>names_all</code> asked of every product) is cut into the longest runs from the left that each name one: "milk bread chicken" → milk · bread · chicken; "semi skimmed milk bread" → semi skimmed milk · bread. A word that names nothing stops the cut and the term stays whole (EC-69); a quoted term is never cut — the page's "search it as one item". The cuts travel in state as <code>split</code> and reach the page. A word that names a catalogue product is never read as a misspelling of another (<code>naming_words</code>): "bread" is not a typo of "Own Brand".</p>
+  <p><b>Equally named products ask.</b> After the margin test (§8.4), when two or more candidates are named by every word (<code>names_all</code>), the term resolves only if exactly one product is <i>called</i> that — its name, a synonym, or name and size (<code>called</code>); otherwise it is ambiguous (EC-70).</p>
   <p><b>A scan does not pass through <code>classify()</code>.</b> <code>classify_query</code> sees <code>action == "scan"</code> and checks the digits with <code>barcode.normalise</code> instead: a valid code becomes shape <code>barcode</code> with the 13-digit code as its one term, and anything else becomes <code>bad_barcode</code> with a message (EC-52). Digits typed into the search box still take the <code>digits</code> branch — the search box finds names.</p>
 </div>
 <h3>8.2a &nbsp;Fuzzy retry and categories</h3>
@@ -635,6 +637,7 @@ def changes(before, after) -&gt; list[Alert]: # only what got worse: none→low,
 <pre><code>MIN_QUERY_CHARS     = 2       # EC-01
 MAX_QUERY_CHARS     = 1000    # NFR-06 — over-long input is cut, and the cut is said
 MAX_BATCH_TERMS     = 30      # EC-06
+MAX_SEGMENT_WORDS   = 8       # FR-02 — a list said without commas is cut only up to this length
 NL_WORD_THRESHOLD   = 3       # set live in Phase 6 — four-word requests reach the model
 BM25_K1, BM25_B     = 1.2, 0.5
 SEARCH_LIMIT        = 10

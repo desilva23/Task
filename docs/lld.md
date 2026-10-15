@@ -422,6 +422,19 @@ a single product's name contains every one of its words. "Salt & Vinegar
 Crisps" and "Sweet & Sour Sauce" stay whole; "milk and bread" still splits,
 because no product is named after both.
 
+**A list without separators is cut by the catalogue.** Speech has no commas, so after
+`classify()`, each term of two to `MAX_SEGMENT_WORDS` (8) words that no single product is named
+by (`names_one` — `names_all` asked of every product) is cut into the longest runs from the left
+that each name one: "milk bread chicken" → milk · bread · chicken; "semi skimmed milk bread" →
+semi skimmed milk · bread. A word that names nothing stops the cut and the term stays whole
+(EC-69); a quoted term is never cut — the page's "search it as one item". The cuts travel in
+state as `split` and reach the page. A word that names a catalogue product is never read as a
+misspelling of another (`naming_words`): "bread" is not a typo of "Own Brand".
+
+**Equally named products ask.** After the margin test (§8.4), when two or more candidates are
+named by every word (`names_all`), the term resolves only if exactly one product is *called*
+that — its name, a synonym, or name and size (`called`); otherwise it is ambiguous (EC-70).
+
 **A scan does not pass through `classify()`.** `classify_query` sees
 `action == "scan"` and checks the digits with `barcode.normalise` instead: a
 valid code becomes shape `barcode` with the 13-digit code as its one term, and
@@ -849,6 +862,7 @@ error in §12 that refuses to start.
 MIN_QUERY_CHARS     = 2       # EC-01
 MAX_QUERY_CHARS     = 1000    # NFR-06 — over-long input is cut, and the cut is said
 MAX_BATCH_TERMS     = 30      # EC-06
+MAX_SEGMENT_WORDS   = 8       # FR-02 — a list said without commas is cut only up to this length
 NL_WORD_THRESHOLD   = 3       # set live in Phase 6 — four-word requests reach the model
 BM25_K1, BM25_B     = 1.2, 0.5
 SEARCH_LIMIT        = 10

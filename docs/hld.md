@@ -315,6 +315,7 @@ That is a batch query, handled by `classify_query` before any searching happens.
 | `coke 500ml` | single term | One product, availability, location, route |
 | `milk, bread, eggs` | delimited list | Three rows, each with its own availability and location, plus one combined route offered |
 | `milk and 6 eggs and some bread` | delimited list | Same. `" and "` is a delimiter; quantities are parsed off the term |
+| `milk bread chicken` | list without separators | As speech gives it. Cut into the longest runs of words that each name a product — milk · bread · chicken — and the page says "Searched as: …" with one tap to search it as one item (quoted). Words that together name one product ("chocolate milk", "semi skimmed milk") are never cut, and a word that names nothing here stops the cut |
 | `what do I need for a fry up` | natural language | Model expands to an item list, then the batch path. Items shown for confirmation before routing, because the model chose them |
 
 Classification order: empty/too-short → reject · digits only → not a product
@@ -664,6 +665,14 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-65 | One letter typed, or nothing in the catalogue begins with what was typed | No list; Search still searches exactly what was typed, and says what it does not recognise as before |
 | EC-66 | A product not sold at this store, or one sold out | The first is never suggested — the search still answers "not sold here" (EC-04). A sold-out one is suggested, marked sold out |
 | EC-67 | Typing the next item of a list — "milk, bre" | Suggestions are for "bre" only; choosing one keeps "milk, " and replaces just that item |
+
+### 6.11 Lists without separators and equally named products
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-68 | Words that together name one product — "chocolate milk", "tomato ketchup", "free range eggs" | Never cut: searched as one item, as before |
+| EC-69 | A word in an unseparated list names nothing here — "wheat bread", "milk crayons bread" | Not cut: searched as typed, and answered as any unrecognised search is — with suggestions, never a guess |
+| EC-70 | Several products answer to every word and none is called exactly that — "coke" names Diet Coke, Coca-Cola Classic and Coke Zero | Asks which one (FR-05), rather than letting a text score pick — least of all a sold-out one. A search that is exactly one product's name, synonym, or name and size ("white bread", "skimmed milk 2 pint") is that product |
 
 ## 7. Onboarding a new store
 

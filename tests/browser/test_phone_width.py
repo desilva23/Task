@@ -399,3 +399,14 @@ def test_ec_65_ec_66_no_list_for_one_letter_or_a_product_not_sold_here(server):
         box.fill("pepsi")
         box.press("Enter")  # typing on and searching still works: "not sold here", as before
         page.get_by_text("Not sold at this store").wait_for(timeout=20000)
+
+
+def test_ac_32_fr_27_a_spoken_list_without_and_is_split_and_can_be_undone(server):
+    with phone(server, voice={"heard": "milk bread chicken"}) as page:
+        page.get_by_role("button", name=MIC).click()
+        page.get_by_text("Searched as: milk · bread · chicken").wait_for(timeout=20000)
+        page.get_by_text("Which did you mean?").wait_for(timeout=20000)
+        page.get_by_role("button", name="Search “milk bread chicken” as one item").click()
+        page.get_by_text("We don't recognise").wait_for(timeout=20000)
+        assert page.get_by_label(SEARCH_LABEL).input_value() == '"milk bread chicken"'
+        assert page.get_by_text("Searched as:").count() == 0
