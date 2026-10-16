@@ -78,20 +78,24 @@ export default function Route({ route, empty }: { route: RouteView | null; empty
       <div className="route-head">
         <h2>Your route</h2>
         {plates.length > 0 && (
-          <div className="tabs" role="tablist" aria-label="Floor plans">
+          <div className="tabs floors" role="tablist" aria-label="Floor plans">
+            <span className="caption" aria-hidden="true">
+              Floor
+            </span>
             {plates.map((p, i) => (
               <button
                 key={p.level}
                 type="button"
                 role="tab"
                 aria-selected={p === plate}
+                aria-label={`Floor ${p.level}`}
                 className={p === plate ? "tab on" : "tab"}
                 onClick={() => {
                   setShown(i);
                   setList(false);
                 }}
               >
-                Floor {p.level}
+                {p.level}
               </button>
             ))}
           </div>

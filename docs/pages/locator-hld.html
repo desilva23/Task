@@ -642,6 +642,7 @@ Crayons are out of stock and left out of the route.</code></pre>
     <tr><td>FR-28 · suggestions</td><td>From two letters, a list under the box of up to six products this store sells whose words begin with what was typed — those whose name or a synonym starts with it first, then in stock, then the popular; a sold-out one says so. Arrow keys and Enter, or a tap, choose one; its name and size replace the item being typed and the search runs. The catalogue comes once with the store call and is matched on the phone, so a keystroke reaches no server and no model, and a product's label searches straight to it, so the suggestion and the answer cannot disagree</td></tr>
     <tr><td>FR-27 · voice</td><td>A microphone button at the end of the search box, drawn only where the browser can recognise speech. One tap listens for one request; the button turns red while it records, the words fill the box as they are heard, "Listening…" says it is on, and when the shopper stops the search runs. A second tap stops the recording at once and searches what was heard so far</td></tr>
     <tr><td>FR-29, FR-30 · result details and basket</td><td>Each result card shows its state, the quantity asked for ("2 ×"), the price, and the dietary tags its record confirms — only a recorded "yes", passed through. The basket lists each product with − and + for how many, a remove button and "Clear basket", and is kept on the phone between visits (local storage); where the shopper stands is kept only for the visit</td></tr>
+    <tr><td>FR-31 · which store</td><td>The store's name in the header opens "Which store?" — every store the deployment holds, with its floor count. Choosing one loads its floors, aisles and catalogue, and this phone's basket and start point for it; the floor buttons on the route show however many floors that store has</td></tr>
     <tr><td>FR-15 · start point</td><td>In a sheet from the header: two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported</td></tr>
     <tr><td>FR-20 · route presented twice</td><td>Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate. The pin for the step on screen pulses; tapping a pin, or its line in the list, says which product it is and where, and goes to its step</td></tr>
     <tr><td>NFR-10 · screen reader</td><td>The directions list <i>is</i> the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route</td></tr>
@@ -665,6 +666,7 @@ Crayons are out of stock and left out of the route.</code></pre>
   <li><b>The expensive objects are built once per instance</b>, when the function starts: store, BM25 index, and the distance and predecessor matrices. Every request on a warm instance reuses them; only a cold start pays for them, and NFR-05 is measured warm and cold.</li>
   <li><b>The search commits on submit</b>, so the agent runs once per search rather than once per keystroke. Suggestions as the shopper types (FR-28) need no request at all: the store call carries the catalogue's labels, and the phone matches them.</li>
   <li><b>The clarification is carried by the page, not the server.</b> FR-05's <code>interrupt()</code> still suspends the graph, but the request that asked the question has ended by the time the shopper answers. The page sends the search back with the answers; the server runs the graph again on a fresh thread and resumes it with each round's answer in turn. Only an option the graph itself offered is accepted (EC-05), and a thread is deleted before its request returns, so an abandoned question leaves nothing behind (EC-34).</li>
+  <li><b>Which store is part of every request</b> (FR-31). The function holds every store folder under <code>data/</code>; each is validated and built on its first request and reused after, so a store nobody opens costs nothing, and the store list is read from two small files per store.</li>
   <li><b>The basket and the shopper's position live in the page</b>, and a route is planned from the SKUs the page sends. Availability and routability are re-read from the store data on every request, so a stale page can ask for a route but never receive one to an empty shelf (EC-17).</li>
 </ol>
 </div>
@@ -863,6 +865,17 @@ Crayons are out of stock and left out of the route.</code></pre>
   </tbody>
 </table>
 </div>
+<h3>6.13 &nbsp;Several stores</h3>
+<div class="tablewrap">
+<table>
+  <thead><tr><th>ID</th><th>Scenario</th><th>Behaviour</th></tr></thead>
+  <tbody>
+    <tr><td class="id">EC-74</td><td>A request names a store this deployment does not hold — an old link, a hand-made request</td><td>Refused: "That store isn't available here." Never answered from another store's data. The page falls back to the default store</td></tr>
+    <tr><td class="id">EC-75</td><td>The shopper switches store with a basket, a route or a question open</td><td>Each store keeps its own basket and start point on the phone; the results, route and question of the store before are cleared. A basket is never routed in a store it was not made in</td></tr>
+    <tr><td class="id">EC-76</td><td>A new store's folder is added under <code>data/</code></td><td>It appears in the switcher on the next deploy, with its own floors, aisles and catalogue — no code change (FR-25). It is validated when it is first opened, so a broken store never answers</td></tr>
+  </tbody>
+</table>
+</div>
 <h2><span class="sec">7</span> &nbsp;Onboarding a new store</h2>
 <div class="prose">
   <p>FR-25 says a different store is a replaced set of data files and no code changes. This is what that costs in practice, and it is the honest answer to "could we run this in a real branch?"</p>
@@ -888,7 +901,7 @@ Crayons are out of stock and left out of the route.</code></pre>
   <p>**A planogram says where a product is <i>supposed</i> to be.** Shelves drift from plan within days of a range change. Synthetic data hides this completely, so the demo will look more reliable than a real deployment would. Honest mitigations are a user "this is wrong" report and, longer term, vision-based shelf compliance.</p>
   <p><b>The start point is self-reported.</b> FR-15 has the shopper pick a floor and an aisle, because live positioning is out of scope. A shopper who picks the wrong aisle gets a correct route from the wrong place, and nothing in the system can detect it.</p>
   <p><b>Substitutes are limited by what the catalogue records.</b> FR-09 filters candidates on dietary attributes before the model sees them, so an unrecorded attribute reads as unknown and the candidate is excluded. That is the safe direction to fail, but it means thin catalogue data produces thin substitutes.</p>
-  <p><b>One store, one shopper.</b> No concurrency, no live stock feed, no second store running at the same time. The portability test (AC-09) swaps the data files; it does not run two stores at once.</p>
+  <p><b>Several stores, but each a folder of files.</b> One deployment serves every store under <code>data/</code> — two, three and five floors today (FR-31) — and AC-01 to AC-08 pass on each with no store-specific code. What it does not have is a live stock feed or a way to add a store without a deploy: a new store is a new folder, validated on its first request.</p>
 </div>
 
 <footer>

@@ -145,6 +145,7 @@ A lower document that disagrees with a higher one is wrong.
 | 12 | Voice input — FR-27, brought into scope by the owner | AC-30 |
 | 13 | Suggestions as you type (FR-28) and a one-screen page (NFR-11) — reviewers' input | AC-31, AC-15 |
 | 14 | Review improvements — lists without commas, equally named products, pins, prices and tags, a kept basket, weak signal | AC-32 to AC-35 |
+| 15 | Several stores — a five-floor store and a store switcher (FR-31, brought into scope by the owner) | AC-36, AC-09 |
 
 **Gate.** A phase is complete only when all of its traced tests pass, `ruff` is clean, the
 traceability matrix is updated, and the owner has reviewed it. The next phase MUST NOT start
@@ -164,4 +165,4 @@ Versioning is semantic: MAJOR for removing or redefining a principle, MINOR for 
 materially expanding guidance, PATCH for wording. Every `/speckit-plan` MUST record a Constitution
 Check, and every gate review MUST confirm compliance with Principles I–VI before approval.
 
-**Version**: 1.8.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-16
+**Version**: 1.9.0 | **Ratified**: 2026-10-13 | **Last Amended**: 2026-10-16

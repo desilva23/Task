@@ -18,7 +18,7 @@ from tests.unit.test_routing import independent_shortest
 from validation import load_store
 
 DATA = Path(__file__).resolve().parents[2] / "data"
-STORES = ["SBY-DEMO-001", "SBY-PORT-002"]
+STORES = ["SBY-DEMO-001", "SBY-PORT-002", "SBY-CITY-003"]  # 3, 2 and 5 floors (AC-09, AC-36)
 
 
 @cache

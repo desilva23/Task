@@ -50,7 +50,7 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() =>
         caches
-          .match(req, { ignoreSearch: true })
+          .match(req) // the exact URL: each store's call is kept as its own (FR-31)
           .then((hit) => hit || (req.mode === "navigate" ? caches.match("/") : Response.error())),
       ),
   );

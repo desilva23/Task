@@ -8,6 +8,7 @@ the shopper's position, basket and clarification answers, and sends what a reque
 This module is the only one that knows it is a web service.
 """
 
+import csv
 import logging
 import os
 import sys
@@ -41,16 +42,60 @@ log = logging.getLogger("locator")
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 
+DATA = ROOT / "data"
+DEFAULT_STORE = "SBY-DEMO-001"
+
+
 @cache
-def services() -> Services:
-    folder = Path(os.environ.get("LOCATOR_STORE") or ROOT / "data" / "SBY-DEMO-001")
+def store_folders() -> dict[str, Path]:
+    """FR-31, FR-25 — every store folder under data/, by its id. A new store is a new folder:
+    it appears in the switcher with no code change. LOCATOR_STORE serves one folder alone."""
+    if os.environ.get("LOCATOR_STORE"):
+        folder = Path(os.environ["LOCATOR_STORE"])
+        return {folder.name: folder}
+    return {f.name: f for f in sorted(DATA.iterdir()) if (f / "store.csv").is_file()}
+
+
+def default_store() -> str:
+    folders = store_folders()
+    return DEFAULT_STORE if DEFAULT_STORE in folders else next(iter(folders))
+
+
+class UnknownStore(Exception):
+    """EC-74 — a store id this deployment does not hold. Never answered from another store."""
+
+
+@cache
+def services(store_id: str | None = None) -> Services:
+    """Built once per store per function instance, on that store's first request (NFR-05)."""
+    store_id = store_id or default_store()
+    folder = store_folders().get(store_id)
+    if folder is None:
+        raise UnknownStore(store_id)
     return Services.from_store(load_store(folder))
+
+
+@cache
+def store_list() -> list[dict]:
+    """What the switcher offers: each store's id, name and floor count — read from two of its
+    files, so listing stores never builds them; each is validated when it is first used. The
+    default store first."""
+    out = []
+    for store_id, folder in store_folders().items():
+        with (folder / "store.csv").open(encoding="utf-8") as f:
+            info = {r["key"]: r["value"] for r in csv.DictReader(f)}
+        with (folder / "map_nodes.csv").open(encoding="utf-8") as f:
+            floors = {r["level"] for r in csv.DictReader(f)}
+        out.append({"id": store_id, "name": info.get("store_name", store_id),
+                    "floors": len(floors)})  # fmt: skip
+    return sorted(out, key=lambda s: (s["id"] != default_store(), s["name"]))
 
 
 # ── requests ─────────────────────────────────────────────────────────────────────────────────
 
 
 class Where(BaseModel):
+    store: str = Field("", max_length=32)  # FR-31 — which store; empty is the default one
     start: str = Field("", max_length=64)  # an unknown point falls back to the entrance
     step_free: bool = False
 
@@ -84,13 +129,14 @@ def _model(used: int):
     return make_model(budget=MODEL_CALLS_PER_SESSION - used)
 
 
-def _journey_run(request: Request, response: Response, run) -> dict:
+def _journey_run(request: Request, response: Response, run, store: str = "") -> dict:
+    svc = services(store or None)  # an unknown store is refused before any work (EC-74)
     used = _used(request)
     model = _model(used)
-    journey, thread = Journey(services(), model), f"req-{uuid.uuid4().hex}"
+    journey, thread = Journey(svc, model), f"req-{uuid.uuid4().hex}"
     try:
         outcome = run(journey, thread)
-        return page_view(services(), outcome.state, outcome.pending)
+        return page_view(svc, outcome.state, outcome.pending)
     finally:
         journey.forget(thread)  # nothing outlives its request (EC-34)
         calls = getattr(model, "calls", 0)
@@ -103,12 +149,16 @@ def _journey_run(request: Request, response: Response, run) -> dict:
 
 
 @app.get("/api/store")
-def store() -> dict:
+def store(store: str = "") -> dict:
     """What the position picker offers (FR-15), and the catalogue the search box suggests from
     (FR-28). Built from the store's files, so another store's folder offers its own floors, aisles
     and products with no code change (FR-25)."""
-    svc, names = services(), floor_names(services())
+    svc = services(store[:32] or None)
+    names = floor_names(svc)
     return {
+        "id": svc.store.info.store_id,
+        "name": svc.store.info.store_name,
+        "stores": store_list(),  # FR-31 — the switcher
         "entrance": svc.engine.graph.entrance,
         "floors": [
             {
@@ -126,14 +176,15 @@ def store() -> dict:
 def search(body: SearchRequest, request: Request, response: Response) -> dict:
     """FR-01, FR-02, FR-04, FR-05 — a search, with the answers to any clarification so far."""
     return _journey_run(request, response, lambda j, t: j.answer(
-        t, body.query, body.answers, start_node=body.start, step_free=body.step_free))  # fmt: skip
+        t, body.query, body.answers, start_node=body.start, step_free=body.step_free),
+        body.store)  # fmt: skip
 
 
 @app.post("/api/scan")
 def scan(body: ScanRequest, request: Request, response: Response) -> dict:
     """FR-03 — digits read by the page's camera or typed; checked again here (hld.md §3.5)."""
     return _journey_run(request, response, lambda j, t: j.run_scan(
-        t, body.code, start_node=body.start, step_free=body.step_free))  # fmt: skip
+        t, body.code, start_node=body.start, step_free=body.step_free), body.store)  # fmt: skip
 
 
 @app.post("/api/route")
@@ -142,7 +193,7 @@ def route(body: RouteRequest, request: Request, response: Response) -> dict:
     data, so a stale page can never be routed to an empty shelf (EC-17)."""
     skus = list(dict.fromkeys(body.skus))
     return _journey_run(request, response, lambda j, t: j.plan_route(
-        t, skus, start_node=body.start, step_free=body.step_free))  # fmt: skip
+        t, skus, start_node=body.start, step_free=body.step_free), body.store)  # fmt: skip
 
 
 # ── failures: an apology, never a trace (AC-13) ─────────────────────────────────────────────
@@ -151,6 +202,11 @@ def route(body: RouteRequest, request: Request, response: Response) -> dict:
 @app.exception_handler(RequestValidationError)
 def bad_request(request: Request, exc: RequestValidationError) -> JSONResponse:
     return JSONResponse({"error": "That request couldn't be read."}, status_code=422)
+
+
+@app.exception_handler(UnknownStore)
+def unknown_store(request: Request, exc: UnknownStore) -> JSONResponse:
+    return JSONResponse({"error": "That store isn't available here."}, status_code=404)
 
 
 @app.exception_handler(Exception)

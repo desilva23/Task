@@ -62,9 +62,9 @@
   <h1>Product Finder Requirements</h1>
   <p class="standfirst">Multi-floor store product finder and navigation agent. What the system must do, and how each requirement is verified.</p>
   <div class="meta">
-    <span><b>Requirements</b> 30 functional · 12 non-functional</span>
+    <span><b>Requirements</b> 31 functional · 12 non-functional</span>
     <span><b>Constraints</b> 9</span>
-    <span><b>Acceptance criteria</b> 35</span>
+    <span><b>Acceptance criteria</b> 36</span>
   </div>
 </header>
 
@@ -72,8 +72,8 @@
 <div class="prose">
   <p>Shoppers in a large multi-floor store lose time hunting for products and cannot tell from the shelf whether an item is stocked at that branch. This system takes one or more typed product requests and returns, for each, whether it is available, exactly where it sits, and the shortest walking route to reach it — including floor changes.</p>
   <p>It is built as an agentic system in which language models interpret and phrase, and deterministic tools supply every fact. It must work on any store by replacing the store data, with no code changes.</p>
-  <p><b>In scope:</b> typed requests (single, several at once, natural language); spoken requests; barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory; location to floor, aisle, rack and shelf; shortest route from any start point, across floors; one combined route for several products; step-free routing; a single-page user interface; an email to the store manager when a product runs low or runs out.</p>
-  <p><b>Out of scope:</b> live shopper positioning (beacons, Wi-Fi, QR); integration with any real inventory, planogram or mapping system; payments, loyalty and recommendations; shelf-compliance detection from photographs; recognising a product from a photograph — the camera reads a barcode and nothing else; more than one store running concurrently; colleague workflows — order picking, replenishment, shelf-edge tasks.</p>
+  <p><b>In scope:</b> typed requests (single, several at once, natural language); spoken requests; barcode scanning with the phone camera; product matching against a store catalogue; availability from a mock inventory; location to floor, aisle, rack and shelf; shortest route from any start point, across floors; one combined route for several products; step-free routing; a single-page user interface; an email to the store manager when a product runs low or runs out; several stores served by one deployment, the shopper choosing which.</p>
+  <p><b>Out of scope:</b> live shopper positioning (beacons, Wi-Fi, QR); integration with any real inventory, planogram or mapping system; payments, loyalty and recommendations; shelf-compliance detection from photographs; recognising a product from a photograph — the camera reads a barcode and nothing else; colleague workflows — order picking, replenishment, shelf-edge tasks.</p>
   <p><b>Inputs:</b> one store folder holding four kinds of data — the <b>store map</b> (walkable points, paths between them, and the stairs and lifts connecting floors), the <b>product catalogue</b>, the <b>planogram</b> (which product sits on which shelf) and the <b>stock position</b>. File format and structure are specified in the Schema document, not here — the map may take more than one file, since a graph does not fit a single table.</p>
   <p><b>Done when:</b> a shopper's request returns the correct availability, the correct location and a provably shortest route — including from a start point other than the entrance, and across floors; every fact in every answer has been checked against the store data before it is shown; and a second, differently shaped store works with no code changes.</p>
 </div>
@@ -112,7 +112,7 @@
   <tbody>
     <tr><td>A-01</td><td>Stock data is treated as current and correct; staleness is not modelled</td><td>confirmed</td><td>Availability needs a freshness indicator and an "unknown" state</td></tr>
     <tr><td>A-02</td><td>A product present in the planogram with non-zero stock counts as available</td><td>confirmed</td><td>—</td></tr>
-    <tr><td>A-03</td><td>Demo store has <b>three floors</b>; the portability test store has two</td><td>confirmed</td><td>Floor count changes, and FR-17's ordering becomes more or less visible</td></tr>
+    <tr><td>A-03</td><td>Demo store has <b>three floors</b>; the portability test store has two; the city flagship has <b>five</b></td><td>confirmed — five-floor store added by the owner, 2026-10-16</td><td>Floor count changes, and FR-17's ordering becomes more or less visible</td></tr>
     <tr><td>A-04</td><td>Catalogue of roughly 150–200 products is representative enough to demonstrate</td><td>confirmed</td><td>Search ranking needs re-tuning at real catalogue scale</td></tr>
     <tr><td>A-05</td><td>"Optimal" means shortest walking distance, not shortest time</td><td>confirmed</td><td>Edge weights become durations; floor transitions re-weighted</td></tr>
     <tr><td>A-06</td><td>The shopper uses the system as a <b>website in a mobile browser</b>, standing in the store. Nothing is installed</td><td>confirmed</td><td>An installed experience would change distribution, offline behaviour and device access</td></tr>
@@ -206,6 +206,7 @@
     <tr><td class="id">FR-28</td><td>While the shopper types, the page <b>suggests products from this store's catalogue</b> that match what has been typed so far; choosing one searches for exactly that product. A product not sold at this store is never suggested, and typing on and searching is never prevented</td><td>confirmed — owner, 2026-10-16</td></tr>
     <tr><td class="id">FR-29</td><td>Each result shows the product's <b>price</b> and the <b>dietary properties its record confirms</b> — vegan, vegetarian, gluten free, halal. A property recorded as false, or not recorded, is not shown, and nothing says a product lacks it</td><td>confirmed — owner, 2026-10-16</td></tr>
     <tr><td class="id">FR-30</td><td>The basket shows <b>how many of each</b> product the shopper wants — taken from "2 x milk" or changed in the basket — and is <b>kept on the phone between visits</b> until the shopper clears it</td><td>confirmed — owner, 2026-10-16</td></tr>
+    <tr><td class="id">FR-31</td><td>The shopper can <b>choose which store</b> they are in, from every store the deployment holds. Every answer — floors and aisles offered, suggestions, stock, location, route — then comes from that store's data alone, and the basket and start point are kept for each store separately</td><td>confirmed — owner, 2026-10-16</td></tr>
   </tbody>
 </table>
 </div>
@@ -272,6 +273,7 @@
     <tr><td class="id">AC-33</td><td>FR-29, NFR-03</td><td>Every result shows the catalogue price, and a dietary tag appears exactly when the product's recorded attribute is <code>true</code> — never for <code>false</code> or empty, and never worded as an absence</td></tr>
     <tr><td class="id">AC-34</td><td>FR-30</td><td>"2 x baked beans" adds baked beans with quantity 2; a quantity changed in the basket survives closing the page and opening it again in a new tab; "Clear basket" empties it</td></tr>
     <tr><td class="id">AC-35</td><td>NFR-12</td><td>After one visit, with the connection cut, reloading the page shows it, says there is no connection, and still suggests products; a search then says it needs a connection; the page offers a web app manifest with home-screen icons</td></tr>
+    <tr><td class="id">AC-36</td><td>FR-31, FR-25, NFR-08</td><td>With three stores of two, three and five floors loaded from their data folders and no store-specific code, the switcher offers all three; choosing the five-floor store offers floors 0–4, places the same product on a different floor, aisle and shelf than the demo store, and plans a route that clears floor 4 first and ends at a till; AC-01 to AC-08 pass on every store; a basket from one store is never routed in another; an unknown store is refused</td></tr>
   </tbody>
 </table>
 </div>
@@ -304,7 +306,7 @@
 </div>
 
 <footer>
-  Requirements specification · v1 · 30 functional · 12 non-functional · 9 constraints · 35 acceptance criteria · companion documents: HLD, LLD, Schema
+  Requirements specification · v1 · 31 functional · 12 non-functional · 9 constraints · 36 acceptance criteria · companion documents: HLD, LLD, Schema
 </footer>
 
 </div>

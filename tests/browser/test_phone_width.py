@@ -213,7 +213,7 @@ def test_ac_15_nfr_11_the_journey_fits_a_phone(server):
 def test_c_04_ac_13_no_store_line_and_typed_markup_stays_text(server):
     with phone(server) as page:
         body = page.locator("body").inner_text()
-        assert "synthetic" not in body.lower() and "Demo Superstore" not in body
+        assert "synthetic" not in body.lower()  # the store's name shows, in the switcher (FR-31)
         search(page, "<img src=x onerror=alert(1)><script>alert(2)</script>")
         shown = page.get_by_text("<img src=x").first  # the search is shown back …
         shown.wait_for(timeout=20000)
@@ -487,3 +487,31 @@ def test_fr_22_ac_08_one_product_found_can_be_added_to_the_basket(server):
         page.get_by_role("tab", name="Basket (1)").wait_for(timeout=5000)
         assert page.get_by_role("button", name="Show route").count() == 1
         assert no_page_scroll(page)
+
+
+def test_ac_36_fr_31_ec_75_switching_store_changes_everything_and_keeps_each_basket(server):
+    with phone(server) as page:
+        search(page, "bananas")
+        page.get_by_role("button", name="Add to basket").click(timeout=20000)
+        page.get_by_role("tab", name="Basket (1)").wait_for(timeout=5000)
+
+        page.get_by_role("button", name="Store:").click()
+        page.get_by_text("City Flagship · 5 floors").wait_for(timeout=5000)
+        page.get_by_role("radio", name="City Flagship").click()
+        page.get_by_role("button", name="Store: City Flagship").wait_for(timeout=20000)
+        page.get_by_role("tab", name="Basket (0)").wait_for(timeout=5000)  # its own basket
+
+        page.get_by_role("button", name="Where you are").click()
+        floors = page.get_by_label("Which floor are you on?").locator("option").all_inner_texts()
+        assert len(floors) == 5 and floors[-1].startswith("Floor 4"), floors
+        page.get_by_role("button", name="Done").click()
+
+        search(page, "dry dog food")
+        page.get_by_text("Floor 4, aisle 1").wait_for(timeout=20000)
+        page.get_by_role("button", name="Show route").click()
+        page.get_by_role("tab", name="Floor 4").wait_for(timeout=20000)
+        assert no_page_scroll(page)
+
+        page.get_by_role("button", name="Store:").click()
+        page.get_by_role("radio", name="Demo Superstore").click()
+        page.get_by_role("tab", name="Basket (1)").wait_for(timeout=20000)  # the demo basket kept

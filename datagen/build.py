@@ -219,16 +219,20 @@ def to_csv(name: str, rows: list[dict[str, str]]) -> str:
     return out.getvalue()
 
 
-STORES = {"demo": STORE_ID, "port": "SBY-PORT-002"}
+STORES = {"demo": STORE_ID, "port": "SBY-PORT-002", "city": "SBY-CITY-003"}
 
 
 def build_store(seed: int = DEFAULT_SEED, store: str = "demo") -> dict[str, str]:
-    """The six files as text, keyed by file name. ``store`` is "demo" or "port"."""
+    """The six files as text, keyed by file name. ``store`` is "demo", "port" or "city"."""
     rows = build_rows(seed)
     if store == "port":
         from datagen.port import build_port_rows
 
         rows = build_port_rows(rows)
+    elif store == "city":
+        from datagen.city import build_city_rows
+
+        rows = build_city_rows(rows)
     return {name: to_csv(name, r) for name, r in rows.items()}
 
 

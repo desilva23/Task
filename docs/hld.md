@@ -472,6 +472,7 @@ Only a long list or the map moves, inside its own frame.
 | FR-28 · suggestions | From two letters, a list under the box of up to six products this store sells whose words begin with what was typed — those whose name or a synonym starts with it first, then in stock, then the popular; a sold-out one says so. Arrow keys and Enter, or a tap, choose one; its name and size replace the item being typed and the search runs. The catalogue comes once with the store call and is matched on the phone, so a keystroke reaches no server and no model, and a product's label searches straight to it, so the suggestion and the answer cannot disagree |
 | FR-27 · voice | A microphone button at the end of the search box, drawn only where the browser can recognise speech. One tap listens for one request; the button turns red while it records, the words fill the box as they are heard, "Listening…" says it is on, and when the shopper stops the search runs. A second tap stops the recording at once and searches what was heard so far |
 | FR-29, FR-30 · result details and basket | Each result card shows its state, the quantity asked for ("2 ×"), the price, and the dietary tags its record confirms — only a recorded "yes", passed through. The basket lists each product with − and + for how many, a remove button and "Clear basket", and is kept on the phone between visits (local storage); where the shopper stands is kept only for the visit |
+| FR-31 · which store | The store's name in the header opens "Which store?" — every store the deployment holds, with its floor count. Choosing one loads its floors, aisles and catalogue, and this phone's basket and start point for it; the floor buttons on the route show however many floors that store has |
 | FR-15 · start point | In a sheet from the header: two selects, floor then aisle, defaulting to the entrance. No positioning technology is used or implied; the start point is self-reported |
 | FR-20 · route presented twice | Step-by-step directions as text, and the same route drawn over one SVG floor plate per floor. The plate is read without explanation: turned upright for a phone (front of store on the right), every aisle labelled with its number and what it sells, counters and locked cabinets named on the rear wall, both stairs-and-lift cores, the checkouts and the entrance named, "Start here" and "Pay here", each pick a numbered pin on its shelf, named with its aisle, rack and shelf in a list under the plan, and each floor change written out — which way, by stairs or lift, to which floor. No label may touch a shelf, box, pin or another label, or run off the plate. The pin for the step on screen pulses; tapping a pin, or its line in the list, says which product it is and where, and goes to its step |
 | NFR-10 · screen reader | The directions list *is* the accessible route, not a caption on a drawing: ordered text, one instruction per step, naming floor, aisle, rack and shelf position. The map is never the only way to read the route |
@@ -514,7 +515,10 @@ consequences are design-level rather than implementation detail:
    thread and resumes it with each round's answer in turn. Only an option the
    graph itself offered is accepted (EC-05), and a thread is deleted before its
    request returns, so an abandoned question leaves nothing behind (EC-34).
-4. **The basket and the shopper's position live in the page**, and a route is
+4. **Which store is part of every request** (FR-31). The function holds every store folder
+   under `data/`; each is validated and built on its first request and reused after, so a
+   store nobody opens costs nothing, and the store list is read from two small files per store.
+5. **The basket and the shopper's position live in the page**, and a route is
    planned from the SKUs the page sends. Availability and routability are
    re-read from the store data on every request, so a stale page can ask for a
    route but never receive one to an empty shelf (EC-17).
@@ -684,6 +688,14 @@ the acceptance criterion that tests it, so none of this rests on assertion.
 | EC-73 | A new release while a copy is kept on the phone | Online, the page is always fetched fresh — the kept copy answers only when the network does not, so nobody is stuck on an old release |
 | EC-71 | A product whose dietary attributes are not recorded | No tag for them. The page never shows "not vegan" or "not gluten free" — an empty attribute is unknown, not no (NFR-03) |
 
+### 6.13 Several stores
+
+| ID | Scenario | Behaviour |
+|---|---|---|
+| EC-74 | A request names a store this deployment does not hold — an old link, a hand-made request | Refused: "That store isn't available here." Never answered from another store's data. The page falls back to the default store |
+| EC-75 | The shopper switches store with a basket, a route or a question open | Each store keeps its own basket and start point on the phone; the results, route and question of the store before are cleared. A basket is never routed in a store it was not made in |
+| EC-76 | A new store's folder is added under `data/` | It appears in the switcher on the next deploy, with its own floors, aisles and catalogue — no code change (FR-25). It is validated when it is first opened, so a broken store never answers |
+
 ## 7. Onboarding a new store
 
 FR-25 says a different store is a replaced set of data files and no code changes. This
@@ -728,6 +740,7 @@ candidates on dietary attributes before the model sees them, so an unrecorded
 attribute reads as unknown and the candidate is excluded. That is the safe
 direction to fail, but it means thin catalogue data produces thin substitutes.
 
-**One store, one shopper.** No concurrency, no live stock feed, no second store
-running at the same time. The portability test (AC-09) swaps the data files; it
-does not run two stores at once.
+**Several stores, but each a folder of files.** One deployment serves every store under
+`data/` — two, three and five floors today (FR-31) — and AC-01 to AC-08 pass on each with no
+store-specific code. What it does not have is a live stock feed or a way to add a store
+without a deploy: a new store is a new folder, validated on its first request.

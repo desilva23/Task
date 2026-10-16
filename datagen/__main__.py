@@ -1,4 +1,4 @@
-"""python -m datagen [--store demo|port] [--seed N] [--out DIR] — write a store's six CSVs."""
+"""python -m datagen [--store demo|port|city] [--seed N] [--out DIR] — write a store's six CSVs."""
 
 import argparse
 from pathlib import Path

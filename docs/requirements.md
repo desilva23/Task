@@ -23,14 +23,14 @@ spoken requests; barcode scanning with the phone camera; product matching agains
 location to floor, aisle, rack and shelf; shortest route from any start point,
 across floors; one combined route for several products; step-free routing;
 a single-page user interface; an email to the store manager when a product runs
-low or runs out.
+low or runs out; several stores served by one deployment, the shopper choosing which.
 
 **Out of scope:** live shopper positioning (beacons, Wi-Fi, QR);
 integration with any real inventory, planogram or mapping system; payments,
 loyalty and recommendations; shelf-compliance detection from photographs;
 recognising a product from a photograph — the camera reads a barcode and
 nothing else;
-more than one store running concurrently; colleague workflows — order picking,
+colleague workflows — order picking,
 replenishment, shelf-edge tasks.
 
 **Inputs:** one store folder holding four kinds of data — the **store map**
@@ -77,7 +77,7 @@ store works with no code changes.
 |---|---|---|---|
 | A-01 | Stock data is treated as current and correct; staleness is not modelled | confirmed | Availability needs a freshness indicator and an "unknown" state |
 | A-02 | A product present in the planogram with non-zero stock counts as available | confirmed | — |
-| A-03 | Demo store has **three floors**; the portability test store has two | confirmed | Floor count changes, and FR-17's ordering becomes more or less visible |
+| A-03 | Demo store has **three floors**; the portability test store has two; the city flagship has **five** | confirmed — five-floor store added by the owner, 2026-10-16 | Floor count changes, and FR-17's ordering becomes more or less visible |
 | A-04 | Catalogue of roughly 150–200 products is representative enough to demonstrate | confirmed | Search ranking needs re-tuning at real catalogue scale |
 | A-05 | "Optimal" means shortest walking distance, not shortest time | confirmed | Edge weights become durations; floor transitions re-weighted |
 | A-06 | The shopper uses the system as a **website in a mobile browser**, standing in the store. Nothing is installed | confirmed | An installed experience would change distribution, offline behaviour and device access |
@@ -153,6 +153,7 @@ store works with no code changes.
 | FR-28 | While the shopper types, the page **suggests products from this store's catalogue** that match what has been typed so far; choosing one searches for exactly that product. A product not sold at this store is never suggested, and typing on and searching is never prevented | confirmed — owner, 2026-10-16 |
 | FR-29 | Each result shows the product's **price** and the **dietary properties its record confirms** — vegan, vegetarian, gluten free, halal. A property recorded as false, or not recorded, is not shown, and nothing says a product lacks it | confirmed — owner, 2026-10-16 |
 | FR-30 | The basket shows **how many of each** product the shopper wants — taken from "2 x milk" or changed in the basket — and is **kept on the phone between visits** until the shopper clears it | confirmed — owner, 2026-10-16 |
+| FR-31 | The shopper can **choose which store** they are in, from every store the deployment holds. Every answer — floors and aisles offered, suggestions, stock, location, route — then comes from that store's data alone, and the basket and start point are kept for each store separately | confirmed — owner, 2026-10-16 |
 
 ---
 
@@ -217,6 +218,7 @@ finished being written.
 | AC-33 | FR-29, NFR-03 | Every result shows the catalogue price, and a dietary tag appears exactly when the product's recorded attribute is `true` — never for `false` or empty, and never worded as an absence |
 | AC-34 | FR-30 | "2 x baked beans" adds baked beans with quantity 2; a quantity changed in the basket survives closing the page and opening it again in a new tab; "Clear basket" empties it |
 | AC-35 | NFR-12 | After one visit, with the connection cut, reloading the page shows it, says there is no connection, and still suggests products; a search then says it needs a connection; the page offers a web app manifest with home-screen icons |
+| AC-36 | FR-31, FR-25, NFR-08 | With three stores of two, three and five floors loaded from their data folders and no store-specific code, the switcher offers all three; choosing the five-floor store offers floors 0–4, places the same product on a different floor, aisle and shelf than the demo store, and plans a route that clears floor 4 first and ends at a till; AC-01 to AC-08 pass on every store; a basket from one store is never routed in another; an unknown store is refused |
 
 ---
 

@@ -700,7 +700,7 @@ them, four calls (C-03):
 
 | Call | Body | Does |
 |---|---|---|
-| `GET /api/store` | — | Floors and the spots on each, for the position picker (FR-15); every product sold here as `{sku, label, terms, in_stock, popularity}` for suggestions (FR-28) |
+| `GET /api/store?store=ID` | — | That store (the default if none): `id`, `name`, `stores` — every store held, `{id, name, floors}`, for the switcher (FR-31) — floors and the spots on each, for the position picker (FR-15); every product sold there as `{sku, label, terms, in_stock, popularity}` for suggestions (FR-28) |
 | `POST /api/search` | `query`, `answers[]`, `start`, `step_free` | `Journey.answer` — the search, resumed with each round's answer (FR-05) |
 | `POST /api/scan` | `code`, `start`, `step_free` | `Journey.run_scan` — one exact product (FR-03) |
 | `POST /api/route` | `skus[]`, `start`, `step_free` | `Journey.plan_route` — the basket, routed (FR-16, FR-23) |
@@ -749,6 +749,15 @@ error: `no-speech` → not heard (EC-63); `not-allowed`, `service-not-allowed`,
 `audio-capture` → microphone unavailable (EC-61); anything else → voice not
 working; `aborted` (the page closing) → nothing. An end with no words and no
 error is not heard too. No API call, no server code and no model call was added.
+
+**Several stores, one function.** `store_folders()` maps every folder under `data/` that holds
+a `store.csv` to its id; `services(store_id)` is cached per store and built on that store's
+first request; `store_list()` reads only `store.csv` and the levels in `map_nodes.csv`, so the
+switcher never builds a store. Every POST carries `store` (empty: `SBY-DEMO-001`); an unknown id
+raises `UnknownStore` → 404 "That store isn't available here" (EC-74). The page keeps the
+chosen store in local storage, and the basket and start point per store (`basket:<id>`,
+`place:<id>`). The generator builds the portability store and the city flagship from one
+`datagen/variant.py` (`Variant`: floors, packing, extras, racks, moved spots, restock seed).
 
 **Suggestions are matched on the phone.** `present.view.suggestions` lists every ranged
 product with its label (`name size`, which searches straight to it — tested for every product),

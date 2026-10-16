@@ -37,15 +37,19 @@ type Asked = { query: string; answers: Record<string, string>[] };
 type Tab = "search" | "basket" | "route";
 
 // Where the shopper stands is for this visit (the tab's session); the basket is a shopping list,
-// kept on the phone between visits until it is cleared (FR-30).
+// kept on the phone between visits until it is cleared (FR-30). Both are kept per store, and
+// the store last chosen is remembered (FR-31): "basket:SBY-CITY-003", "place:SBY-CITY-003".
 const KEEP: Record<string, () => Storage> = {
   place: () => sessionStorage,
   basket: () => localStorage,
+  store: () => localStorage,
 };
 
 function load<T>(key: string, fallback: T): T {
   try {
-    const raw = KEEP[key]().getItem(`${SAVED}:${key}`) ?? sessionStorage.getItem(`${SAVED}:${key}`);
+    const raw =
+      KEEP[key.split(":")[0]]().getItem(`${SAVED}:${key}`) ??
+      sessionStorage.getItem(`${SAVED}:${key}`);
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -54,7 +58,7 @@ function load<T>(key: string, fallback: T): T {
 
 function save(key: string, value: unknown) {
   try {
-    KEEP[key]().setItem(`${SAVED}:${key}`, JSON.stringify(value));
+    KEEP[key.split(":")[0]]().setItem(`${SAVED}:${key}`, JSON.stringify(value));
   } catch {
     /* private mode — the page still works, it just forgets on refresh */
   }
@@ -109,7 +113,7 @@ export default function Page() {
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
   const [added, setAdded] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>("search");
-  const [sheet, setSheet] = useState<"where" | "scan" | null>(null);
+  const [sheet, setSheet] = useState<"store" | "where" | "scan" | null>(null);
 
   const [online, setOnline] = useState(true);
 
@@ -137,25 +141,49 @@ export default function Page() {
       .catch(() => undefined); // no worker, no offline copy — the page works as before
   }, []);
 
-  useEffect(() => {
-    setBasket(load<Item[]>("basket", []).map((i) => ({ ...i, qty: i.qty || 1 })));
-    getStore()
-      .then((s) => {
-        keepOffline();
-        setStore(s);
-        const saved = load<Place | null>("place", null);
-        const known = saved && s.floors.some((f) => f.spots.some((p) => p.node === saved.node));
-        setPlace(known ? saved : { level: s.floors[0].level, node: s.entrance, stepFree: false });
-      })
-      .catch(() => setError(navigator.onLine ? APOLOGY : OFFLINE));
-  }, [keepOffline]);
+  // FR-31 — open a store: its floors, its catalogue, and this phone's basket and start point for
+  // it. Nothing from the store before is carried over — a basket is never routed in another
+  // store (EC-75).
+  const openStore = useCallback(
+    (id?: string) => {
+      setError(null);
+      getStore(id)
+        .catch(() => (id ? getStore() : Promise.reject())) // a store no longer offered: the default
+        .then((s) => {
+          keepOffline();
+          const first = s.stores[0]?.id === s.id;
+          const kept =
+            load<Item[] | null>(`basket:${s.id}`, null) ??
+            (first ? load<Item[]>("basket", []) : []);
+          const saved = load<Place | null>(`place:${s.id}`, null);
+          const known = saved && s.floors.some((f) => f.spots.some((p) => p.node === saved.node));
+          setStore(s);
+          setBasket(kept.map((i) => ({ ...i, qty: i.qty || 1 })));
+          setPlace(known ? saved : { level: s.floors[0].level, node: s.entrance, stepFree: false });
+          setView(null);
+          setRouted(null);
+          setAsked(null);
+          setQuery("");
+          setAdded(null);
+          setTab("search");
+          save("store", s.id);
+        })
+        .catch(() => setError(navigator.onLine ? APOLOGY : OFFLINE));
+    },
+    [keepOffline],
+  );
 
-  useEffect(() => save("basket", basket), [basket]);
-  useEffect(() => {
-    if (place) save("place", place);
-  }, [place]);
+  useEffect(() => openStore(load<string>("store", "") || undefined), [openStore]);
 
-  const where = place ? { start: place.node, step_free: place.stepFree } : null;
+  useEffect(() => {
+    if (store) save(`basket:${store.id}`, basket);
+  }, [basket, store]);
+  useEffect(() => {
+    if (place && store) save(`place:${store.id}`, place);
+  }, [place, store]);
+
+  const where =
+    place && store ? { store: store.id, start: place.node, step_free: place.stepFree } : null;
 
   const run = useCallback(async (call: () => Promise<View>, then: (v: View) => void) => {
     setBusy(true);
@@ -185,20 +213,20 @@ export default function Page() {
 
   const onCode = useCallback(
     (code: string) => {
-      if (!place) return;
+      if (!place || !store) return;
       setAsked(null);
       setAdded(null);
       setSheet(null);
       setTab("search");
       run(
-        () => scan(code, { start: place.node, step_free: place.stepFree }),
+        () => scan(code, { store: store.id, start: place.node, step_free: place.stepFree }),
         (v) => {
           setView(v);
           setRouted(null);
         },
       );
     },
-    [place, run],
+    [place, store, run],
   );
 
   const add = (rows: Row[]) => {
@@ -224,7 +252,19 @@ export default function Page() {
   return (
     <div className="app">
       <header className="bar">
-        <h1>Find it in store</h1>
+        <div className="brand">
+          <h1>Find it in store</h1>
+          {store && (
+            <button
+              type="button"
+              className="store"
+              onClick={() => setSheet("store")}
+              aria-label={`Store: ${store.name}. Change`}
+            >
+              {store.name} ▾
+            </button>
+          )}
+        </div>
         {place && (
           <button
             type="button"
@@ -465,6 +505,30 @@ export default function Page() {
           <button type="button" className="primary wide" onClick={closeSheet}>
             Done
           </button>
+        </Sheet>
+      )}
+      {sheet === "store" && store && (
+        <Sheet title="Which store?" onClose={closeSheet}>
+          <fieldset>
+            <legend className="sr-only">Store</legend>
+            {store.stores.map((s) => (
+              <label key={s.id} className="choice">
+                <input
+                  type="radio"
+                  name="store"
+                  value={s.id}
+                  checked={s.id === store.id}
+                  onChange={() => {
+                    setSheet(null);
+                    if (s.id !== store.id) openStore(s.id);
+                  }}
+                />
+                <span>
+                  {s.name} <span className="caption">· {s.floors} floors</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
         </Sheet>
       )}
       {sheet === "scan" && (

@@ -29,6 +29,8 @@ data/
     map_edges.csv
   SBY-PORT-002/          ← two-floor portability store (AC-09)
     …the same six files
+  SBY-CITY-003/          ← five-floor city flagship (AC-09, AC-36)
+    …the same six files
 ```
 
 ### 1.1 Six files, four kinds of data

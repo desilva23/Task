@@ -1,0 +1,323 @@
+node_id,node_type,level,floor_name,aisle,rack,shelf_count,zone,x_m,y_m,is_open
+F0-A01-N,aisle_end,0,Fresh Food,1,,,Fruit,6.0,6.0,true
+F0-A01-R01,rack,0,Fresh Food,1,1,5,Fruit,6.0,9.0,true
+F0-A01-R02,rack,0,Fresh Food,1,2,5,Fruit,6.0,12.2,true
+F0-A01-R03,rack,0,Fresh Food,1,3,5,Fruit,6.0,15.4,true
+F0-A01-R04,rack,0,Fresh Food,1,4,5,Fruit,6.0,18.6,true
+F0-A01-R05,rack,0,Fresh Food,1,5,5,Fruit,6.0,21.8,true
+F0-A01-R06,rack,0,Fresh Food,1,6,5,Fruit,6.0,25.0,true
+F0-A01-S,aisle_end,0,Fresh Food,1,,,Fruit,6.0,28.0,true
+F0-A02-N,aisle_end,0,Fresh Food,2,,,Vegetables,12.0,6.0,true
+F0-A02-R01,rack,0,Fresh Food,2,1,5,Vegetables,12.0,9.0,true
+F0-A02-R02,rack,0,Fresh Food,2,2,5,Vegetables,12.0,12.2,true
+F0-A02-R03,rack,0,Fresh Food,2,3,5,Vegetables,12.0,15.4,true
+F0-A02-R04,rack,0,Fresh Food,2,4,5,Vegetables,12.0,18.6,true
+F0-A02-R05,rack,0,Fresh Food,2,5,5,Vegetables,12.0,21.8,true
+F0-A02-R06,rack,0,Fresh Food,2,6,5,Vegetables,12.0,25.0,true
+F0-A02-S,aisle_end,0,Fresh Food,2,,,Vegetables,12.0,28.0,true
+F0-A03-N,aisle_end,0,Fresh Food,3,,,Bread,18.0,6.0,true
+F0-A03-R01,rack,0,Fresh Food,3,1,5,Bread,18.0,9.0,true
+F0-A03-R02,rack,0,Fresh Food,3,2,5,Bread,18.0,12.2,true
+F0-A03-R03,rack,0,Fresh Food,3,3,5,Bread,18.0,15.4,true
+F0-A03-R04,rack,0,Fresh Food,3,4,5,Bread,18.0,18.6,true
+F0-A03-R05,rack,0,Fresh Food,3,5,5,Bread,18.0,21.8,true
+F0-A03-R06,rack,0,Fresh Food,3,6,5,Bread,18.0,25.0,true
+F0-A03-S,aisle_end,0,Fresh Food,3,,,Bread,18.0,28.0,true
+F0-A04-N,aisle_end,0,Fresh Food,4,,,Rolls & Wraps,24.0,6.0,true
+F0-A04-R01,rack,0,Fresh Food,4,1,5,Rolls & Wraps,24.0,9.0,true
+F0-A04-R02,rack,0,Fresh Food,4,2,5,Rolls & Wraps,24.0,12.2,true
+F0-A04-R03,rack,0,Fresh Food,4,3,5,Rolls & Wraps,24.0,15.4,true
+F0-A04-R04,rack,0,Fresh Food,4,4,5,Rolls & Wraps,24.0,18.6,true
+F0-A04-R05,rack,0,Fresh Food,4,5,5,Rolls & Wraps,24.0,21.8,true
+F0-A04-R06,rack,0,Fresh Food,4,6,5,Rolls & Wraps,24.0,25.0,true
+F0-A04-S,aisle_end,0,Fresh Food,4,,,Rolls & Wraps,24.0,28.0,true
+F0-A05-N,aisle_end,0,Fresh Food,5,,,Milk,30.0,6.0,true
+F0-A05-R01,rack,0,Fresh Food,5,1,5,Milk,30.0,9.0,true
+F0-A05-R02,rack,0,Fresh Food,5,2,5,Milk,30.0,12.2,true
+F0-A05-R03,rack,0,Fresh Food,5,3,5,Milk,30.0,15.4,true
+F0-A05-R04,rack,0,Fresh Food,5,4,5,Milk,30.0,18.6,true
+F0-A05-R05,rack,0,Fresh Food,5,5,5,Milk,30.0,21.8,true
+F0-A05-R06,rack,0,Fresh Food,5,6,5,Milk,30.0,25.0,true
+F0-A05-S,aisle_end,0,Fresh Food,5,,,Milk,30.0,28.0,true
+F0-A06-N,aisle_end,0,Fresh Food,6,,,Cheese & Butter,36.0,6.0,true
+F0-A06-R01,rack,0,Fresh Food,6,1,5,Cheese & Butter,36.0,9.0,true
+F0-A06-R02,rack,0,Fresh Food,6,2,5,Cheese & Butter,36.0,12.2,true
+F0-A06-R03,rack,0,Fresh Food,6,3,5,Cheese & Butter,36.0,15.4,true
+F0-A06-R04,rack,0,Fresh Food,6,4,5,Cheese & Butter,36.0,18.6,true
+F0-A06-R05,rack,0,Fresh Food,6,5,5,Cheese & Butter,36.0,21.8,true
+F0-A06-R06,rack,0,Fresh Food,6,6,5,Cheese & Butter,36.0,25.0,true
+F0-A06-S,aisle_end,0,Fresh Food,6,,,Cheese & Butter,36.0,28.0,true
+F0-A07-N,aisle_end,0,Fresh Food,7,,,Eggs & Yogurt,42.0,6.0,true
+F0-A07-R01,rack,0,Fresh Food,7,1,5,Eggs & Yogurt,42.0,9.0,true
+F0-A07-R02,rack,0,Fresh Food,7,2,5,Eggs & Yogurt,42.0,12.2,true
+F0-A07-R03,rack,0,Fresh Food,7,3,5,Eggs & Yogurt,42.0,15.4,true
+F0-A07-R04,rack,0,Fresh Food,7,4,5,Eggs & Yogurt,42.0,18.6,true
+F0-A07-R05,rack,0,Fresh Food,7,5,5,Eggs & Yogurt,42.0,21.8,true
+F0-A07-R06,rack,0,Fresh Food,7,6,5,Eggs & Yogurt,42.0,25.0,true
+F0-A07-S,aisle_end,0,Fresh Food,7,,,Eggs & Yogurt,42.0,28.0,true
+F0-A08-N,aisle_end,0,Fresh Food,8,,,Fresh Meat,48.0,6.0,true
+F0-A08-R01,rack,0,Fresh Food,8,1,5,Fresh Meat,48.0,9.0,true
+F0-A08-R02,rack,0,Fresh Food,8,2,5,Fresh Meat,48.0,12.2,true
+F0-A08-R03,rack,0,Fresh Food,8,3,5,Fresh Meat,48.0,15.4,true
+F0-A08-R04,rack,0,Fresh Food,8,4,5,Fresh Meat,48.0,18.6,true
+F0-A08-R05,rack,0,Fresh Food,8,5,5,Fresh Meat,48.0,21.8,true
+F0-A08-R06,rack,0,Fresh Food,8,6,5,Fresh Meat,48.0,25.0,true
+F0-A08-S,aisle_end,0,Fresh Food,8,,,Fresh Meat,48.0,28.0,true
+F0-A09-N,aisle_end,0,Fresh Food,9,,,Ready Meals,54.0,6.0,true
+F0-A09-R01,rack,0,Fresh Food,9,1,5,Ready Meals,54.0,9.0,true
+F0-A09-R02,rack,0,Fresh Food,9,2,5,Ready Meals,54.0,12.2,true
+F0-A09-R03,rack,0,Fresh Food,9,3,5,Ready Meals,54.0,15.4,true
+F0-A09-R04,rack,0,Fresh Food,9,4,5,Ready Meals,54.0,18.6,true
+F0-A09-R05,rack,0,Fresh Food,9,5,5,Ready Meals,54.0,21.8,true
+F0-A09-R06,rack,0,Fresh Food,9,6,5,Ready Meals,54.0,25.0,true
+F0-A09-S,aisle_end,0,Fresh Food,9,,,Ready Meals,54.0,28.0,true
+F0-A10-N,aisle_end,0,Fresh Food,10,,,Pizza & Dips,60.0,6.0,true
+F0-A10-R01,rack,0,Fresh Food,10,1,5,Pizza & Dips,60.0,9.0,true
+F0-A10-R02,rack,0,Fresh Food,10,2,5,Pizza & Dips,60.0,12.2,true
+F0-A10-R03,rack,0,Fresh Food,10,3,5,Pizza & Dips,60.0,15.4,true
+F0-A10-R04,rack,0,Fresh Food,10,4,5,Pizza & Dips,60.0,18.6,true
+F0-A10-R05,rack,0,Fresh Food,10,5,5,Pizza & Dips,60.0,21.8,true
+F0-A10-R06,rack,0,Fresh Food,10,6,5,Pizza & Dips,60.0,25.0,true
+F0-A10-S,aisle_end,0,Fresh Food,10,,,Pizza & Dips,60.0,28.0,true
+F0-A11-N,aisle_end,0,Fresh Food,11,,,Frozen Veg & Chips,66.0,6.0,true
+F0-A11-R01,rack,0,Fresh Food,11,1,5,Frozen Veg & Chips,66.0,9.0,true
+F0-A11-R02,rack,0,Fresh Food,11,2,5,Frozen Veg & Chips,66.0,12.2,true
+F0-A11-R03,rack,0,Fresh Food,11,3,5,Frozen Veg & Chips,66.0,15.4,true
+F0-A11-R04,rack,0,Fresh Food,11,4,5,Frozen Veg & Chips,66.0,18.6,true
+F0-A11-R05,rack,0,Fresh Food,11,5,5,Frozen Veg & Chips,66.0,21.8,true
+F0-A11-R06,rack,0,Fresh Food,11,6,5,Frozen Veg & Chips,66.0,25.0,true
+F0-A11-S,aisle_end,0,Fresh Food,11,,,Frozen Veg & Chips,66.0,28.0,true
+F0-A12-N,aisle_end,0,Fresh Food,12,,,Ice Cream & Desserts,72.0,6.0,true
+F0-A12-R01,rack,0,Fresh Food,12,1,5,Ice Cream & Desserts,72.0,9.0,true
+F0-A12-R02,rack,0,Fresh Food,12,2,5,Ice Cream & Desserts,72.0,12.2,true
+F0-A12-R03,rack,0,Fresh Food,12,3,5,Ice Cream & Desserts,72.0,15.4,true
+F0-A12-R04,rack,0,Fresh Food,12,4,5,Ice Cream & Desserts,72.0,18.6,true
+F0-A12-R05,rack,0,Fresh Food,12,5,5,Ice Cream & Desserts,72.0,21.8,true
+F0-A12-R06,rack,0,Fresh Food,12,6,5,Ice Cream & Desserts,72.0,25.0,true
+F0-A12-S,aisle_end,0,Fresh Food,12,,,Ice Cream & Desserts,72.0,28.0,true
+F0-BIN-01,bin,0,Fresh Food,,,,Front of Store,12.0,31.0,true
+F0-CORE-FRONT,core,0,Fresh Food,,,,Front Core,0.0,32.0,true
+F0-CORE-REAR,core,0,Fresh Food,,,,Rear Core,78.0,2.0,true
+F0-CTR-01,counter,0,Fresh Food,,,,Deli Counter,12.0,2.0,true
+F0-CTR-02,counter,0,Fresh Food,,,,Fish Counter,24.0,2.0,true
+F0-CTR-03,counter,0,Fresh Food,,,,Bakery Counter,36.0,2.0,true
+F0-ENTRANCE,entrance,0,Fresh Food,,,,Entrance,6.0,36.0,true
+F0-TILL-01,till,0,Fresh Food,,,,Checkouts,18.0,34.0,true
+F0-TILL-02,till,0,Fresh Food,,,,Checkouts,24.0,34.0,true
+F0-TILL-03,till,0,Fresh Food,,,,Checkouts,30.0,34.0,true
+F0-TILL-04,till,0,Fresh Food,,,,Checkouts,36.0,34.0,true
+F0-TILL-05,till,0,Fresh Food,,,,Checkouts,42.0,34.0,true
+F0-TILL-06,till,0,Fresh Food,,,,Checkouts,48.0,34.0,true
+F0-X01,junction,0,Fresh Food,,,,Front Corridor,0.0,28.0,true
+F0-X02,junction,0,Fresh Food,,,,Rear Corridor,78.0,6.0,true
+F1-A01-N,aisle_end,1,Food Cupboard & Drinks,1,,,Breakfast Cereals,6.0,6.0,true
+F1-A01-R01,rack,1,Food Cupboard & Drinks,1,1,5,Breakfast Cereals,6.0,9.0,true
+F1-A01-R02,rack,1,Food Cupboard & Drinks,1,2,5,Breakfast Cereals,6.0,12.2,true
+F1-A01-R03,rack,1,Food Cupboard & Drinks,1,3,5,Breakfast Cereals,6.0,15.4,true
+F1-A01-R04,rack,1,Food Cupboard & Drinks,1,4,5,Breakfast Cereals,6.0,18.6,true
+F1-A01-R05,rack,1,Food Cupboard & Drinks,1,5,5,Breakfast Cereals,6.0,21.8,true
+F1-A01-R06,rack,1,Food Cupboard & Drinks,1,6,5,Breakfast Cereals,6.0,25.0,true
+F1-A01-S,aisle_end,1,Food Cupboard & Drinks,1,,,Breakfast Cereals,6.0,28.0,true
+F1-A02-N,aisle_end,1,Food Cupboard & Drinks,2,,,Tea & Coffee,12.0,6.0,true
+F1-A02-R01,rack,1,Food Cupboard & Drinks,2,1,5,Tea & Coffee,12.0,9.0,true
+F1-A02-R02,rack,1,Food Cupboard & Drinks,2,2,5,Tea & Coffee,12.0,12.2,true
+F1-A02-R03,rack,1,Food Cupboard & Drinks,2,3,5,Tea & Coffee,12.0,15.4,true
+F1-A02-R04,rack,1,Food Cupboard & Drinks,2,4,5,Tea & Coffee,12.0,18.6,true
+F1-A02-R05,rack,1,Food Cupboard & Drinks,2,5,5,Tea & Coffee,12.0,21.8,true
+F1-A02-R06,rack,1,Food Cupboard & Drinks,2,6,5,Tea & Coffee,12.0,25.0,true
+F1-A02-S,aisle_end,1,Food Cupboard & Drinks,2,,,Tea & Coffee,12.0,28.0,true
+F1-A03-N,aisle_end,1,Food Cupboard & Drinks,3,,,Tins & Cans,18.0,6.0,true
+F1-A03-R01,rack,1,Food Cupboard & Drinks,3,1,5,Tins & Cans,18.0,9.0,true
+F1-A03-R02,rack,1,Food Cupboard & Drinks,3,2,5,Tins & Cans,18.0,12.2,true
+F1-A03-R03,rack,1,Food Cupboard & Drinks,3,3,5,Tins & Cans,18.0,15.4,true
+F1-A03-R04,rack,1,Food Cupboard & Drinks,3,4,5,Tins & Cans,18.0,18.6,true
+F1-A03-R05,rack,1,Food Cupboard & Drinks,3,5,5,Tins & Cans,18.0,21.8,true
+F1-A03-R06,rack,1,Food Cupboard & Drinks,3,6,5,Tins & Cans,18.0,25.0,true
+F1-A03-S,aisle_end,1,Food Cupboard & Drinks,3,,,Tins & Cans,18.0,28.0,true
+F1-A04-N,aisle_end,1,Food Cupboard & Drinks,4,,,"Pasta, Rice & Noodles",24.0,6.0,true
+F1-A04-R01,rack,1,Food Cupboard & Drinks,4,1,5,"Pasta, Rice & Noodles",24.0,9.0,true
+F1-A04-R02,rack,1,Food Cupboard & Drinks,4,2,5,"Pasta, Rice & Noodles",24.0,12.2,true
+F1-A04-R03,rack,1,Food Cupboard & Drinks,4,3,5,"Pasta, Rice & Noodles",24.0,15.4,true
+F1-A04-R04,rack,1,Food Cupboard & Drinks,4,4,5,"Pasta, Rice & Noodles",24.0,18.6,true
+F1-A04-R05,rack,1,Food Cupboard & Drinks,4,5,5,"Pasta, Rice & Noodles",24.0,21.8,true
+F1-A04-R06,rack,1,Food Cupboard & Drinks,4,6,5,"Pasta, Rice & Noodles",24.0,25.0,true
+F1-A04-S,aisle_end,1,Food Cupboard & Drinks,4,,,"Pasta, Rice & Noodles",24.0,28.0,true
+F1-A05-N,aisle_end,1,Food Cupboard & Drinks,5,,,Cooking Sauces,30.0,6.0,true
+F1-A05-R01,rack,1,Food Cupboard & Drinks,5,1,5,Cooking Sauces,30.0,9.0,true
+F1-A05-R02,rack,1,Food Cupboard & Drinks,5,2,5,Cooking Sauces,30.0,12.2,true
+F1-A05-R03,rack,1,Food Cupboard & Drinks,5,3,5,Cooking Sauces,30.0,15.4,true
+F1-A05-R04,rack,1,Food Cupboard & Drinks,5,4,5,Cooking Sauces,30.0,18.6,true
+F1-A05-R05,rack,1,Food Cupboard & Drinks,5,5,5,Cooking Sauces,30.0,21.8,true
+F1-A05-R06,rack,1,Food Cupboard & Drinks,5,6,5,Cooking Sauces,30.0,25.0,true
+F1-A05-S,aisle_end,1,Food Cupboard & Drinks,5,,,Cooking Sauces,30.0,28.0,true
+F1-A06-N,aisle_end,1,Food Cupboard & Drinks,6,,,Condiments & Oils,36.0,6.0,true
+F1-A06-R01,rack,1,Food Cupboard & Drinks,6,1,5,Condiments & Oils,36.0,9.0,true
+F1-A06-R02,rack,1,Food Cupboard & Drinks,6,2,5,Condiments & Oils,36.0,12.2,true
+F1-A06-R03,rack,1,Food Cupboard & Drinks,6,3,5,Condiments & Oils,36.0,15.4,true
+F1-A06-R04,rack,1,Food Cupboard & Drinks,6,4,5,Condiments & Oils,36.0,18.6,true
+F1-A06-R05,rack,1,Food Cupboard & Drinks,6,5,5,Condiments & Oils,36.0,21.8,true
+F1-A06-R06,rack,1,Food Cupboard & Drinks,6,6,5,Condiments & Oils,36.0,25.0,true
+F1-A06-S,aisle_end,1,Food Cupboard & Drinks,6,,,Condiments & Oils,36.0,28.0,true
+F1-A07-N,aisle_end,1,Food Cupboard & Drinks,7,,,Soft Drinks,42.0,6.0,true
+F1-A07-R01,rack,1,Food Cupboard & Drinks,7,1,5,Soft Drinks,42.0,9.0,true
+F1-A07-R02,rack,1,Food Cupboard & Drinks,7,2,5,Soft Drinks,42.0,12.2,true
+F1-A07-R03,rack,1,Food Cupboard & Drinks,7,3,5,Soft Drinks,42.0,15.4,true
+F1-A07-R04,rack,1,Food Cupboard & Drinks,7,4,5,Soft Drinks,42.0,18.6,true
+F1-A07-R05,rack,1,Food Cupboard & Drinks,7,5,5,Soft Drinks,42.0,21.8,true
+F1-A07-R06,rack,1,Food Cupboard & Drinks,7,6,5,Soft Drinks,42.0,25.0,true
+F1-A07-S,aisle_end,1,Food Cupboard & Drinks,7,,,Soft Drinks,42.0,28.0,true
+F1-A08-N,aisle_end,1,Food Cupboard & Drinks,8,,,Water & Juice,48.0,6.0,true
+F1-A08-R01,rack,1,Food Cupboard & Drinks,8,1,5,Water & Juice,48.0,9.0,true
+F1-A08-R02,rack,1,Food Cupboard & Drinks,8,2,5,Water & Juice,48.0,12.2,true
+F1-A08-R03,rack,1,Food Cupboard & Drinks,8,3,5,Water & Juice,48.0,15.4,true
+F1-A08-R04,rack,1,Food Cupboard & Drinks,8,4,5,Water & Juice,48.0,18.6,true
+F1-A08-R05,rack,1,Food Cupboard & Drinks,8,5,5,Water & Juice,48.0,21.8,true
+F1-A08-R06,rack,1,Food Cupboard & Drinks,8,6,5,Water & Juice,48.0,25.0,true
+F1-A08-S,aisle_end,1,Food Cupboard & Drinks,8,,,Water & Juice,48.0,28.0,true
+F1-BIN-01,bin,1,Food Cupboard & Drinks,,,,Front of Store,12.0,31.0,true
+F1-CORE-FRONT,core,1,Food Cupboard & Drinks,,,,Front Core,0.0,32.0,true
+F1-CORE-REAR,core,1,Food Cupboard & Drinks,,,,Rear Core,78.0,2.0,true
+F1-X01,junction,1,Food Cupboard & Drinks,,,,Front Corridor,0.0,28.0,true
+F1-X02,junction,1,Food Cupboard & Drinks,,,,Rear Corridor,78.0,6.0,true
+F2-A01-N,aisle_end,2,"Snacks, Beer & Wine",1,,,Crisps & Snacks,6.0,6.0,true
+F2-A01-R01,rack,2,"Snacks, Beer & Wine",1,1,5,Crisps & Snacks,6.0,9.0,true
+F2-A01-R02,rack,2,"Snacks, Beer & Wine",1,2,5,Crisps & Snacks,6.0,12.2,true
+F2-A01-R03,rack,2,"Snacks, Beer & Wine",1,3,5,Crisps & Snacks,6.0,15.4,true
+F2-A01-R04,rack,2,"Snacks, Beer & Wine",1,4,5,Crisps & Snacks,6.0,18.6,true
+F2-A01-R05,rack,2,"Snacks, Beer & Wine",1,5,5,Crisps & Snacks,6.0,21.8,true
+F2-A01-R06,rack,2,"Snacks, Beer & Wine",1,6,5,Crisps & Snacks,6.0,25.0,true
+F2-A01-S,aisle_end,2,"Snacks, Beer & Wine",1,,,Crisps & Snacks,6.0,28.0,true
+F2-A02-N,aisle_end,2,"Snacks, Beer & Wine",2,,,Biscuits,12.0,6.0,true
+F2-A02-R01,rack,2,"Snacks, Beer & Wine",2,1,5,Biscuits,12.0,9.0,true
+F2-A02-R02,rack,2,"Snacks, Beer & Wine",2,2,5,Biscuits,12.0,12.2,true
+F2-A02-R03,rack,2,"Snacks, Beer & Wine",2,3,5,Biscuits,12.0,15.4,true
+F2-A02-R04,rack,2,"Snacks, Beer & Wine",2,4,5,Biscuits,12.0,18.6,true
+F2-A02-R05,rack,2,"Snacks, Beer & Wine",2,5,5,Biscuits,12.0,21.8,true
+F2-A02-R06,rack,2,"Snacks, Beer & Wine",2,6,5,Biscuits,12.0,25.0,true
+F2-A02-S,aisle_end,2,"Snacks, Beer & Wine",2,,,Biscuits,12.0,28.0,true
+F2-A03-N,aisle_end,2,"Snacks, Beer & Wine",3,,,Chocolate & Sweets,18.0,6.0,true
+F2-A03-R01,rack,2,"Snacks, Beer & Wine",3,1,5,Chocolate & Sweets,18.0,9.0,true
+F2-A03-R02,rack,2,"Snacks, Beer & Wine",3,2,5,Chocolate & Sweets,18.0,12.2,true
+F2-A03-R03,rack,2,"Snacks, Beer & Wine",3,3,5,Chocolate & Sweets,18.0,15.4,true
+F2-A03-R04,rack,2,"Snacks, Beer & Wine",3,4,5,Chocolate & Sweets,18.0,18.6,true
+F2-A03-R05,rack,2,"Snacks, Beer & Wine",3,5,5,Chocolate & Sweets,18.0,21.8,true
+F2-A03-R06,rack,2,"Snacks, Beer & Wine",3,6,5,Chocolate & Sweets,18.0,25.0,true
+F2-A03-S,aisle_end,2,"Snacks, Beer & Wine",3,,,Chocolate & Sweets,18.0,28.0,true
+F2-A04-N,aisle_end,2,"Snacks, Beer & Wine",4,,,Home Baking,24.0,6.0,true
+F2-A04-R01,rack,2,"Snacks, Beer & Wine",4,1,5,Home Baking,24.0,9.0,true
+F2-A04-R02,rack,2,"Snacks, Beer & Wine",4,2,5,Home Baking,24.0,12.2,true
+F2-A04-R03,rack,2,"Snacks, Beer & Wine",4,3,5,Home Baking,24.0,15.4,true
+F2-A04-R04,rack,2,"Snacks, Beer & Wine",4,4,5,Home Baking,24.0,18.6,true
+F2-A04-R05,rack,2,"Snacks, Beer & Wine",4,5,5,Home Baking,24.0,21.8,true
+F2-A04-R06,rack,2,"Snacks, Beer & Wine",4,6,5,Home Baking,24.0,25.0,true
+F2-A04-S,aisle_end,2,"Snacks, Beer & Wine",4,,,Home Baking,24.0,28.0,true
+F2-A05-N,aisle_end,2,"Snacks, Beer & Wine",5,,,Beer & Cider,30.0,6.0,true
+F2-A05-R01,rack,2,"Snacks, Beer & Wine",5,1,5,Beer & Cider,30.0,9.0,true
+F2-A05-R02,rack,2,"Snacks, Beer & Wine",5,2,5,Beer & Cider,30.0,12.2,true
+F2-A05-R03,rack,2,"Snacks, Beer & Wine",5,3,5,Beer & Cider,30.0,15.4,true
+F2-A05-R04,rack,2,"Snacks, Beer & Wine",5,4,5,Beer & Cider,30.0,18.6,true
+F2-A05-R05,rack,2,"Snacks, Beer & Wine",5,5,5,Beer & Cider,30.0,21.8,true
+F2-A05-R06,rack,2,"Snacks, Beer & Wine",5,6,5,Beer & Cider,30.0,25.0,true
+F2-A05-S,aisle_end,2,"Snacks, Beer & Wine",5,,,Beer & Cider,30.0,28.0,true
+F2-A06-N,aisle_end,2,"Snacks, Beer & Wine",6,,,Wine,36.0,6.0,true
+F2-A06-R01,rack,2,"Snacks, Beer & Wine",6,1,5,Wine,36.0,9.0,true
+F2-A06-R02,rack,2,"Snacks, Beer & Wine",6,2,5,Wine,36.0,12.2,true
+F2-A06-R03,rack,2,"Snacks, Beer & Wine",6,3,5,Wine,36.0,15.4,true
+F2-A06-R04,rack,2,"Snacks, Beer & Wine",6,4,5,Wine,36.0,18.6,true
+F2-A06-R05,rack,2,"Snacks, Beer & Wine",6,5,5,Wine,36.0,21.8,true
+F2-A06-R06,rack,2,"Snacks, Beer & Wine",6,6,5,Wine,36.0,25.0,true
+F2-A06-S,aisle_end,2,"Snacks, Beer & Wine",6,,,Wine,36.0,28.0,true
+F2-CAB-01,cabinet,2,"Snacks, Beer & Wine",,,,Spirits,36.0,2.0,true
+F2-CORE-FRONT,core,2,"Snacks, Beer & Wine",,,,Front Core,0.0,32.0,true
+F2-CORE-REAR,core,2,"Snacks, Beer & Wine",,,,Rear Core,78.0,2.0,true
+F2-X01,junction,2,"Snacks, Beer & Wine",,,,Front Corridor,0.0,28.0,true
+F2-X02,junction,2,"Snacks, Beer & Wine",,,,Rear Corridor,78.0,6.0,true
+F3-A01-N,aisle_end,3,Health & Household,1,,,Hair & Body,6.0,6.0,true
+F3-A01-R01,rack,3,Health & Household,1,1,5,Hair & Body,6.0,9.0,true
+F3-A01-R02,rack,3,Health & Household,1,2,5,Hair & Body,6.0,12.2,true
+F3-A01-R03,rack,3,Health & Household,1,3,5,Hair & Body,6.0,15.4,true
+F3-A01-R04,rack,3,Health & Household,1,4,5,Hair & Body,6.0,18.6,true
+F3-A01-R05,rack,3,Health & Household,1,5,5,Hair & Body,6.0,21.8,true
+F3-A01-R06,rack,3,Health & Household,1,6,5,Hair & Body,6.0,25.0,true
+F3-A01-S,aisle_end,3,Health & Household,1,,,Hair & Body,6.0,28.0,true
+F3-A02-N,aisle_end,3,Health & Household,2,,,Oral Care,12.0,6.0,true
+F3-A02-R01,rack,3,Health & Household,2,1,5,Oral Care,12.0,9.0,true
+F3-A02-R02,rack,3,Health & Household,2,2,5,Oral Care,12.0,12.2,true
+F3-A02-R03,rack,3,Health & Household,2,3,5,Oral Care,12.0,15.4,true
+F3-A02-R04,rack,3,Health & Household,2,4,5,Oral Care,12.0,18.6,true
+F3-A02-R05,rack,3,Health & Household,2,5,5,Oral Care,12.0,21.8,true
+F3-A02-R06,rack,3,Health & Household,2,6,5,Oral Care,12.0,25.0,true
+F3-A02-S,aisle_end,3,Health & Household,2,,,Oral Care,12.0,28.0,true
+F3-A03-N,aisle_end,3,Health & Household,3,,,Medicines,18.0,6.0,true
+F3-A03-R01,rack,3,Health & Household,3,1,5,Medicines,18.0,9.0,true
+F3-A03-R02,rack,3,Health & Household,3,2,5,Medicines,18.0,12.2,true
+F3-A03-R03,rack,3,Health & Household,3,3,5,Medicines,18.0,15.4,true
+F3-A03-R04,rack,3,Health & Household,3,4,5,Medicines,18.0,18.6,true
+F3-A03-R05,rack,3,Health & Household,3,5,5,Medicines,18.0,21.8,true
+F3-A03-R06,rack,3,Health & Household,3,6,5,Medicines,18.0,25.0,true
+F3-A03-S,aisle_end,3,Health & Household,3,,,Medicines,18.0,28.0,true
+F3-A04-N,aisle_end,3,Health & Household,4,,,Cleaning,24.0,6.0,true
+F3-A04-R01,rack,3,Health & Household,4,1,5,Cleaning,24.0,9.0,true
+F3-A04-R02,rack,3,Health & Household,4,2,5,Cleaning,24.0,12.2,true
+F3-A04-R03,rack,3,Health & Household,4,3,5,Cleaning,24.0,15.4,true
+F3-A04-R04,rack,3,Health & Household,4,4,5,Cleaning,24.0,18.6,true
+F3-A04-R05,rack,3,Health & Household,4,5,5,Cleaning,24.0,21.8,true
+F3-A04-R06,rack,3,Health & Household,4,6,5,Cleaning,24.0,25.0,true
+F3-A04-S,aisle_end,3,Health & Household,4,,,Cleaning,24.0,28.0,true
+F3-A05-N,aisle_end,3,Health & Household,5,,,Laundry,30.0,6.0,true
+F3-A05-R01,rack,3,Health & Household,5,1,5,Laundry,30.0,9.0,true
+F3-A05-R02,rack,3,Health & Household,5,2,5,Laundry,30.0,12.2,true
+F3-A05-R03,rack,3,Health & Household,5,3,5,Laundry,30.0,15.4,true
+F3-A05-R04,rack,3,Health & Household,5,4,5,Laundry,30.0,18.6,true
+F3-A05-R05,rack,3,Health & Household,5,5,5,Laundry,30.0,21.8,true
+F3-A05-R06,rack,3,Health & Household,5,6,5,Laundry,30.0,25.0,true
+F3-A05-S,aisle_end,3,Health & Household,5,,,Laundry,30.0,28.0,true
+F3-A06-N,aisle_end,3,Health & Household,6,,,Kitchen Roll & Toilet Tissue,36.0,6.0,true
+F3-A06-R01,rack,3,Health & Household,6,1,5,Kitchen Roll & Toilet Tissue,36.0,9.0,true
+F3-A06-R02,rack,3,Health & Household,6,2,5,Kitchen Roll & Toilet Tissue,36.0,12.2,true
+F3-A06-R03,rack,3,Health & Household,6,3,5,Kitchen Roll & Toilet Tissue,36.0,15.4,true
+F3-A06-R04,rack,3,Health & Household,6,4,5,Kitchen Roll & Toilet Tissue,36.0,18.6,true
+F3-A06-R05,rack,3,Health & Household,6,5,5,Kitchen Roll & Toilet Tissue,36.0,21.8,true
+F3-A06-R06,rack,3,Health & Household,6,6,5,Kitchen Roll & Toilet Tissue,36.0,25.0,true
+F3-A06-S,aisle_end,3,Health & Household,6,,,Kitchen Roll & Toilet Tissue,36.0,28.0,true
+F3-CORE-FRONT,core,3,Health & Household,,,,Front Core,0.0,32.0,true
+F3-CORE-REAR,core,3,Health & Household,,,,Rear Core,78.0,2.0,true
+F3-X01,junction,3,Health & Household,,,,Front Corridor,0.0,28.0,true
+F3-X02,junction,3,Health & Household,,,,Rear Corridor,78.0,6.0,true
+F4-A01-N,aisle_end,4,"Pets, Baby & Home",1,,,Pet Food & Care,6.0,6.0,true
+F4-A01-R01,rack,4,"Pets, Baby & Home",1,1,5,Pet Food & Care,6.0,9.0,true
+F4-A01-R02,rack,4,"Pets, Baby & Home",1,2,5,Pet Food & Care,6.0,12.2,true
+F4-A01-R03,rack,4,"Pets, Baby & Home",1,3,5,Pet Food & Care,6.0,15.4,true
+F4-A01-R04,rack,4,"Pets, Baby & Home",1,4,5,Pet Food & Care,6.0,18.6,true
+F4-A01-R05,rack,4,"Pets, Baby & Home",1,5,5,Pet Food & Care,6.0,21.8,true
+F4-A01-R06,rack,4,"Pets, Baby & Home",1,6,5,Pet Food & Care,6.0,25.0,true
+F4-A01-S,aisle_end,4,"Pets, Baby & Home",1,,,Pet Food & Care,6.0,28.0,true
+F4-A02-N,aisle_end,4,"Pets, Baby & Home",2,,,Baby Care,12.0,6.0,true
+F4-A02-R01,rack,4,"Pets, Baby & Home",2,1,5,Baby Care,12.0,9.0,true
+F4-A02-R02,rack,4,"Pets, Baby & Home",2,2,5,Baby Care,12.0,12.2,true
+F4-A02-R03,rack,4,"Pets, Baby & Home",2,3,5,Baby Care,12.0,15.4,true
+F4-A02-R04,rack,4,"Pets, Baby & Home",2,4,5,Baby Care,12.0,18.6,true
+F4-A02-R05,rack,4,"Pets, Baby & Home",2,5,5,Baby Care,12.0,21.8,true
+F4-A02-R06,rack,4,"Pets, Baby & Home",2,6,5,Baby Care,12.0,25.0,true
+F4-A02-S,aisle_end,4,"Pets, Baby & Home",2,,,Baby Care,12.0,28.0,true
+F4-A03-N,aisle_end,4,"Pets, Baby & Home",3,,,Home & Kitchen,18.0,6.0,true
+F4-A03-R01,rack,4,"Pets, Baby & Home",3,1,5,Home & Kitchen,18.0,9.0,true
+F4-A03-R02,rack,4,"Pets, Baby & Home",3,2,5,Home & Kitchen,18.0,12.2,true
+F4-A03-R03,rack,4,"Pets, Baby & Home",3,3,5,Home & Kitchen,18.0,15.4,true
+F4-A03-R04,rack,4,"Pets, Baby & Home",3,4,5,Home & Kitchen,18.0,18.6,true
+F4-A03-R05,rack,4,"Pets, Baby & Home",3,5,5,Home & Kitchen,18.0,21.8,true
+F4-A03-R06,rack,4,"Pets, Baby & Home",3,6,5,Home & Kitchen,18.0,25.0,true
+F4-A03-S,aisle_end,4,"Pets, Baby & Home",3,,,Home & Kitchen,18.0,28.0,true
+F4-A04-N,aisle_end,4,"Pets, Baby & Home",4,,,Halloween,24.0,6.0,true
+F4-A04-R01,rack,4,"Pets, Baby & Home",4,1,5,Halloween,24.0,9.0,true
+F4-A04-R02,rack,4,"Pets, Baby & Home",4,2,5,Halloween,24.0,12.2,true
+F4-A04-R03,rack,4,"Pets, Baby & Home",4,3,5,Halloween,24.0,15.4,true
+F4-A04-R04,rack,4,"Pets, Baby & Home",4,4,5,Halloween,24.0,18.6,true
+F4-A04-R05,rack,4,"Pets, Baby & Home",4,5,5,Halloween,24.0,21.8,true
+F4-A04-R06,rack,4,"Pets, Baby & Home",4,6,5,Halloween,24.0,25.0,true
+F4-A04-S,aisle_end,4,"Pets, Baby & Home",4,,,Halloween,24.0,28.0,true
+F4-CAB-01,cabinet,4,"Pets, Baby & Home",,,,Baby,12.0,2.0,true
+F4-CORE-FRONT,core,4,"Pets, Baby & Home",,,,Front Core,0.0,32.0,true
+F4-CORE-REAR,core,4,"Pets, Baby & Home",,,,Rear Core,78.0,2.0,true
+F4-X01,junction,4,"Pets, Baby & Home",,,,Front Corridor,0.0,28.0,true
+F4-X02,junction,4,"Pets, Baby & Home",,,,Rear Corridor,78.0,6.0,true

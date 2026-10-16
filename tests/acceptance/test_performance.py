@@ -37,7 +37,7 @@ def timed(fn) -> list[float]:
     return out
 
 
-@pytest.mark.parametrize("store_id", ["SBY-DEMO-001", "SBY-PORT-002"])
+@pytest.mark.parametrize("store_id", ["SBY-DEMO-001", "SBY-PORT-002", "SBY-CITY-003"])
 def test_ac_12_one_product_and_ten_products_inside_budget(store_id):
     svc = services(store_id)
     j = Journey(svc, good_model(svc))

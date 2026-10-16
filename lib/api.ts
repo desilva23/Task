@@ -10,7 +10,15 @@ export type Suggestion = {
   in_stock: boolean;
   popularity: number;
 };
-export type Store = { entrance: string; floors: Floor[]; products: Suggestion[] };
+export type StoreChoice = { id: string; name: string; floors: number };
+export type Store = {
+  id: string;
+  name: string;
+  stores: StoreChoice[]; // FR-31 — every store this deployment serves
+  entrance: string;
+  floors: Floor[];
+  products: Suggestion[];
+};
 
 export type Option = { sku: string; label: string };
 export type Question = { index: string; term: string; options: Option[] };
@@ -48,7 +56,7 @@ export type View = {
   split: { from: string; into: string[] }[]; // a list said without commas, cut into items
 };
 
-export type Where = { start: string; step_free: boolean };
+export type Where = { store: string; start: string; step_free: boolean };
 
 export const APOLOGY = "Something went wrong on our side — please try your search again.";
 
@@ -62,7 +70,8 @@ async function call<T>(path: string, body?: object): Promise<T> {
   return (await response.json()) as T;
 }
 
-export const getStore = () => call<Store>("/api/store");
+export const getStore = (id?: string) =>
+  call<Store>(id ? `/api/store?store=${encodeURIComponent(id)}` : "/api/store");
 
 export const search = (query: string, answers: Record<string, string>[], where: Where) =>
   call<View>("/api/search", { query, answers, ...where });

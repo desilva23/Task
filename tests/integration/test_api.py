@@ -53,7 +53,8 @@ def test_c_04_fr_15_the_store_call_offers_floors_and_aisles_and_no_store_line(ap
     assert store["entrance"] == F0_ENTRANCE
     assert [f["level"] for f in store["floors"]] == [0, 1, 2]
     assert store["floors"][0]["spots"][0] == {"label": "Entrance", "node": F0_ENTRANCE}
-    assert "synthetic" not in text(store).lower() and "Demo Superstore" not in text(store)
+    assert "synthetic" not in text(store).lower()  # no data-provenance line on the page (C-04)
+    assert store["name"] == "Demo Superstore"  # the switcher names each store (FR-31)
 
 
 def test_ac_08_fr_21_fr_22_three_available_one_not_one_action_adds_three(api):
@@ -166,3 +167,57 @@ def test_ac_32_a_list_without_commas_is_searched_item_by_item_and_says_so(api):
     assert view["split"] == [{"from": "milk bread chicken", "into": ["milk", "bread", "chicken"]}]
     assert [q["term"] for q in view["pending"]["questions"]] == ["milk", "bread", "chicken"]
     assert search(api, '"milk bread chicken"')["split"] == []  # the page's "as one item"
+
+
+def test_ac_36_fr_31_the_store_call_lists_every_store_and_opens_any(api):
+    default = api.get("/api/store").json()
+    assert default["id"] == "SBY-DEMO-001"
+    assert [(s["id"], s["floors"]) for s in default["stores"]] == [
+        ("SBY-DEMO-001", 3), ("SBY-CITY-003", 5), ("SBY-PORT-002", 2)
+    ]  # fmt: skip
+    city = api.get("/api/store", params={"store": "SBY-CITY-003"}).json()
+    assert city["name"] == "City Flagship" and [f["level"] for f in city["floors"]] == [
+        0,
+        1,
+        2,
+        3,
+        4,
+    ]
+
+
+def test_ac_36_the_same_product_is_answered_from_each_store_s_own_data(api):
+    where = {}
+    for store in ("SBY-DEMO-001", "SBY-CITY-003", "SBY-PORT-002"):
+        r = api.post("/api/search", json={"store": store, "query": "everyday shampoo",
+                                          "start": F0_ENTRANCE}).json()  # fmt: skip
+        where[store] = r["available"][0]["statement"]
+    assert len(set(where.values())) == 3, where
+    assert "Floor 3" in where["SBY-CITY-003"]
+
+
+def test_ac_36_a_five_floor_route_clears_the_top_floor_first_and_ends_at_a_till(api):
+    skus = []
+    for q in ("dry dog food", "everyday shampoo", "bananas"):
+        r = api.post("/api/search", json={"store": "SBY-CITY-003", "query": q,
+                                          "start": F0_ENTRANCE}).json()  # fmt: skip
+        skus += r["addable"]
+    r = api.post("/api/route", json={"store": "SBY-CITY-003", "skus": skus,
+                                     "start": F0_ENTRANCE}).json()  # fmt: skip
+    steps = r["route"]["directions"]
+    picks = [s for s in steps if "pick up" in s or "grab" in s]
+    assert picks[0].startswith("Floor 4") and picks[-1].startswith("Floor 0"), steps
+    assert "checkout" in steps[-2].lower() and {p["level"] for p in r["route"]["plates"]} == {
+        0,
+        1,
+        2,
+        3,
+        4,
+    }
+
+
+def test_ec_74_an_unknown_store_is_refused_never_answered_from_another(api):
+    assert api.get("/api/store", params={"store": "SBY-NOPE-999"}).status_code == 404
+    r = api.post(
+        "/api/search", json={"store": "SBY-NOPE-999", "query": "milk", "start": F0_ENTRANCE}
+    )
+    assert r.status_code == 404 and r.json() == {"error": "That store isn't available here."}
